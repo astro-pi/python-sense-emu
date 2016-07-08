@@ -1,0 +1,5 @@
+prune debian
+prune docs
+include README.rst
+include LICENSE.txt
+include sense_emu/*.glade
