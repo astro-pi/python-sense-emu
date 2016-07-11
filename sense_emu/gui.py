@@ -35,7 +35,7 @@ class EmuApplication(Gtk.Application):
         action.connect('activate', self.on_quit)
         self.add_action(action)
 
-        builder = Gtk.Builder.new_from_string(pkg_resources.resource_string(__name__, 'app_menu.xml'), -1)
+        builder = Gtk.Builder.new_from_string(pkg_resources.resource_string(__name__, 'app_menu.xml').decode('utf-8'), -1)
         self.set_app_menu(builder.get_object('app-menu'))
 
     def do_activate(self):
