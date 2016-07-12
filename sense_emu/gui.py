@@ -9,11 +9,16 @@ str = type('')
 
 import sys
 import atexit
+from time import sleep
+from threading import Thread
 
+import numpy as np
 import pkg_resources
 import gi
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, GdkPixbuf, Gio, GLib
+from gi.repository import Gtk, GdkPixbuf, Gio, GLib, GObject
+
+from .screen import ScreenClient
 
 
 class EmuApplication(Gtk.Application):
@@ -25,6 +30,7 @@ class EmuApplication(Gtk.Application):
         self.window = None
 
     def do_startup(self):
+        # super-call needs to be in this form?!
         Gtk.Application.do_startup(self)
 
         action = Gio.SimpleAction.new('about', None)
@@ -61,39 +67,42 @@ class EmuWindow(Gtk.ApplicationWindow):
     def __init__(self, *args, **kwargs):
         super(EmuWindow, self).__init__(*args, **kwargs)
 
-        max_action = Gio.SimpleAction.new_stateful('maximize', None,
-                GLib.Variant.new_boolean(False))
-        max_action.connect('change-state', self.on_maximize_toggle)
-        self.add_action(max_action)
+        hbox = Gtk.Box(spacing=6, visible=True)
+        self.add(hbox)
 
-        self.connect('notify::is-maximized',
-            lambda obj, pspec: max_action.set_state(
-                GLib.Variant.new_boolean(obj.props.is_maximized))
-            )
+        self.image1 = Gtk.Image(visible=True)
+        hbox.pack_start(self.image1, True, True, 0)
+        self.button1 = Gtk.Button(label="_Close", use_underline=True, visible=True)
+        self.button1.connect('clicked', self.close_clicked)
+        hbox.pack_start(self.button1, True, True, 0)
 
-        lbl_variant = GLib.Variant.new_string('String 1')
-        lbl_action = Gio.SimpleAction.new_stateful('change_label', lbl_variant.get_type(), lbl_variant)
-        lbl_action.connect('change-state', self.on_change_label_state)
-        self.add_action(lbl_action)
+        self._screen = ScreenClient()
+        self._pixbuf = None
+        self._screen_thread = Thread(target=self._update_screen)
+        self._screen_thread.daemon = True
+        self._screen_thread.start()
 
-        self.label = Gtk.Label(label=lbl_variant.get_string(), margin=30)
-        self.add(self.label)
-        self.label.show()
+    def close_clicked(self, button):
+        self.quit()
 
-    def on_change_label_state(self, action, value):
-        action.set_state(value)
-        self.label.set_text(value.get_string())
+    def _update_screen(self):
+        while True:
+            self._pixbuf = GdkPixbuf.Pixbuf.new_from_data(
+                list(np.ravel(self._screen.rgb_array)),
+                colorspace=GdkPixbuf.Colorspace.RGB, has_alpha=False,
+                bits_per_sample=8, width=8, height=8, rowstride=8 * 3)
+            GLib.idle_add(self._copy_to_image)
+            sleep(0.1)
 
-    def on_maximize_toggle(self, action, value):
-        action.set_state(value)
-        if value.get_boolean():
-            self.maximize()
-        else:
-            self.unmaximize()
+    def _copy_to_image(self):
+        if self._pixbuf:
+            self.image1.set_from_pixbuf(self._pixbuf)
+        return False
 
 
 def main():
     atexit.register(pkg_resources.cleanup_resources)
+    GObject.threads_init()
     app = EmuApplication()
     app.run(sys.argv)
 
