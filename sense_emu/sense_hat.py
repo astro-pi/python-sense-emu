@@ -1,4 +1,14 @@
 #!/usr/bin/python
+
+from __future__ import (
+    unicode_literals,
+    absolute_import,
+    print_function,
+    division,
+    )
+nstr = str
+str = type('')
+
 import struct
 import os
 import sys
@@ -9,14 +19,14 @@ import shutil
 import glob
 import pwd
 import array
-import fcntl
+import struct
 from PIL import Image  # pillow
 from copy import deepcopy
 
 
 import sense_emu.imu as RTIMU
 from .stick import SenseStick
-from .screen import screen_filename
+from .screen import init_screen
 
 
 class SenseHat(object):
@@ -30,6 +40,17 @@ class SenseHat(object):
     SENSE_HAT_FB_GAMMA_USER = 2
     SETTINGS_HOME_PATH = '.config/sense_hat'
 
+    _GAMMA_DEFAULT = [
+        0,  0,  0,  0,  0,  0,  1,  1,
+        2,  2,  3,  3,  4,  5,  6,  7,
+        8,  9,  10, 11, 12, 14, 15, 17,
+        18, 20, 21, 23, 25, 27, 29, 31]
+    _GAMMA_LOW = [
+        0,  1,  1,  1,  1,  1,  1,  1,
+        1,  1,  1,  1,  1,  2,  2,  2,
+        3,  3,  3,  4,  4,  5,  5,  6,
+        6,  7,  7,  8,  8,  9,  10, 10]
+
     def __init__(
             self,
             imu_settings_file='RTIMULib',
@@ -39,9 +60,6 @@ class SenseHat(object):
         self._fb_device = self._get_fb_device()
         if self._fb_device is None:
             raise OSError('Cannot detect %s device' % self.SENSE_HAT_FB_NAME)
-
-        if not glob.glob('/dev/i2c*'):
-            raise OSError('Cannot access I2C. Please ensure I2C is enabled in raspi-config')
 
         # 0 is With B+ HDMI port facing downwards
         pix_map0 = np.array([
@@ -169,7 +187,10 @@ class SenseHat(object):
         Internal. Finds the correct frame buffer device for the sense HAT
         and returns its /dev name.
         """
-        return screen_filename()
+        fd = init_screen()
+        result = fd.name
+        fd.close()
+        return result
 
     ####
     # Joystick
@@ -485,10 +506,9 @@ class SenseHat(object):
 
     @property
     def gamma(self):
-        buffer = array.array('B', [0]*32)
-        with open(self._fb_device) as f:
-            fcntl.ioctl(f, self.SENSE_HAT_FB_FBIOGET_GAMMA, buffer)
-        return list(buffer)
+        with open(self._fb_device, 'rb') as f:
+            f.seek(128)
+            return struct.unpack(nstr('32B'), f.read(32))
 
     @gamma.setter
     def gamma(self, buffer):
@@ -501,26 +521,26 @@ class SenseHat(object):
         if not isinstance(buffer, array.array):
             buffer = array.array('B', buffer)
 
-        with open(self._fb_device) as f:
-            fcntl.ioctl(f, self.SENSE_HAT_FB_FBIOSET_GAMMA, buffer)
+        with open(self._fb_device, 'rb+') as f:
+            f.seek(128)
+            f.write(struct.pack(nstr('32B'), *buffer))
 
     def gamma_reset(self):
         """
         Resets the LED matrix gamma correction to default
         """
-
-        with open(self._fb_device) as f:
-            fcntl.ioctl(f, self.SENSE_HAT_FB_FBIORESET_GAMMA, self.SENSE_HAT_FB_GAMMA_DEFAULT)
+        self.gamma = self._GAMMA_DEFAULT
 
     @property
     def low_light(self):
-        return self.gamma == [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 10, 10]
+        return self.gamma == self._GAMMA_LOW
 
     @low_light.setter
     def low_light(self, value):
-        with open(self._fb_device) as f:
-            cmd = self.SENSE_HAT_FB_GAMMA_LOW if value else self.SENSE_HAT_FB_GAMMA_DEFAULT
-            fcntl.ioctl(f, self.SENSE_HAT_FB_FBIORESET_GAMMA, cmd)
+        if value:
+            self.gamma = self._GAMMA_LOW
+        else:
+            self.gamma = self._GAMMA_DEFAULT
 
     ####
     # Environmental sensors

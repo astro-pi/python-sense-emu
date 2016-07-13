@@ -32,22 +32,37 @@ def screen_filename():
             return os.path.join('/tmp', fname)
 
 
+def init_screen():
+    try:
+        # Attempt to open the screen's device file and ensure it's 160 bytes
+        # long
+        fd = io.open(screen_filename(), 'rb+', buffering=0)
+        fd.seek(160)
+        fd.truncate()
+    except IOError as e:
+        # If the screen's device file doesn't exist, create it with reasonable
+        # initial values
+        if e.errno == errno.ENOENT:
+            fd = io.open(screen_filename(), 'wb+', buffering=0)
+            # screen is all black initially
+            fd.write(b'\x00\x00' * 64)
+            # initial gamma table
+            fd.write(b''.join(chr(i).encode('ascii') for i in [
+                0,  0,  0,  0,  0,  0,  1,  1,
+                2,  2,  3,  3,  4,  5,  6,  7,
+                8,  9,  10, 11, 12, 14, 15, 17,
+                18, 20, 21, 23, 25, 27, 29, 31]))
+        else:
+            raise
+    return fd
+
+
 class ScreenClient(object):
     def __init__(self):
-        try:
-            self._fd = io.open(screen_filename(), 'rb+')
-        except IOError as e:
-            # If the screen's device file doesn't exist, create it
-            if e.errno == errno.ENOENT:
-                self._fd = io.open(screen_filename(), 'wb+')
-            else:
-                raise
-        # Ensure the file has 128-bytes (64 2-byte integers)
-        self._fd.seek(128)
-        self._fd.truncate()
-        self._fd.seek(0)
+        self._fd = init_screen()
         self._map = mmap.mmap(self._fd.fileno(), 0, access=mmap.ACCESS_READ)
-        self._array = np.frombuffer(self._map, dtype=np.uint16).reshape((8, 8))
+        self._screen = np.frombuffer(self._map, dtype=np.uint16, count=64).reshape((8, 8))
+        self._gamma = np.frombuffer(self._map, dtype=np.uint8, count=32, offset=128)
 
     def close(self):
         if self._fd:
@@ -58,16 +73,18 @@ class ScreenClient(object):
 
     @property
     def array(self):
-        return self._array
+        return self._screen
 
     @property
     def rgb_array(self):
-            a = np.empty((8, 8, 3), dtype=np.uint8)
-            a[..., 0] = ((self._array & 0xF800) >> 8).astype(np.uint8)
-            a[..., 1] = ((self._array & 0x07E0) >> 3).astype(np.uint8)
-            a[..., 2] = ((self._array & 0x001F) << 3).astype(np.uint8)
-            a[..., 0] |= a[..., 0] >> 5
-            a[..., 1] |= a[..., 1] >> 6
-            a[..., 2] |= a[..., 2] >> 5
-            return a
+        a = np.empty((8, 8, 3), dtype=np.uint8)
+        # convert the RGB565 pixels to RGB555 (as the real hardware does)
+        a[..., 0] = ((self._screen & 0xF800) >> 11).astype(np.uint8)
+        a[..., 1] = ((self._screen & 0x07E0) >> 6).astype(np.uint8)
+        a[..., 2] = (self._screen & 0x001F).astype(np.uint8)
+        # map all values according to the gamma table
+        a = np.take(self._gamma, a)
+        # convert to RGB888
+        a = a << 3 | a >> 2
+        return a
 
