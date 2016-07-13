@@ -67,21 +67,10 @@ class EmuWindow(Gtk.ApplicationWindow):
     def __init__(self, *args, **kwargs):
         super(EmuWindow, self).__init__(*args, **kwargs)
 
+        self.app = kwargs['application']
+
         hbox = Gtk.Box(spacing=6, visible=True)
         self.add(hbox)
-
-        grid = Gtk.Grid(visible=True)
-        hbox.pack_start(grid, True, True, 0)
-
-        self.labels = []
-        for y in range(8):
-            row = []
-            for x in range(8):
-                label = Gtk.Label("", visible=True, hexpand=True)
-                label.set_size_request(8, 8)
-                row.append(label)
-                grid.attach(label, x, y, 1, 1)
-            self.labels.append(row)
 
         self.image1 = Gtk.Image(visible=True)
         hbox.pack_start(self.image1, True, True, 0)
@@ -96,12 +85,12 @@ class EmuWindow(Gtk.ApplicationWindow):
         self._screen_thread.start()
 
     def close_clicked(self, button):
-        self.quit()
+        self.app.quit()
 
     def _update_screen(self):
         while True:
-            b = GLib.Bytes.new(np.ravel(self._screen.rgb_array))
-            self._pixbuf = GdkPixbuf.Pixbuf.new_from_bytes(b,
+            self._pixbuf = GdkPixbuf.Pixbuf.new_from_bytes(
+                GLib.Bytes.new(np.ravel(self._screen.rgb_array)),
                 colorspace=GdkPixbuf.Colorspace.RGB, has_alpha=False,
                 bits_per_sample=8, width=8, height=8, rowstride=8 * 3)
             GLib.idle_add(self._copy_to_image)
@@ -111,8 +100,6 @@ class EmuWindow(Gtk.ApplicationWindow):
         if self._pixbuf:
             p = self._pixbuf.scale_simple(128, 128, GdkPixbuf.InterpType.NEAREST)
             self.image1.set_from_pixbuf(p)
-            self.labels[0][0].override_background_color(
-                Gtk.StateFlags.NORMAL, Gdk.RGBA(1, 0, 0, 1))
         return False
 
 
