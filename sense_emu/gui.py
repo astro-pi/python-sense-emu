@@ -10,13 +10,13 @@ str = type('')
 import sys
 import atexit
 from time import sleep
-from threading import Thread
+from threading import Thread, Lock
 
 import numpy as np
 import pkg_resources
 import gi
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, GdkPixbuf, Gio, GLib, GObject
+from gi.repository import Gtk, Gdk, GdkPixbuf, Gio, GLib, GObject
 
 from .screen import ScreenClient
 
@@ -70,6 +70,19 @@ class EmuWindow(Gtk.ApplicationWindow):
         hbox = Gtk.Box(spacing=6, visible=True)
         self.add(hbox)
 
+        grid = Gtk.Grid(visible=True)
+        hbox.pack_start(grid, True, True, 0)
+
+        self.labels = []
+        for y in range(8):
+            row = []
+            for x in range(8):
+                label = Gtk.Label("", visible=True, hexpand=True)
+                label.set_size_request(8, 8)
+                row.append(label)
+                grid.attach(label, x, y, 1, 1)
+            self.labels.append(row)
+
         self.image1 = Gtk.Image(visible=True)
         hbox.pack_start(self.image1, True, True, 0)
         self.button1 = Gtk.Button(label="_Close", use_underline=True, visible=True)
@@ -87,8 +100,8 @@ class EmuWindow(Gtk.ApplicationWindow):
 
     def _update_screen(self):
         while True:
-            self._pixbuf = GdkPixbuf.Pixbuf.new_from_data(
-                list(np.ravel(self._screen.rgb_array)),
+            b = GLib.Bytes(np.ravel(self._screen.rgb_array))
+            self._pixbuf = GdkPixbuf.Pixbuf.new_from_bytes(b,
                 colorspace=GdkPixbuf.Colorspace.RGB, has_alpha=False,
                 bits_per_sample=8, width=8, height=8, rowstride=8 * 3)
             GLib.idle_add(self._copy_to_image)
@@ -96,7 +109,10 @@ class EmuWindow(Gtk.ApplicationWindow):
 
     def _copy_to_image(self):
         if self._pixbuf:
-            self.image1.set_from_pixbuf(self._pixbuf)
+            p = self._pixbuf.scale_simple(128, 128, GdkPixbuf.InterpType.NEAREST)
+            self.image1.set_from_pixbuf(p)
+            self.labels[0][0].override_background_color(
+                Gtk.StateFlags.NORMAL, Gdk.RGBA(1, 0, 0, 1))
         return False
 
 
