@@ -100,7 +100,7 @@ class EmuWindow(Gtk.ApplicationWindow):
 
     def _update_screen(self):
         while True:
-            b = GLib.Bytes(np.ravel(self._screen.rgb_array))
+            b = GLib.Bytes.new(np.ravel(self._screen.rgb_array))
             self._pixbuf = GdkPixbuf.Pixbuf.new_from_bytes(b,
                 colorspace=GdkPixbuf.Colorspace.RGB, has_alpha=False,
                 bits_per_sample=8, width=8, height=8, rowstride=8 * 3)
