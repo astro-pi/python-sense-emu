@@ -282,9 +282,9 @@ class PressureServer(object):
         self._noise_thread = None
         self._noise_event = Event()
         self._pressure = 1013.0
-        self._pressures = deque(maxlen=32)
+        self._pressures = deque(maxlen=25)
         self._temperature = 20.0
-        self._temperatures = deque(maxlen=16)
+        self._temperatures = deque(maxlen=300)
         self._noise_write()
         self.simulate_noise = simulate_noise
 
@@ -370,9 +370,9 @@ class HumidityServer(object):
         self._noise_thread = None
         self._noise_event = Event()
         self._humidity = 45.0
-        self._humidities = deque(maxlen=32)
+        self._humidities = deque(maxlen=77)
         self._temperature = 20.0
-        self._temperatures = deque(maxlen=16)
+        self._temperatures = deque(maxlen=116)
         self._noise_write()
         self.simulate_noise = simulate_noise
 
