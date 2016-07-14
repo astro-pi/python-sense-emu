@@ -26,7 +26,7 @@ from copy import deepcopy
 
 import sense_emu.imu as RTIMU
 from .stick import SenseStick
-from .screen import init_screen
+from .screen import init_screen, GAMMA_DEFAULT, GAMMA_LOW
 
 
 class SenseHat(object):
@@ -39,17 +39,6 @@ class SenseHat(object):
     SENSE_HAT_FB_GAMMA_LOW = 1
     SENSE_HAT_FB_GAMMA_USER = 2
     SETTINGS_HOME_PATH = '.config/sense_hat'
-
-    _GAMMA_DEFAULT = [
-        0,  0,  0,  0,  0,  0,  1,  1,
-        2,  2,  3,  3,  4,  5,  6,  7,
-        8,  9,  10, 11, 12, 14, 15, 17,
-        18, 20, 21, 23, 25, 27, 29, 31]
-    _GAMMA_LOW = [
-        0,  1,  1,  1,  1,  1,  1,  1,
-        1,  1,  1,  1,  1,  2,  2,  2,
-        3,  3,  3,  4,  4,  5,  5,  6,
-        6,  7,  7,  8,  8,  9,  10, 10]
 
     def __init__(
             self,
@@ -529,18 +518,18 @@ class SenseHat(object):
         """
         Resets the LED matrix gamma correction to default
         """
-        self.gamma = self._GAMMA_DEFAULT
+        self.gamma = GAMMA_DEFAULT
 
     @property
     def low_light(self):
-        return self.gamma == self._GAMMA_LOW
+        return self.gamma == GAMMA_LOW
 
     @low_light.setter
     def low_light(self, value):
         if value:
-            self.gamma = self._GAMMA_LOW
+            self.gamma = GAMMA_LOW
         else:
-            self.gamma = self._GAMMA_DEFAULT
+            self.gamma = GAMMA_DEFAULT
 
     ####
     # Environmental sensors

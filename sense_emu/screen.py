@@ -17,6 +17,18 @@ import struct
 import numpy as np
 
 
+GAMMA_DEFAULT = [
+    0,  0,  0,  0,  0,  0,  1,  1,
+    2,  2,  3,  3,  4,  5,  6,  7,
+    8,  9,  10, 11, 12, 14, 15, 17,
+    18, 20, 21, 23, 25, 27, 29, 31]
+GAMMA_LOW = [
+    0,  1,  1,  1,  1,  1,  1,  1,
+    1,  1,  1,  1,  1,  2,  2,  2,
+    3,  3,  3,  4,  4,  5,  5,  6,
+    6,  7,  7,  8,  8,  9,  10, 10]
+
+
 def screen_filename():
     # returns the file used to represent the state of the emulated sense HAT's
     # screen. On UNIX we try /dev/shm then fall back to /tmp; on Windows we
@@ -36,22 +48,16 @@ def init_screen():
     try:
         # Attempt to open the screen's device file and ensure it's 160 bytes
         # long
-        fd = io.open(screen_filename(), 'rb+', buffering=0)
+        fd = io.open(screen_filename(), 'r+b', buffering=0)
         fd.seek(160)
         fd.truncate()
     except IOError as e:
         # If the screen's device file doesn't exist, create it with reasonable
         # initial values
         if e.errno == errno.ENOENT:
-            fd = io.open(screen_filename(), 'wb+', buffering=0)
-            # screen is all black initially
+            fd = io.open(screen_filename(), 'w+b', buffering=0)
             fd.write(b'\x00\x00' * 64)
-            # initial gamma table
-            fd.write(b''.join(chr(i).encode('ascii') for i in [
-                0,  0,  0,  0,  0,  0,  1,  1,
-                2,  2,  3,  3,  4,  5,  6,  7,
-                8,  9,  10, 11, 12, 14, 15, 17,
-                18, 20, 21, 23, 25, 27, 29, 31]))
+            fd.write(b''.join(chr(i).encode('ascii') for i in GAMMA_DEFAULT))
         else:
             raise
     return fd
