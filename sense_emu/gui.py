@@ -9,8 +9,7 @@ str = type('')
 
 import sys
 import atexit
-from time import sleep
-from threading import Thread, Lock
+from threading import Thread, Lock, Event
 
 import numpy as np
 import pkg_resources
@@ -69,6 +68,7 @@ class EmuWindow(Gtk.ApplicationWindow):
         super(EmuWindow, self).__init__(*args, **kwargs)
 
         self.app = kwargs['application']
+        self.connect('delete-event', self.delete_window)
 
         hbox = Gtk.Box(spacing=6, visible=True)
         self.add(hbox)
@@ -79,14 +79,21 @@ class EmuWindow(Gtk.ApplicationWindow):
         self.quit_button.connect('clicked', self.close_clicked)
         hbox.pack_start(self.quit_button, True, True, 0)
 
+        self._pressure = PressureServer()
+        self._humidity = HumidityServer()
+
         self._screen = ScreenClient()
         self._screen_pb = None
+        self._screen_event = Event()
         self._screen_thread = Thread(target=self._update_screen)
         self._screen_thread.daemon = True
         self._screen_thread.start()
 
-        self._pressure = PressureServer()
-        self._humidity = HumidityServer()
+    def delete_window(self, window):
+        self._screen_event.set()
+        self._screen_thread.join()
+        self._humidity.close()
+        self._pressure.close()
 
     def close_clicked(self, button):
         self.app.quit()
@@ -98,7 +105,8 @@ class EmuWindow(Gtk.ApplicationWindow):
                 colorspace=GdkPixbuf.Colorspace.RGB, has_alpha=False,
                 bits_per_sample=8, width=8, height=8, rowstride=8 * 3)
             GLib.idle_add(self._copy_to_image)
-            sleep(0.1)
+            if self._screen_event.wait(0.1):
+                break
 
     def _copy_to_image(self):
         if self._screen_pb:

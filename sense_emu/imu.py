@@ -17,6 +17,7 @@ import subprocess
 from collections import namedtuple
 from random import random
 from time import time
+from threading import Thread, Lock, Event
 
 
 IMU_DATA = struct.Struct(
@@ -274,9 +275,20 @@ class PressureServer(object):
         self._fd = init_imu()
         self._map = mmap.mmap(self._fd.fileno(), 0, access=mmap.ACCESS_WRITE)
         self._write(PressureData(3, b'LPS25H', 0, 0, 0))
-        self._noise = simulate_noise
-        self.pressure = 1000.0
-        self.temperature = 25.0
+        self._noise_thread = None
+        self._noise_event = Event()
+        self._pressure = 1000.0
+        self._temperature = 25.0
+        self._noise_write()
+        self.simulate_noise = simulate_noise
+
+    def close(self):
+        if self._fd:
+            self.simulate_noise = False
+            self._map.close()
+            self._fd.close()
+            self._fd = None
+            self._map = None
 
     def _read(self):
         return PressureData(*PRESSURE_DATA.unpack_from(self._map,
@@ -288,29 +300,56 @@ class PressureServer(object):
 
     @property
     def pressure(self):
-        return clamp(self._read().P_OUT / 4096, 260, 1260)
+        return self._pressure
 
     @pressure.setter
     def pressure(self, value):
-        error = (
-            0.0 if not self._noise else
-            0.2 if 800 <= value <= 1100 and 20 <= self.temperature <= 60 else
-            1.0)
-        self._write(self._read()._replace(
-            P_OUT=int(clamp(perturb(value, error), 260, 1260) * 4096)))
+        self._pressure = value
+        if not self._noise_thread:
+            self._noise_write()
 
     @property
     def temperature(self):
-        return clamp(self._read().T_OUT / 480 + 42.5, -30, 105)
+        return self._temperature
 
     @temperature.setter
     def temperature(self, value):
-        error = (
-            0.0 if not self._noise else
-            2.0 if 0 <= value <= 65 else
+        self._temperature = value
+        if not self._noise_thread:
+            self._noise_write()
+
+    @property
+    def simulate_noise(self):
+        return self._noise_thread is not None
+
+    @simulate_noise.setter
+    def simulate_noise(self, value):
+        if value and not self._noise_thread:
+            self._noise_event.clear()
+            self._noise_thread = Thread(target=self._noise_loop)
+            self._noise_thread.daemon = True
+            self._noise_thread.start()
+        elif self._noise_thread and not value:
+            self._noise_event.set()
+            self._noise_thread.join()
+            self._noise_thread = None
+
+    def _noise_loop(self):
+        while not self._noise_event.wait(0.04):
+            self._noise_write()
+
+    def _noise_write(self):
+        p_error = (
+            0.0 if not self.simulate_noise else
+            0.2 if 800 <= self.pressure <= 1100 and 20 <= self.temperature <= 60 else
+            1.0)
+        t_error = (
+            0.0 if not self.simulate_noise else
+            2.0 if 0 <= self.temperature <= 65 else
             4.0)
         self._write(self._read()._replace(
-            T_OUT=int((clamp(perturb(value, error), -30, 105) - 42.5) * 480)))
+            P_OUT=int(clamp(perturb(self.pressure, p_error), 260, 1260) * 4096),
+            T_OUT=int((clamp(perturb(self.temperature, t_error), -30, 105) - 42.5) * 480)))
 
 
 class HumidityServer(object):
@@ -318,9 +357,20 @@ class HumidityServer(object):
         self._fd = init_imu()
         self._map = mmap.mmap(self._fd.fileno(), 0, access=mmap.ACCESS_WRITE)
         self._write(HumidityData(2, b'HTS221', 0, 100, 0, 100, 0, 25600, 0, 6400, 0, 0))
-        self._noise = simulate_noise
-        self.humidity = 50.0
-        self.temperature = 25.0
+        self._noise_thread = None
+        self._noise_event = Event()
+        self._humidity = 50.0
+        self._temperature = 25.0
+        self._noise_write()
+        self.simulate_noise = simulate_noise
+
+    def close(self):
+        if self._fd:
+            self.simulate_noise = False
+            self._map.close()
+            self._fd.close()
+            self._fd = None
+            self._map = None
 
     def _read(self):
         return HumidityData(*HUMIDITY_DATA.unpack_from(self._map, IMU_DATA.size))
@@ -330,28 +380,55 @@ class HumidityServer(object):
 
     @property
     def humidity(self):
-        return clamp(self._read().H_OUT / 256, 0, 100)
+        return self._humidity
 
     @humidity.setter
     def humidity(self, value):
-        error = (
-            0.0 if not self._noise else
-            3.5 if 20 <= value <= 80 else
-            5.0)
-        self._write(self._read()._replace(
-            H_OUT=int(clamp(perturb(value, error), 0, 100) * 256)))
+        self._humidity = value
+        if not self._noise_thread:
+            self._noise_write()
 
     @property
     def temperature(self):
-        return clamp(self._read().T_OUT / 64, -40, 120)
+        return self._temperature
 
     @temperature.setter
     def temperature(self, value):
-        error = (
-            0.0 if not self._noise else
-            0.5 if 15 <= value <= 40 else
-            1.0 if 0 <= value <= 60 else
+        self._temperature = value
+        if not self._noise_thread:
+            self._noise_write()
+
+    @property
+    def simulate_noise(self):
+        return self._noise_thread is not None
+
+    @simulate_noise.setter
+    def simulate_noise(self, value):
+        if value and not self._noise_thread:
+            self._noise_event.clear()
+            self._noise_thread = Thread(target=self._noise_loop)
+            self._noise_thread.daemon = True
+            self._noise_thread.start()
+        elif self._noise_thread and not value:
+            self._noise_event.set()
+            self._noise_thread.join()
+            self._noise_thread = None
+
+    def _noise_loop(self):
+        while not self._noise_event.wait(0.13):
+            self._noise_write()
+
+    def _noise_write(self):
+        h_error = (
+            0.0 if not self.simulate_noise else
+            3.5 if 20 <= self.humidity <= 80 else
+            5.0)
+        t_error = (
+            0.0 if not self.simulate_noise else
+            0.5 if 15 <= self.temperature <= 40 else
+            1.0 if 0 <= self.temperature <= 60 else
             2.0)
         self._write(self._read()._replace(
-            T_OUT=int(clamp(perturb(value, error), -40, 120) * 64)))
+            H_OUT=int(clamp(perturb(self.humidity, h_error), 0, 100) * 256),
+            T_OUT=int(clamp(perturb(self.temperature, t_error), -40, 120) * 64)))
 
