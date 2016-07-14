@@ -49,6 +49,7 @@ __keywords__ = [
     ]
 
 __requires__ = [
+    'numpy', 'Pillow',
     ]
 
 __extra_requires__ = {
