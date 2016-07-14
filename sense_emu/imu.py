@@ -7,8 +7,11 @@ from __future__ import (
 nstr = str
 str = type('')
 
+import sys
+import os
 import io
 import mmap
+import errno
 import struct
 import subprocess
 from collections import namedtuple
@@ -50,9 +53,9 @@ PRESSURE_DATA = struct.Struct(
 IMUData = namedtuple('IMUData',
     ('type', 'name', 'accel', 'gyro', 'compass'))
 HumidityData = namedtuple('HumidityData',
-    ('type', 'name', 'H0', 'H1', 'T0', 'T1', 'H0_OUT', 'H1_OUT', 'H_OUT', 'T_OUT'))
+    ('type', 'name', 'H0', 'H1', 'T0', 'T1', 'H0_OUT', 'H1_OUT', 'T0_OUT', 'T1_OUT', 'H_OUT', 'T_OUT'))
 PressureData = namedtuple('PressureData',
-    ('type', 'name', 'P_REF', 'P_OUT', 'T_OUT')
+    ('type', 'name', 'P_REF', 'P_OUT', 'T_OUT'))
 
 
 clamp = lambda value, min_value, max_value: min(max_value, max(min_value, value))
@@ -84,7 +87,7 @@ def init_imu():
         # If the screen's device file doesn't exist, create it with reasonable
         # initial values
         if e.errno == errno.ENOENT:
-            fd = io.open(screen_filename(), 'w+b', buffering=0)
+            fd = io.open(imu_filename(), 'w+b', buffering=0)
             fd.write(b'\x00' * (IMU_DATA.size + HUMIDITY_DATA.size + PRESSURE_DATA.size))
         else:
             raise
@@ -215,7 +218,7 @@ class RTPressure(object):
         return self._read().type
 
     def pressureName(self):
-        return self._read().name
+        return self._read().name.decode('ascii')
 
 
 class RTHumidity(object):
@@ -263,14 +266,14 @@ class RTHumidity(object):
         return self._read().type
 
     def humidityName(self):
-        return self._read().name
+        return self._read().name.decode('ascii')
 
 
 class PressureServer(object):
     def __init__(self, simulate_noise=True):
         self._fd = init_imu()
         self._map = mmap.mmap(self._fd.fileno(), 0, access=mmap.ACCESS_WRITE)
-        self._write(PressureData(3, 'LPS25H', 0, 0, 0))
+        self._write(PressureData(3, b'LPS25H', 0, 0, 0))
         self._noise = simulate_noise
         self.pressure = 1000.0
         self.temperature = 25.0
@@ -294,11 +297,11 @@ class PressureServer(object):
             0.2 if 800 <= value <= 1100 and 20 <= self.temperature <= 60 else
             1.0)
         self._write(self._read()._replace(
-            'P_OUT', int(clamp(perturb(value, error), 260, 1260) * 4096)))
+            P_OUT=int(clamp(perturb(value, error), 260, 1260) * 4096)))
 
     @property
     def temperature(self):
-        return clamp(self._read().T_OUT / 480 + 42.5)
+        return clamp(self._read().T_OUT / 480 + 42.5, -30, 105)
 
     @temperature.setter
     def temperature(self, value):
@@ -307,14 +310,14 @@ class PressureServer(object):
             2.0 if 0 <= value <= 65 else
             4.0)
         self._write(self._read()._replace(
-            'T_OUT', int((clamp(perturb(value, error), -30, 105) - 42.5) * 480)))
+            T_OUT=int((clamp(perturb(value, error), -30, 105) - 42.5) * 480)))
 
 
 class HumidityServer(object):
     def __init__(self, simulate_noise=True):
         self._fd = init_imu()
         self._map = mmap.mmap(self._fd.fileno(), 0, access=mmap.ACCESS_WRITE)
-        self._write(HumidityData(2, 'HTS221', 0, 100, 0, 100, 0, 25600, 0, 6400, 0, 0))
+        self._write(HumidityData(2, b'HTS221', 0, 100, 0, 100, 0, 25600, 0, 6400, 0, 0))
         self._noise = simulate_noise
         self.humidity = 50.0
         self.temperature = 25.0
@@ -331,8 +334,12 @@ class HumidityServer(object):
 
     @humidity.setter
     def humidity(self, value):
+        error = (
+            0.0 if not self._noise else
+            3.5 if 20 <= value <= 80 else
+            5.0)
         self._write(self._read()._replace(
-            'H_OUT', int(clamp(perturb(value, error), 0, 100) * 256)))
+            H_OUT=int(clamp(perturb(value, error), 0, 100) * 256)))
 
     @property
     def temperature(self):
@@ -346,5 +353,5 @@ class HumidityServer(object):
             1.0 if 0 <= value <= 60 else
             2.0)
         self._write(self._read()._replace(
-            'T_OUT', int(clamp(perturb(value, error), -40, 120) * 64)))
+            T_OUT=int(clamp(perturb(value, error), -40, 120) * 64)))
 

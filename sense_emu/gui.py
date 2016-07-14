@@ -19,6 +19,7 @@ gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Gdk, GdkPixbuf, Gio, GLib, GObject
 
 from .screen import ScreenClient
+from .imu import PressureServer, HumidityServer
 
 
 class EmuApplication(Gtk.Application):
@@ -72,24 +73,27 @@ class EmuWindow(Gtk.ApplicationWindow):
         hbox = Gtk.Box(spacing=6, visible=True)
         self.add(hbox)
 
-        self.image1 = Gtk.Image(visible=True)
-        hbox.pack_start(self.image1, True, True, 0)
-        self.button1 = Gtk.Button(label="_Close", use_underline=True, visible=True)
-        self.button1.connect('clicked', self.close_clicked)
-        hbox.pack_start(self.button1, True, True, 0)
+        self.screen_image = Gtk.Image(visible=True)
+        hbox.pack_start(self.screen_image, True, True, 0)
+        self.quit_button = Gtk.Button(label="_Quit", use_underline=True, visible=True)
+        self.quit_button.connect('clicked', self.close_clicked)
+        hbox.pack_start(self.quit_button, True, True, 0)
 
         self._screen = ScreenClient()
-        self._pixbuf = None
+        self._screen_pb = None
         self._screen_thread = Thread(target=self._update_screen)
         self._screen_thread.daemon = True
         self._screen_thread.start()
+
+        self._pressure = PressureServer()
+        self._humidity = HumidityServer()
 
     def close_clicked(self, button):
         self.app.quit()
 
     def _update_screen(self):
         while True:
-            self._pixbuf = GdkPixbuf.Pixbuf.new_from_bytes(
+            self._screen_pb = GdkPixbuf.Pixbuf.new_from_bytes(
                 GLib.Bytes.new(np.ravel(self._screen.rgb_array)),
                 colorspace=GdkPixbuf.Colorspace.RGB, has_alpha=False,
                 bits_per_sample=8, width=8, height=8, rowstride=8 * 3)
@@ -97,9 +101,9 @@ class EmuWindow(Gtk.ApplicationWindow):
             sleep(0.1)
 
     def _copy_to_image(self):
-        if self._pixbuf:
-            p = self._pixbuf.scale_simple(128, 128, GdkPixbuf.InterpType.NEAREST)
-            self.image1.set_from_pixbuf(p)
+        if self._screen_pb:
+            p = self._screen_pb.scale_simple(128, 128, GdkPixbuf.InterpType.NEAREST)
+            self.screen_image.set_from_pixbuf(p)
         return False
 
 
