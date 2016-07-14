@@ -1,3 +1,5 @@
+# vim: set encoding=utf-8:
+
 from __future__ import (
     unicode_literals,
     absolute_import,
@@ -76,22 +78,46 @@ class EmuWindow(Gtk.ApplicationWindow):
         self.add(hbox)
 
         self.screen_image = Gtk.Image(visible=True)
-        adj = Gtk.Adjustment(lower=0, upper=100, value=self._humidity.humidity)
-        adj.connect('value_changed', self.humidity_changed)
-        humidity_scale = Gtk.Scale(orientation=Gtk.Orientation.VERTICAL, adjustment=adj, visible=True)
-        adj = Gtk.Adjustment(lower=260, upper=1260, value=self._pressure.pressure)
-        adj.connect('value_changed', self.pressure_changed)
-        pressure_scale = Gtk.Scale(orientation=Gtk.Orientation.VERTICAL, adjustment=adj, visible=True)
-        adj = Gtk.Adjustment(lower=-30, upper=105, value=self._humidity.temperature)
+        hbox.pack_start(self.screen_image, True, True, 0)
+
+        vbox = Gtk.Box(spacing=6, orientation=Gtk.Orientation.VERTICAL, visible=True)
+        vbox.pack_start(Gtk.Label(label="Temp (°C)", visible=True), False, False, 0)
+        adj = Gtk.Adjustment(
+            lower=-30, upper=105, value=self._humidity.temperature,
+            step_increment=1, page_increment=10)
         adj.connect('value_changed' ,self.temperature_changed)
-        temperature_scale = Gtk.Scale(orientation=Gtk.Orientation.VERTICAL, adjustment=adj, visible=True)
+        temperature_scale = Gtk.Scale(
+            orientation=Gtk.Orientation.VERTICAL, adjustment=adj,
+            inverted=True, visible=True)
+        vbox.pack_start(temperature_scale, True, True, 0)
+        hbox.pack_start(vbox, True, True, 0)
+
+        vbox = Gtk.Box(spacing=6, orientation=Gtk.Orientation.VERTICAL, visible=True)
+        vbox.pack_start(Gtk.Label(label="Pressure (hPa)", visible=True), False, False, 0)
+        adj = Gtk.Adjustment(
+            lower=260, upper=1260, value=self._pressure.pressure,
+            step_increment=1, page_increment=100)
+        adj.connect('value_changed', self.pressure_changed)
+        pressure_scale = Gtk.Scale(
+            orientation=Gtk.Orientation.VERTICAL, adjustment=adj,
+            inverted=True, visible=True)
+        vbox.pack_start(pressure_scale, True, True, 0)
+        hbox.pack_start(vbox, True, True, 0)
+
+        vbox = Gtk.Box(spacing=6, orientation=Gtk.Orientation.VERTICAL, visible=True)
+        vbox.pack_start(Gtk.Label(label="Humidity (%)", visible=True), False, False, 0)
+        adj = Gtk.Adjustment(
+            lower=0, upper=100, value=self._humidity.humidity,
+            step_increment=1, page_increment=10)
+        adj.connect('value_changed', self.humidity_changed)
+        humidity_scale = Gtk.Scale(
+            orientation=Gtk.Orientation.VERTICAL, adjustment=adj,
+            inverted=True, visible=True)
+        vbox.pack_start(humidity_scale, True, True, 0)
+        hbox.pack_start(vbox, True, True, 0)
+
         quit_button = Gtk.Button(label="_Quit", use_underline=True, visible=True)
         quit_button.connect('clicked', self.close_clicked)
-
-        hbox.pack_start(self.screen_image, True, True, 0)
-        hbox.pack_start(temperature_scale, True, True, 0)
-        hbox.pack_start(pressure_scale, True, True, 0)
-        hbox.pack_start(humidity_scale, True, True, 0)
         hbox.pack_start(quit_button, True, True, 0)
 
         self._screen_pb = None
