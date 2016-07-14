@@ -14,10 +14,14 @@ import mmap
 import errno
 import struct
 import subprocess
-from collections import namedtuple
-from random import random
+from collections import namedtuple, deque
+from random import normalvariate
 from time import time
 from threading import Thread, Lock, Event
+try:
+    from statistics import mean
+except ImportError:
+    from .compat import mean
 
 
 IMU_DATA = struct.Struct(
@@ -60,7 +64,7 @@ PressureData = namedtuple('PressureData',
 
 
 clamp = lambda value, min_value, max_value: min(max_value, max(min_value, value))
-perturb = lambda value, error: value + (random() * 2 - 1) * error
+perturb = lambda value, error: value + normalvariate(0, 0.2) * error
 
 
 def imu_filename():
@@ -277,8 +281,10 @@ class PressureServer(object):
         self._write(PressureData(3, b'LPS25H', 0, 0, 0))
         self._noise_thread = None
         self._noise_event = Event()
-        self._pressure = 1000.0
-        self._temperature = 25.0
+        self._pressure = 1013.0
+        self._pressures = deque(maxlen=32)
+        self._temperature = 20.0
+        self._temperatures = deque(maxlen=16)
         self._noise_write()
         self.simulate_noise = simulate_noise
 
@@ -339,17 +345,21 @@ class PressureServer(object):
             self._noise_write()
 
     def _noise_write(self):
-        p_error = (
-            0.0 if not self.simulate_noise else
-            0.2 if 800 <= self.pressure <= 1100 and 20 <= self.temperature <= 60 else
-            1.0)
-        t_error = (
-            0.0 if not self.simulate_noise else
-            2.0 if 0 <= self.temperature <= 65 else
-            4.0)
+        if self.simulate_noise:
+            self._pressures.append(perturb(self.pressure, (
+                0.2 if 800 <= self.pressure <= 1100 and 20 <= self.temperature <= 60 else
+                1.0)))
+            self._temperatures.append(perturb(self.temperature, (
+                2.0 if 0 <= self.temperature <= 65 else
+                4.0)))
+            pressure = mean(self._pressures)
+            temperature = mean(self._temperatures)
+        else:
+            pressure = self.pressure
+            temperature = self.temperature
         self._write(self._read()._replace(
-            P_OUT=int(clamp(perturb(self.pressure, p_error), 260, 1260) * 4096),
-            T_OUT=int((clamp(perturb(self.temperature, t_error), -30, 105) - 42.5) * 480)))
+            P_OUT=int(clamp(pressure, 260, 1260) * 4096),
+            T_OUT=int((clamp(temperature, -30, 105) - 42.5) * 480)))
 
 
 class HumidityServer(object):
@@ -359,8 +369,10 @@ class HumidityServer(object):
         self._write(HumidityData(2, b'HTS221', 0, 100, 0, 100, 0, 25600, 0, 6400, 0, 0))
         self._noise_thread = None
         self._noise_event = Event()
-        self._humidity = 50.0
-        self._temperature = 25.0
+        self._humidity = 45.0
+        self._humidities = deque(maxlen=32)
+        self._temperature = 20.0
+        self._temperatures = deque(maxlen=16)
         self._noise_write()
         self.simulate_noise = simulate_noise
 
@@ -419,16 +431,20 @@ class HumidityServer(object):
             self._noise_write()
 
     def _noise_write(self):
-        h_error = (
-            0.0 if not self.simulate_noise else
-            3.5 if 20 <= self.humidity <= 80 else
-            5.0)
-        t_error = (
-            0.0 if not self.simulate_noise else
-            0.5 if 15 <= self.temperature <= 40 else
-            1.0 if 0 <= self.temperature <= 60 else
-            2.0)
+        if self.simulate_noise:
+            self._humidities.append(perturb(self.humidity, (
+                3.5 if 20 <= self.humidity <= 80 else
+                5.0)))
+            self._temperatures.append(perturb(self.temperature, (
+                0.5 if 15 <= self.temperature <= 40 else
+                1.0 if 0 <= self.temperature <= 60 else
+                2.0)))
+            humidity = mean(self._humidities)
+            temperature = mean(self._temperatures)
+        else:
+            humidity = self.humidity
+            temperature = self.temperature
         self._write(self._read()._replace(
-            H_OUT=int(clamp(perturb(self.humidity, h_error), 0, 100) * 256),
-            T_OUT=int(clamp(perturb(self.temperature, t_error), -40, 120) * 64)))
+            H_OUT=int(clamp(humidity, 0, 100) * 256),
+            T_OUT=int(clamp(temperature, -40, 120) * 64)))
 

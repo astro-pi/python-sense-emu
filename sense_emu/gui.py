@@ -68,26 +68,49 @@ class EmuWindow(Gtk.ApplicationWindow):
         super(EmuWindow, self).__init__(*args, **kwargs)
 
         self.app = kwargs['application']
-        self.connect('delete-event', self.delete_window)
+        self._pressure = PressureServer()
+        self._humidity = HumidityServer()
+        self._screen = ScreenClient()
 
         hbox = Gtk.Box(spacing=6, visible=True)
         self.add(hbox)
 
         self.screen_image = Gtk.Image(visible=True)
+        adj = Gtk.Adjustment(lower=0, upper=100, value=self._humidity.humidity)
+        adj.connect('value_changed', self.humidity_changed)
+        humidity_scale = Gtk.Scale(orientation=Gtk.Orientation.VERTICAL, adjustment=adj, visible=True)
+        adj = Gtk.Adjustment(lower=260, upper=1260, value=self._pressure.pressure)
+        adj.connect('value_changed', self.pressure_changed)
+        pressure_scale = Gtk.Scale(orientation=Gtk.Orientation.VERTICAL, adjustment=adj, visible=True)
+        adj = Gtk.Adjustment(lower=-30, upper=105, value=self._humidity.temperature)
+        adj.connect('value_changed' ,self.temperature_changed)
+        temperature_scale = Gtk.Scale(orientation=Gtk.Orientation.VERTICAL, adjustment=adj, visible=True)
+        quit_button = Gtk.Button(label="_Quit", use_underline=True, visible=True)
+        quit_button.connect('clicked', self.close_clicked)
+
         hbox.pack_start(self.screen_image, True, True, 0)
-        self.quit_button = Gtk.Button(label="_Quit", use_underline=True, visible=True)
-        self.quit_button.connect('clicked', self.close_clicked)
-        hbox.pack_start(self.quit_button, True, True, 0)
+        hbox.pack_start(temperature_scale, True, True, 0)
+        hbox.pack_start(pressure_scale, True, True, 0)
+        hbox.pack_start(humidity_scale, True, True, 0)
+        hbox.pack_start(quit_button, True, True, 0)
 
-        self._pressure = PressureServer()
-        self._humidity = HumidityServer()
-
-        self._screen = ScreenClient()
         self._screen_pb = None
         self._screen_event = Event()
         self._screen_thread = Thread(target=self._update_screen)
         self._screen_thread.daemon = True
         self._screen_thread.start()
+
+        self.connect('delete-event', self.delete_window)
+
+    def pressure_changed(self, adjustment):
+        self._pressure.pressure = adjustment.props.value
+
+    def humidity_changed(self, adjustment):
+        self._humidity.humidity = adjustment.props.value
+
+    def temperature_changed(self, adjustment):
+        self._pressure.temperature = adjustment.props.value
+        self._humidity.temperature = adjustment.props.value
 
     def delete_window(self, window):
         self._screen_event.set()
