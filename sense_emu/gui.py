@@ -1,4 +1,4 @@
-# vim: set encoding=utf-8:
+# vim: set et sw=4 sts=4 fileencoding=utf-8:
 
 from __future__ import (
     unicode_literals,

@@ -30,6 +30,7 @@ IMU_DATA = struct.Struct(
     '20p' # IMU sensor name
     )
 
+# See HTS221 data-sheet for details of register values
 HUMIDITY_DATA = struct.Struct(
     '<'   # little endian
     'B'   # humidity sensor type
@@ -46,6 +47,7 @@ HUMIDITY_DATA = struct.Struct(
     'h'   # T_OUT
     )
 
+# See LPS25H data-sheet for details of register values
 PRESSURE_DATA = struct.Struct(
     '<'   # little endian
     'B'   # pressure sensor type
@@ -63,14 +65,27 @@ PressureData = namedtuple('PressureData',
     ('type', 'name', 'P_REF', 'P_OUT', 'T_OUT'))
 
 
-clamp = lambda value, min_value, max_value: min(max_value, max(min_value, value))
-perturb = lambda value, error: value + normalvariate(0, 0.2) * error
+def clamp(value, min_value, max_value):
+    """
+    Return *value* clipped to the range *min_value* to *max_value* inclusive.
+    """
+    return min(max_value, max(min_value, value))
+
+
+def perturb(value, error):
+    """
+    Return *value* perturbed by +/- *error* which is derived from a normally
+    distributed random generator.
+    """
+    return value + normalvariate(0, 0.2) * error
 
 
 def imu_filename():
-    # returns the file used to represent the state of the emulated sense HAT's
-    # IMU, pressure and humidity sensors. On UNIX we try /dev/shm then fall
-    # back to /tmp; on Windows we use whatever %TEMP% points at
+    """
+    Return the filename used represent the state of the emulated sense HAT's
+    IMU, pressure and humidity sensors. On UNIX we try ``/dev/shm`` then fall
+    back to ``/tmp``; on Windows we use whatever ``%TEMP%`` contains
+    """
     fname = 'rpi-sense-emu-imu'
     if sys.platform.startswith('win'):
         # just use a temporary file on Windows
@@ -83,6 +98,13 @@ def imu_filename():
 
 
 def init_imu():
+    """
+    Opens the file represeting the state of the IMU, pressure and humidity
+    sensors. The file-like object is returned.
+
+    If the file already exists we simply make sure it is the right size. If
+    the file does not already exist, it is created and zeroed.
+    """
     try:
         # Attempt to open the IMU's device file and ensure it's the right size
         fd = io.open(imu_filename(), 'r+b', buffering=0)
@@ -278,14 +300,21 @@ class PressureServer(object):
     def __init__(self, simulate_noise=True):
         self._fd = init_imu()
         self._map = mmap.mmap(self._fd.fileno(), 0, access=mmap.ACCESS_WRITE)
-        self._write(PressureData(3, b'LPS25H', 0, 0, 0))
+        data = self._read()
+        if data.type != 3:
+            self._write(PressureData(3, b'LPS25H', 0, 0, 0))
+            self._pressure = 1013.0
+            self._temperature = 20.0
+        else:
+            self._pressure = data.P_OUT / 4096
+            self._temperature = data.T_OUT / 480 + 42.5
         self._noise_thread = None
         self._noise_event = Event()
-        self._pressure = 1013.0
-        self._pressures = deque(maxlen=25)
-        self._temperature = 20.0
-        self._temperatures = deque(maxlen=300)
         self._noise_write()
+        # The deque lengths are selected to accurately represent the response
+        # time of the sensors
+        self._pressures = deque(maxlen=25)
+        self._temperatures = deque(maxlen=75)
         self.simulate_noise = simulate_noise
 
     def close(self):
@@ -366,14 +395,21 @@ class HumidityServer(object):
     def __init__(self, simulate_noise=True):
         self._fd = init_imu()
         self._map = mmap.mmap(self._fd.fileno(), 0, access=mmap.ACCESS_WRITE)
-        self._write(HumidityData(2, b'HTS221', 0, 100, 0, 100, 0, 25600, 0, 6400, 0, 0))
+        data = self._read()
+        if data.type != 2:
+            self._write(HumidityData(2, b'HTS221', 0, 100, 0, 100, 0, 25600, 0, 6400, 0, 0))
+            self._humidity = 45.0
+            self._temperature = 20.0
+        else:
+            self._humidity = data.H_OUT / 256
+            self._temperature = data.T_OUT / 64
         self._noise_thread = None
         self._noise_event = Event()
-        self._humidity = 45.0
-        self._humidities = deque(maxlen=77)
-        self._temperature = 20.0
-        self._temperatures = deque(maxlen=116)
         self._noise_write()
+        # The deque lengths are selected to accurately represent the response
+        # time of the sensors
+        self._humidities = deque(maxlen=77)
+        self._temperatures = deque(maxlen=31)
         self.simulate_noise = simulate_noise
 
     def close(self):
