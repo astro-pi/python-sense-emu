@@ -16,11 +16,12 @@ import math
 from time import time
 from threading import Thread, Lock, Event
 
-import numpy as np
-import pkg_resources
 import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Gdk, GdkPixbuf, Gio, GLib, GObject
+from PIL import Image
+import numpy as np
+import pkg_resources
 
 from .screen import ScreenClient
 from .imu import PressureServer, HumidityServer
@@ -94,8 +95,52 @@ class EmuWindow(Gtk.ApplicationWindow):
         self.add(hbox)
 
         # Add the pixel-image
+        vbox = Gtk.Box(spacing=6, orientation=Gtk.Orientation.VERTICAL, visible=True)
+        vbox.pack_start(Gtk.Label(label="Screen", visible=True), False, False, 0)
+        self.screen_alpha = Image.open(pkg_resources.resource_stream(__name__, 'led_alpha.png'))
         self.screen_image = Gtk.Image(visible=True)
-        hbox.pack_start(self.screen_image, True, True, 0)
+        vbox.pack_start(self.screen_image, False, False, 0)
+        logo = Gtk.Image(visible=True)
+        loader = GdkPixbuf.PixbufLoader.new_with_type('png')
+        loader.connect('size-prepared', lambda l, width, height: l.set_size(128, int(128 * (height / width))))
+        loader.write(pkg_resources.resource_string(__name__, 'raspberry_pi_logo.png'))
+        loader.close()
+        logo.set_from_pixbuf(loader.get_pixbuf())
+        vbox.pack_end(logo, False, False, 0)
+        hbox.pack_start(vbox, False, False, 0)
+
+        # Add the joystick grid
+        vbox = Gtk.Box(spacing=6, orientation=Gtk.Orientation.VERTICAL, visible=True)
+        vbox.pack_start(Gtk.Label(label="Joystick", visible=True), False, False, 0)
+        left_button = Gtk.Button(label="←", visible=True)
+        left_button.direction = SenseStick.KEY_LEFT
+        right_button = Gtk.Button(label="→", visible=True)
+        right_button.direction = SenseStick.KEY_RIGHT
+        up_button = Gtk.Button(label="↑", visible=True)
+        up_button.direction = SenseStick.KEY_UP
+        down_button = Gtk.Button(label="↓", visible=True)
+        down_button.direction = SenseStick.KEY_DOWN
+        enter_button = Gtk.Button(label="↵", visible=True)
+        enter_button.direction = SenseStick.KEY_ENTER
+        for button in (
+                left_button,
+                right_button,
+                up_button,
+                down_button,
+                enter_button):
+            button.connect('button-press-event', self.stick_pressed)
+            button.connect('button-release-event', self.stick_released)
+        grid = Gtk.Grid(visible=True)
+        grid.attach(up_button, 1, 0, 1, 1)
+        grid.attach(left_button, 0, 1, 1, 1)
+        grid.attach(enter_button, 1, 1, 1, 1)
+        grid.attach(right_button, 2, 1, 1, 1)
+        grid.attach(down_button, 1, 2, 1, 1)
+        vbox.pack_start(grid, False, False, 0)
+        hbox.pack_start(vbox, False, False, 0)
+
+        # Add a visual separator
+        hbox.pack_start(Gtk.Separator(orientation=Gtk.Orientation.VERTICAL, visible=True), False, False, 0)
 
         # Add the temperature slider
         vbox = Gtk.Box(spacing=6, orientation=Gtk.Orientation.VERTICAL, visible=True)
@@ -135,36 +180,6 @@ class EmuWindow(Gtk.ApplicationWindow):
             inverted=True, visible=True)
         vbox.pack_start(humidity_scale, True, True, 0)
         hbox.pack_start(vbox, True, True, 0)
-
-        # Add the joystick grid
-        vbox = Gtk.Box(spacing=6, orientation=Gtk.Orientation.VERTICAL, visible=True)
-        vbox.pack_start(Gtk.Label(label="Joystick", visible=True), False, False, 0)
-        left_button = Gtk.Button(label="←", visible=True)
-        left_button.direction = SenseStick.KEY_LEFT
-        right_button = Gtk.Button(label="→", visible=True)
-        right_button.direction = SenseStick.KEY_RIGHT
-        up_button = Gtk.Button(label="↑", visible=True)
-        up_button.direction = SenseStick.KEY_UP
-        down_button = Gtk.Button(label="↓", visible=True)
-        down_button.direction = SenseStick.KEY_DOWN
-        enter_button = Gtk.Button(label="↵", visible=True)
-        enter_button.direction = SenseStick.KEY_ENTER
-        for button in (
-                left_button,
-                right_button,
-                up_button,
-                down_button,
-                enter_button):
-            button.connect('button-press-event', self.stick_pressed)
-            button.connect('button-release-event', self.stick_released)
-        grid = Gtk.Grid(visible=True)
-        grid.attach(up_button, 1, 0, 1, 1)
-        grid.attach(left_button, 0, 1, 1, 1)
-        grid.attach(enter_button, 1, 1, 1, 1)
-        grid.attach(right_button, 2, 1, 1, 1)
-        grid.attach(down_button, 1, 2, 1, 1)
-        vbox.pack_start(grid, False, False, 0)
-        hbox.pack_start(vbox, True, False, 0)
 
         quit_button = Gtk.Button(label="_Quit", use_underline=True, visible=True)
         quit_button.connect('clicked', self.close_clicked)
@@ -245,10 +260,13 @@ class EmuWindow(Gtk.ApplicationWindow):
             if not self._screen_pending:
                 ts = self.app.screen.timestamp
                 if ts > self._screen_timestamp:
+                    img = Image.fromarray(self.app.screen.rgb_array, 'RGB')
+                    img = img.resize((128, 128), Image.NEAREST).convert('RGBA')
+                    img.putalpha(self.screen_alpha)
                     self._screen_pb = GdkPixbuf.Pixbuf.new_from_bytes(
-                        GLib.Bytes.new(np.ravel(self.app.screen.rgb_array)),
-                        colorspace=GdkPixbuf.Colorspace.RGB, has_alpha=False,
-                        bits_per_sample=8, width=8, height=8, rowstride=8 * 3)
+                        GLib.Bytes.new(tuple(c for p in img.getdata() for c in p)),
+                        colorspace=GdkPixbuf.Colorspace.RGB, has_alpha=True,
+                        bits_per_sample=8, width=128, height=128, rowstride=128 * 4)
                     self._screen_pending = True
                     self._screen_timestamp = ts
                     GLib.idle_add(self._copy_to_image)
@@ -256,8 +274,7 @@ class EmuWindow(Gtk.ApplicationWindow):
                 break
 
     def _copy_to_image(self):
-        p = self._screen_pb.scale_simple(128, 128, GdkPixbuf.InterpType.NEAREST)
-        self.screen_image.set_from_pixbuf(p)
+        self.screen_image.set_from_pixbuf(self._screen_pb)
         self._screen_pending = False
         return False
 
