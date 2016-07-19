@@ -242,13 +242,14 @@ class EmuWindow(Gtk.ApplicationWindow):
     def _update_screen(self):
         while True:
             if not self._screen_pending:
+                # XXX Only update screen on changes
                 self._screen_pb = GdkPixbuf.Pixbuf.new_from_bytes(
                     GLib.Bytes.new(np.ravel(self.app.screen.rgb_array)),
                     colorspace=GdkPixbuf.Colorspace.RGB, has_alpha=False,
                     bits_per_sample=8, width=8, height=8, rowstride=8 * 3)
                 self._screen_pending = True
                 GLib.idle_add(self._copy_to_image)
-            if self._screen_event.wait(0.01):
+            if self._screen_event.wait(0.04):
                 break
 
     def _copy_to_image(self):
