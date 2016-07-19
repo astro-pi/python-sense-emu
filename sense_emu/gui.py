@@ -57,7 +57,6 @@ class EmuApplication(Gtk.Application):
         self.stick = StickServer()
 
     def do_shutdown(self):
-        Gtk.Application.do_shutdown(self)
         if self.window:
             self.window.destroy()
             self.window = None
@@ -65,6 +64,7 @@ class EmuApplication(Gtk.Application):
         self.screen.close()
         self.humidity.close()
         self.pressure.close()
+        Gtk.Application.do_shutdown(self)
 
     def do_activate(self):
         if not self.window:
