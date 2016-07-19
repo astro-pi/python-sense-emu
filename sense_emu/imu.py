@@ -99,7 +99,7 @@ def imu_filename():
 
 def init_imu():
     """
-    Opens the file represeting the state of the IMU, pressure and humidity
+    Opens the file representing the state of the IMU, pressure and humidity
     sensors. The file-like object is returned.
 
     If the file already exists we simply make sure it is the right size. If
