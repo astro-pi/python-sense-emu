@@ -94,3 +94,7 @@ class ScreenClient(object):
         a = a << 3 | a >> 2
         return a
 
+    @property
+    def timestamp(self):
+        return os.fstat(self._fd.fileno()).st_mtime
+

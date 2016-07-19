@@ -163,8 +163,8 @@ class EmuWindow(Gtk.ApplicationWindow):
         grid.attach(enter_button, 1, 1, 1, 1)
         grid.attach(right_button, 2, 1, 1, 1)
         grid.attach(down_button, 1, 2, 1, 1)
-        vbox.pack_start(grid, True, True, 0)
-        hbox.pack_start(vbox, True, True, 0)
+        vbox.pack_start(grid, False, False, 0)
+        hbox.pack_start(vbox, True, False, 0)
 
         quit_button = Gtk.Button(label="_Quit", use_underline=True, visible=True)
         quit_button.connect('clicked', self.close_clicked)
@@ -174,6 +174,7 @@ class EmuWindow(Gtk.ApplicationWindow):
         # client object
         self._screen_pb = None
         self._screen_pending = False
+        self._screen_timestamp = 0.0
         self._screen_event = Event()
         self._screen_thread = Thread(target=self._update_screen)
         self._screen_thread.daemon = True
@@ -242,21 +243,22 @@ class EmuWindow(Gtk.ApplicationWindow):
     def _update_screen(self):
         while True:
             if not self._screen_pending:
-                # XXX Only update screen on changes
-                self._screen_pb = GdkPixbuf.Pixbuf.new_from_bytes(
-                    GLib.Bytes.new(np.ravel(self.app.screen.rgb_array)),
-                    colorspace=GdkPixbuf.Colorspace.RGB, has_alpha=False,
-                    bits_per_sample=8, width=8, height=8, rowstride=8 * 3)
-                self._screen_pending = True
-                GLib.idle_add(self._copy_to_image)
+                ts = self.app.screen.timestamp
+                if ts > self._screen_timestamp:
+                    self._screen_pb = GdkPixbuf.Pixbuf.new_from_bytes(
+                        GLib.Bytes.new(np.ravel(self.app.screen.rgb_array)),
+                        colorspace=GdkPixbuf.Colorspace.RGB, has_alpha=False,
+                        bits_per_sample=8, width=8, height=8, rowstride=8 * 3)
+                    self._screen_pending = True
+                    self._screen_timestamp = ts
+                    GLib.idle_add(self._copy_to_image)
             if self._screen_event.wait(0.04):
                 break
 
     def _copy_to_image(self):
-        if self._screen_pb:
-            p = self._screen_pb.scale_simple(128, 128, GdkPixbuf.InterpType.NEAREST)
-            self.screen_image.set_from_pixbuf(p)
-            self._screen_pending = False
+        p = self._screen_pb.scale_simple(128, 128, GdkPixbuf.InterpType.NEAREST)
+        self.screen_image.set_from_pixbuf(p)
+        self._screen_pending = False
         return False
 
 
