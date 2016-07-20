@@ -24,7 +24,8 @@ import numpy as np
 import pkg_resources
 
 from .screen import ScreenClient
-from .imu import PressureServer, HumidityServer
+from .pressure import PressureServer
+from .humidity import HumidityServer
 from .stick import StickServer, SenseStick
 
 

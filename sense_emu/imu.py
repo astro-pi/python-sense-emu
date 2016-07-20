@@ -12,10 +12,10 @@ import os
 import io
 import mmap
 import errno
-import struct
 import subprocess
+from struct import Struct
 from collections import namedtuple, deque
-from random import normalvariate
+from random import Random
 from time import time
 from threading import Thread, Lock, Event
 try:
@@ -23,68 +23,24 @@ try:
 except ImportError:
     from .compat import mean
 
+from .common import clamp
 
-IMU_DATA = struct.Struct(
+
+IMU_DATA = Struct(
     '<'   # little endian
     'B'   # IMU sensor type
     '20p' # IMU sensor name
     )
 
-# See HTS221 data-sheet for details of register values
-HUMIDITY_DATA = struct.Struct(
-    '<'   # little endian
-    'B'   # humidity sensor type
-    '6p'  # humidity sensor name
-    'B'   # H0
-    'B'   # H1
-    'H'   # T0
-    'H'   # T1
-    'h'   # H0_OUT
-    'h'   # H1_OUT
-    'h'   # T0_OUT
-    'h'   # T1_OUT
-    'h'   # H_OUT
-    'h'   # T_OUT
-    )
-
-# See LPS25H data-sheet for details of register values
-PRESSURE_DATA = struct.Struct(
-    '<'   # little endian
-    'B'   # pressure sensor type
-    '6p'  # pressure sensor name
-    'l'   # P_REF
-    'l'   # P_OUT
-    'h'   # T_OUT
-    )
-
 IMUData = namedtuple('IMUData',
     ('type', 'name', 'accel', 'gyro', 'compass'))
-HumidityData = namedtuple('HumidityData',
-    ('type', 'name', 'H0', 'H1', 'T0', 'T1', 'H0_OUT', 'H1_OUT', 'T0_OUT', 'T1_OUT', 'H_OUT', 'T_OUT'))
-PressureData = namedtuple('PressureData',
-    ('type', 'name', 'P_REF', 'P_OUT', 'T_OUT'))
-
-
-def clamp(value, min_value, max_value):
-    """
-    Return *value* clipped to the range *min_value* to *max_value* inclusive.
-    """
-    return min(max_value, max(min_value, value))
-
-
-def perturb(value, error):
-    """
-    Return *value* perturbed by +/- *error* which is derived from a normally
-    distributed random generator.
-    """
-    return value + normalvariate(0, 0.2) * error
 
 
 def imu_filename():
     """
     Return the filename used represent the state of the emulated sense HAT's
-    IMU, pressure and humidity sensors. On UNIX we try ``/dev/shm`` then fall
-    back to ``/tmp``; on Windows we use whatever ``%TEMP%`` contains
+    IMU sensors. On UNIX we try ``/dev/shm`` then fall back to ``/tmp``; on
+    Windows we use whatever ``%TEMP%`` contains
     """
     fname = 'rpi-sense-emu-imu'
     if sys.platform.startswith('win'):
@@ -99,8 +55,8 @@ def imu_filename():
 
 def init_imu():
     """
-    Opens the file representing the state of the IMU, pressure and humidity
-    sensors. The file-like object is returned.
+    Opens the file representing the state of the IMU sensors. The file-like
+    object is returned.
 
     If the file already exists we simply make sure it is the right size. If
     the file does not already exist, it is created and zeroed.
@@ -108,379 +64,16 @@ def init_imu():
     try:
         # Attempt to open the IMU's device file and ensure it's the right size
         fd = io.open(imu_filename(), 'r+b', buffering=0)
-        fd.seek(IMU_DATA.size + HUMIDITY_DATA.size + PRESSURE_DATA.size)
+        fd.seek(IMU_DATA.size)
         fd.truncate()
     except IOError as e:
         # If the screen's device file doesn't exist, create it with reasonable
         # initial values
         if e.errno == errno.ENOENT:
             fd = io.open(imu_filename(), 'w+b', buffering=0)
-            fd.write(b'\x00' * (IMU_DATA.size + HUMIDITY_DATA.size + PRESSURE_DATA.size))
+            fd.write(b'\x00' * IMU_DATA.size)
         else:
             raise
     return fd
 
-
-class Settings(object):
-    def __init__(self, path):
-        self.path = path
-
-
-class RTIMU(object):
-    def __init__(self, settings):
-        self._settings = settings
-        self._initialized = False
-        self._imu_init = {}
-        self._imu_data = {
-            'accel':            (0.0, 0.0, 0.0),
-            'accelValid':       False,
-            'compass':          (0.0, 0.0, 0.0),
-            'compassValid':     False,
-            'fusionPose':       (0.0, 0.0, 0.0),
-            'fusionPoseValid':  False,
-            'fusionQPose':      (0.0, 0.0, 0.0, 0.0),
-            'fusionQPoseValid': False,
-            'gyro':             (0.0, 0.0, 0.0),
-            'gyroValid':        False,
-            'humidity':         float('nan'),
-            'humidityValid':    False,
-            'pressure':         float('nan'),
-            'pressureValid':    False,
-            'temperature':      float('nan'),
-            'temperatureValid': False,
-            'timestamp':        0,
-            }
-
-    def IMUInit(self):
-        # XXX set up mmap, read IMU type and name; return True if they're
-        # filled in
-        return bool(self._imu_init)
-
-    def IMUGetPollInterval(self):
-        return self._imu_init['poll'] # 3 in real unit
-
-    def IMUGetGyroBiasValid(self):
-        raise NotImplementedError
-
-    def IMURead(self):
-        if self._initialized:
-            # XXX copy mmap data to internal struct
-            return True
-        else:
-            return False
-
-    def IMUType(self):
-        return self._imu_init['type'] # 6 in real unit
-
-    def IMUName(self):
-        return self._imu_init['name'] # "LSM9DS1" in real unit
-
-    def getAccel(self):
-        return self._imu_data['accel']
-
-    def getAccelCalibrationValid(self):
-        raise NotImplementedError
-
-    def getAccelResiduals(self):
-        raise NotImplementedError
-
-    def getCompass(self):
-        return self._imu_data['compass']
-
-    def getCompassCalibrationEllipsoidValid(self):
-        raise NotImplementedError
-
-    def getCompassCalibrationValid(self):
-        raise NotImplementedError
-
-    def getFusionData(self):
-        return self._imu_data['fusionPose']
-
-    def getGyro(self):
-        return self._imu_data['gyro']
-
-    def getIMUData(self):
-        return self._imu_data
-
-    def getMeasuredPose(self):
-        raise NotImplementedError
-
-    def getMeasuredQPose(self):
-        raise NotImplementedError
-
-
-class RTPressure(object):
-    def __init__(self, settings):
-        self.settings = settings
-        self._fd = init_imu()
-        self._map = mmap.mmap(self._fd.fileno(), 0, access=mmap.ACCESS_READ)
-        self._last_read = 0.0
-        self._last_data = None
-        self._p_ref = None
-
-    def _read(self):
-        now = time()
-        if now - self._last_read > 0.04:
-            self._last_read = now
-            self._last_data = PressureData(*PRESSURE_DATA.unpack_from(self._map,
-                IMU_DATA.size + HUMIDITY_DATA.size))
-        return self._last_data
-
-    def pressureInit(self):
-        d = self._read()
-        self._p_ref = d.P_REF
-        return d.type != 0
-
-    def pressureRead(self):
-        if self._p_ref is None:
-            return (0, 0.0, 0, 0.0)
-        else:
-            d = self._read()
-            return (
-                1, d.P_OUT / 4096,
-                1, d.T_OUT / 480 + 42.5,
-                )
-
-    def pressureType(self):
-        return self._read().type
-
-    def pressureName(self):
-        return self._read().name.decode('ascii')
-
-
-class RTHumidity(object):
-    def __init__(self, settings):
-        self.settings = settings
-        self._fd = init_imu()
-        self._map = mmap.mmap(self._fd.fileno(), 0, access=mmap.ACCESS_READ)
-        self._last_read = 0.0
-        self._last_data = None
-        self._humidity_m = None
-        self._humidity_c = None
-        self._temp_m = None
-        self._temp_c = None
-
-    def _read(self):
-        now = time()
-        if now - self._last_read > 0.13:
-            self._last_read = now
-            self._last_data = HumidityData(
-                *HUMIDITY_DATA.unpack_from(self._map, IMU_DATA.size))
-        return self._last_data
-
-    def humidityInit(self):
-        d = self._read()
-        try:
-            self._humidity_m = (d.H1 - d.H0) / (d.H1_OUT - d.H0_OUT)
-            self._humidity_c = d.H0 - self._humidity_m * d.H0_OUT
-            self._temp_m = (d.T1 - d.T0) / (d.T1_OUT - d.T0_OUT)
-            self._temp_c = d.T0 - self._temp_m * d.T0_OUT
-            return True
-        except ZeroDivisionError:
-            return False
-
-    def humidityRead(self):
-        if self._temp_m is None:
-            return (0, 0.0, 0, 0.0)
-        else:
-            d = self._read()
-            return (
-                1, d.H_OUT * self._humidity_m + self._humidity_c,
-                1, d.T_OUT * self._temp_m + self._temp_c,
-                )
-
-    def humidityType(self):
-        return self._read().type
-
-    def humidityName(self):
-        return self._read().name.decode('ascii')
-
-
-class PressureServer(object):
-    def __init__(self, simulate_noise=True):
-        self._fd = init_imu()
-        self._map = mmap.mmap(self._fd.fileno(), 0, access=mmap.ACCESS_WRITE)
-        data = self._read()
-        if data.type != 3:
-            self._write(PressureData(3, b'LPS25H', 0, 0, 0))
-            self._pressure = 1013.0
-            self._temperature = 20.0
-        else:
-            self._pressure = data.P_OUT / 4096
-            self._temperature = data.T_OUT / 480 + 42.5
-        self._noise_thread = None
-        self._noise_event = Event()
-        self._noise_write()
-        # The deque lengths are selected to accurately represent the response
-        # time of the sensors
-        self._pressures = deque(maxlen=25)
-        self._temperatures = deque(maxlen=75)
-        self.simulate_noise = simulate_noise
-
-    def close(self):
-        if self._fd:
-            self.simulate_noise = False
-            self._map.close()
-            self._fd.close()
-            self._fd = None
-            self._map = None
-
-    def _read(self):
-        return PressureData(*PRESSURE_DATA.unpack_from(self._map,
-            IMU_DATA.size + HUMIDITY_DATA.size))
-
-    def _write(self, value):
-        PRESSURE_DATA.pack_into(
-            self._map, IMU_DATA.size + HUMIDITY_DATA.size, *value)
-
-    @property
-    def pressure(self):
-        return self._pressure
-
-    @pressure.setter
-    def pressure(self, value):
-        self._pressure = value
-        if not self._noise_thread:
-            self._noise_write()
-
-    @property
-    def temperature(self):
-        return self._temperature
-
-    @temperature.setter
-    def temperature(self, value):
-        self._temperature = value
-        if not self._noise_thread:
-            self._noise_write()
-
-    @property
-    def simulate_noise(self):
-        return self._noise_thread is not None
-
-    @simulate_noise.setter
-    def simulate_noise(self, value):
-        if value and not self._noise_thread:
-            self._noise_event.clear()
-            self._noise_thread = Thread(target=self._noise_loop)
-            self._noise_thread.daemon = True
-            self._noise_thread.start()
-        elif self._noise_thread and not value:
-            self._noise_event.set()
-            self._noise_thread.join()
-            self._noise_thread = None
-
-    def _noise_loop(self):
-        while not self._noise_event.wait(0.04):
-            self._noise_write()
-
-    def _noise_write(self):
-        if self.simulate_noise:
-            self._pressures.append(perturb(self.pressure, (
-                0.2 if 800 <= self.pressure <= 1100 and 20 <= self.temperature <= 60 else
-                1.0)))
-            self._temperatures.append(perturb(self.temperature, (
-                2.0 if 0 <= self.temperature <= 65 else
-                4.0)))
-            pressure = mean(self._pressures)
-            temperature = mean(self._temperatures)
-        else:
-            pressure = self.pressure
-            temperature = self.temperature
-        self._write(self._read()._replace(
-            P_OUT=int(clamp(pressure, 260, 1260) * 4096),
-            T_OUT=int((clamp(temperature, -30, 105) - 42.5) * 480)))
-
-
-class HumidityServer(object):
-    def __init__(self, simulate_noise=True):
-        self._fd = init_imu()
-        self._map = mmap.mmap(self._fd.fileno(), 0, access=mmap.ACCESS_WRITE)
-        data = self._read()
-        if data.type != 2:
-            self._write(HumidityData(2, b'HTS221', 0, 100, 0, 100, 0, 25600, 0, 6400, 0, 0))
-            self._humidity = 45.0
-            self._temperature = 20.0
-        else:
-            self._humidity = data.H_OUT / 256
-            self._temperature = data.T_OUT / 64
-        self._noise_thread = None
-        self._noise_event = Event()
-        self._noise_write()
-        # The deque lengths are selected to accurately represent the response
-        # time of the sensors
-        self._humidities = deque(maxlen=77)
-        self._temperatures = deque(maxlen=31)
-        self.simulate_noise = simulate_noise
-
-    def close(self):
-        if self._fd:
-            self.simulate_noise = False
-            self._map.close()
-            self._fd.close()
-            self._fd = None
-            self._map = None
-
-    def _read(self):
-        return HumidityData(*HUMIDITY_DATA.unpack_from(self._map, IMU_DATA.size))
-
-    def _write(self, value):
-        HUMIDITY_DATA.pack_into(self._map, IMU_DATA.size, *value)
-
-    @property
-    def humidity(self):
-        return self._humidity
-
-    @humidity.setter
-    def humidity(self, value):
-        self._humidity = value
-        if not self._noise_thread:
-            self._noise_write()
-
-    @property
-    def temperature(self):
-        return self._temperature
-
-    @temperature.setter
-    def temperature(self, value):
-        self._temperature = value
-        if not self._noise_thread:
-            self._noise_write()
-
-    @property
-    def simulate_noise(self):
-        return self._noise_thread is not None
-
-    @simulate_noise.setter
-    def simulate_noise(self, value):
-        if value and not self._noise_thread:
-            self._noise_event.clear()
-            self._noise_thread = Thread(target=self._noise_loop)
-            self._noise_thread.daemon = True
-            self._noise_thread.start()
-        elif self._noise_thread and not value:
-            self._noise_event.set()
-            self._noise_thread.join()
-            self._noise_thread = None
-
-    def _noise_loop(self):
-        while not self._noise_event.wait(0.13):
-            self._noise_write()
-
-    def _noise_write(self):
-        if self.simulate_noise:
-            self._humidities.append(perturb(self.humidity, (
-                3.5 if 20 <= self.humidity <= 80 else
-                5.0)))
-            self._temperatures.append(perturb(self.temperature, (
-                0.5 if 15 <= self.temperature <= 40 else
-                1.0 if 0 <= self.temperature <= 60 else
-                2.0)))
-            humidity = mean(self._humidities)
-            temperature = mean(self._temperatures)
-        else:
-            humidity = self.humidity
-            temperature = self.temperature
-        self._write(self._read()._replace(
-            H_OUT=int(clamp(humidity, 0, 100) * 256),
-            T_OUT=int(clamp(temperature, -40, 120) * 64)))
 

@@ -24,7 +24,7 @@ from PIL import Image  # pillow
 from copy import deepcopy
 
 
-import sense_emu.imu as RTIMU
+from . import RTIMU
 from .stick import SenseStick
 from .screen import init_screen, GAMMA_DEFAULT, GAMMA_LOW
 

@@ -1,0 +1,190 @@
+from __future__ import (
+    unicode_literals,
+    absolute_import,
+    print_function,
+    division,
+    )
+nstr = str
+str = type('')
+
+
+import mmap
+
+from .pressure import init_pressure, PRESSURE_DATA, PressureData
+from .humidity import init_humidity, HUMIDITY_DATA, HumidityData
+from .imu import init_imu, IMU_DATA, IMUData
+
+
+class Settings(object):
+    def __init__(self, path):
+        self.path = path
+
+
+class RTIMU(object):
+    def __init__(self, settings):
+        self._settings = settings
+        self._initialized = False
+        self._imu_init = {}
+        self._imu_data = {
+            'accel':            (0.0, 0.0, 0.0),
+            'accelValid':       False,
+            'compass':          (0.0, 0.0, 0.0),
+            'compassValid':     False,
+            'fusionPose':       (0.0, 0.0, 0.0),
+            'fusionPoseValid':  False,
+            'fusionQPose':      (0.0, 0.0, 0.0, 0.0),
+            'fusionQPoseValid': False,
+            'gyro':             (0.0, 0.0, 0.0),
+            'gyroValid':        False,
+            'humidity':         float('nan'),
+            'humidityValid':    False,
+            'pressure':         float('nan'),
+            'pressureValid':    False,
+            'temperature':      float('nan'),
+            'temperatureValid': False,
+            'timestamp':        0,
+            }
+
+    def IMUInit(self):
+        # XXX set up mmap, read IMU type and name; return True if they're
+        # filled in
+        return bool(self._imu_init)
+
+    def IMUGetPollInterval(self):
+        return self._imu_init['poll'] # 3 in real unit
+
+    def IMUGetGyroBiasValid(self):
+        raise NotImplementedError
+
+    def IMURead(self):
+        if self._initialized:
+            # XXX copy mmap data to internal struct
+            return True
+        else:
+            return False
+
+    def IMUType(self):
+        return self._imu_init['type'] # 6 in real unit
+
+    def IMUName(self):
+        return self._imu_init['name'] # "LSM9DS1" in real unit
+
+    def getAccel(self):
+        return self._imu_data['accel']
+
+    def getAccelCalibrationValid(self):
+        raise NotImplementedError
+
+    def getAccelResiduals(self):
+        raise NotImplementedError
+
+    def getCompass(self):
+        return self._imu_data['compass']
+
+    def getCompassCalibrationEllipsoidValid(self):
+        raise NotImplementedError
+
+    def getCompassCalibrationValid(self):
+        raise NotImplementedError
+
+    def getFusionData(self):
+        return self._imu_data['fusionPose']
+
+    def getGyro(self):
+        return self._imu_data['gyro']
+
+    def getIMUData(self):
+        return self._imu_data
+
+    def getMeasuredPose(self):
+        raise NotImplementedError
+
+    def getMeasuredQPose(self):
+        raise NotImplementedError
+
+
+class RTPressure(object):
+    def __init__(self, settings):
+        self.settings = settings
+        self._fd = init_pressure()
+        self._map = mmap.mmap(self._fd.fileno(), 0, access=mmap.ACCESS_READ)
+        self._last_read = 0.0
+        self._last_data = None
+        self._p_ref = None
+
+    def _read(self):
+        now = time()
+        if now - self._last_read > 0.04:
+            self._last_read = now
+            self._last_data = PressureData(*PRESSURE_DATA.unpack_from(self._map))
+        return self._last_data
+
+    def pressureInit(self):
+        d = self._read()
+        self._p_ref = d.P_REF
+        return d.type != 0
+
+    def pressureRead(self):
+        if self._p_ref is None:
+            return (0, 0.0, 0, 0.0)
+        else:
+            d = self._read()
+            return (
+                1, d.P_OUT / 4096,
+                1, d.T_OUT / 480 + 42.5,
+                )
+
+    def pressureType(self):
+        return self._read().type
+
+    def pressureName(self):
+        return self._read().name.decode('ascii')
+
+
+class RTHumidity(object):
+    def __init__(self, settings):
+        self.settings = settings
+        self._fd = init_humidity()
+        self._map = mmap.mmap(self._fd.fileno(), 0, access=mmap.ACCESS_READ)
+        self._last_read = 0.0
+        self._last_data = None
+        self._humidity_m = None
+        self._humidity_c = None
+        self._temp_m = None
+        self._temp_c = None
+
+    def _read(self):
+        now = time()
+        if now - self._last_read > 0.13:
+            self._last_read = now
+            self._last_data = HumidityData(*HUMIDITY_DATA.unpack_from(self._map))
+        return self._last_data
+
+    def humidityInit(self):
+        d = self._read()
+        try:
+            self._humidity_m = (d.H1 - d.H0) / (d.H1_OUT - d.H0_OUT)
+            self._humidity_c = d.H0 - self._humidity_m * d.H0_OUT
+            self._temp_m = (d.T1 - d.T0) / (d.T1_OUT - d.T0_OUT)
+            self._temp_c = d.T0 - self._temp_m * d.T0_OUT
+            return True
+        except ZeroDivisionError:
+            return False
+
+    def humidityRead(self):
+        if self._temp_m is None:
+            return (0, 0.0, 0, 0.0)
+        else:
+            d = self._read()
+            return (
+                1, d.H_OUT * self._humidity_m + self._humidity_c,
+                1, d.T_OUT * self._temp_m + self._temp_c,
+                )
+
+    def humidityType(self):
+        return self._read().type
+
+    def humidityName(self):
+        return self._read().name.decode('ascii')
+
+
