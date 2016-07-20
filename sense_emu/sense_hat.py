@@ -522,7 +522,7 @@ class SenseHat(object):
 
     @property
     def low_light(self):
-        return self.gamma == GAMMA_LOW
+        return self.gamma == tuple(GAMMA_LOW)
 
     @low_light.setter
     def low_light(self, value):

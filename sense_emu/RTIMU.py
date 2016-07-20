@@ -9,6 +9,7 @@ str = type('')
 
 
 import mmap
+from time import time
 
 from .pressure import init_pressure, PRESSURE_DATA, PressureData
 from .humidity import init_humidity, HUMIDITY_DATA, HumidityData
