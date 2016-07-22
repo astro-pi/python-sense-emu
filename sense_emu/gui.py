@@ -92,22 +92,25 @@ class EmuWindow(Gtk.ApplicationWindow):
         super(EmuWindow, self).__init__(*args, **kwargs)
         self.app = kwargs['application']
 
+        # Load graphics assets
+        loader = GdkPixbuf.PixbufLoader.new_with_type('png')
+        loader.write(pkg_resources.resource_string(__name__, 'sense_emu.png'))
+        loader.close()
+        self.sense_image = loader.get_pixbuf()
+        loader = GdkPixbuf.PixbufLoader.new_with_type('png')
+        loader.write(pkg_resources.resource_string(__name__, 'pixel_grid.png'))
+        loader.close()
+        self.pixel_grid = loader.get_pixbuf()
+
+        # Base component is a horizontally oriented box
         hbox = Gtk.Box(spacing=6, visible=True)
         self.add(hbox)
 
-        # Add the pixel-image
+        # Add the Sense HAT image (we handle drawing it later)
         vbox = Gtk.Box(spacing=6, orientation=Gtk.Orientation.VERTICAL, visible=True)
         vbox.pack_start(Gtk.Label(label="Screen", visible=True), False, False, 0)
-        self.screen_alpha = Image.open(pkg_resources.resource_stream(__name__, 'led_alpha.png'))
         self.screen_image = Gtk.Image(visible=True)
         vbox.pack_start(self.screen_image, False, False, 0)
-        logo = Gtk.Image(visible=True)
-        loader = GdkPixbuf.PixbufLoader.new_with_type('png')
-        loader.connect('size-prepared', lambda l, width, height: l.set_size(128, int(128 * (height / width))))
-        loader.write(pkg_resources.resource_string(__name__, 'raspberry_pi_logo.png'))
-        loader.close()
-        logo.set_from_pixbuf(loader.get_pixbuf())
-        vbox.pack_end(logo, False, False, 0)
         hbox.pack_start(vbox, False, False, 0)
 
         # Add the joystick grid
@@ -261,21 +264,24 @@ class EmuWindow(Gtk.ApplicationWindow):
             if not self._screen_pending:
                 ts = self.app.screen.timestamp
                 if ts > self._screen_timestamp:
-                    img = Image.fromarray(self.app.screen.rgb_array, 'RGB')
-                    img = img.resize((128, 128), Image.NEAREST).convert('RGBA')
-                    img.putalpha(self.screen_alpha)
-                    self._screen_pb = GdkPixbuf.Pixbuf.new_from_bytes(
-                        GLib.Bytes.new(tuple(c for p in img.getdata() for c in p)),
-                        colorspace=GdkPixbuf.Colorspace.RGB, has_alpha=True,
-                        bits_per_sample=8, width=128, height=128, rowstride=128 * 4)
+                    img = self.sense_image.copy()
+                    pixels = GdkPixbuf.Pixbuf.new_from_bytes(
+                        GLib.Bytes.new(self.app.screen.rgb_array.tostring()),
+                        colorspace=GdkPixbuf.Colorspace.RGB, has_alpha=False,
+                        bits_per_sample=8, width=8, height=8, rowstride=8 * 3)
+                    pixels.composite(img, 31, 38, 128, 128, 31, 38, 16, 16,
+                        GdkPixbuf.InterpType.NEAREST, 255)
+                    self.pixel_grid.composite(img, 31, 38, 128, 128, 31, 38, 1, 1,
+                        GdkPixbuf.InterpType.NEAREST, 255)
                     self._screen_pending = True
                     self._screen_timestamp = ts
-                    GLib.idle_add(self._copy_to_image)
+                    GLib.idle_add(self._copy_to_image, img)
             if self._screen_event.wait(0.04):
                 break
 
-    def _copy_to_image(self):
-        self.screen_image.set_from_pixbuf(self._screen_pb)
+    def _copy_to_image(self, pb):
+        #self.screen_image.set_from_pixbuf(pb.scale_simple(128, 128, GdkPixbuf.InterpType.NEAREST))
+        self.screen_image.set_from_pixbuf(pb)
         self._screen_pending = False
         return False
 
