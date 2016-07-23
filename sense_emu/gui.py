@@ -19,7 +19,6 @@ from threading import Thread, Lock, Event
 import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Gdk, GdkPixbuf, Gio, GLib, GObject
-from PIL import Image
 import numpy as np
 import pkg_resources
 
@@ -49,7 +48,8 @@ class EmuApplication(Gtk.Application):
         action.connect('activate', self.on_quit)
         self.add_action(action)
 
-        builder = Gtk.Builder.new_from_string(pkg_resources.resource_string(__name__, 'app_menu.xml').decode('utf-8'), -1)
+        builder = Gtk.Builder.new_from_string(
+            pkg_resources.resource_string(__name__, 'app_menu.xml').decode('utf-8'), -1)
         self.set_app_menu(builder.get_object('app-menu'))
 
         # Construct the emulator servers
@@ -60,7 +60,7 @@ class EmuApplication(Gtk.Application):
 
     def do_shutdown(self):
         if self.window:
-            self.window.destroy()
+            self.window.close()
             self.window = None
         self.stick.close()
         self.screen.close()
@@ -70,7 +70,7 @@ class EmuApplication(Gtk.Application):
 
     def do_activate(self):
         if not self.window:
-            self.window = EmuWindow(application=self, title='Sense HAT Emulator')
+            self.window = EmuWindow(application=self)
         self.window.present()
 
     def do_command_line(self, command_line):
@@ -87,10 +87,31 @@ class EmuApplication(Gtk.Application):
         self.quit()
 
 
-class EmuWindow(Gtk.ApplicationWindow):
-    def __init__(self, *args, **kwargs):
-        super(EmuWindow, self).__init__(*args, **kwargs)
-        self.app = kwargs['application']
+class EmuWindow(object):
+    def __init__(self, application):
+        super(EmuWindow, self).__init__()
+
+        # Load the GUI definitions and connect the handlers
+        builder = Gtk.Builder.new_from_string(
+            pkg_resources.resource_string(__name__, 'sense_emu_gui.glade').decode('utf-8'), -1)
+        builder.connect_signals(self)
+        for name in (
+            'window',
+            'humidity',
+            'pressure',
+            'temperature',
+            'left_button',
+            'right_button',
+            'up_button',
+            'down_button',
+            'enter_button',
+            'screen_image',
+            ):
+            setattr(self, name, builder.get_object(name))
+        self.application = application
+        self.humidity.props.value = self.application.humidity.humidity
+        self.pressure.props.value = self.application.pressure.pressure
+        self.temperature.props.value = self.application.humidity.temperature
 
         # Load graphics assets
         loader = GdkPixbuf.PixbufLoader.new_with_type('png')
@@ -102,96 +123,16 @@ class EmuWindow(Gtk.ApplicationWindow):
         loader.close()
         self.pixel_grid = loader.get_pixbuf()
 
-        # Base component is a horizontally oriented box
-        hbox = Gtk.Box(spacing=6, visible=True)
-        self.add(hbox)
-
-        # Add the Sense HAT image (we handle drawing it later)
-        vbox = Gtk.Box(spacing=6, orientation=Gtk.Orientation.VERTICAL, visible=True)
-        vbox.pack_start(Gtk.Label(label="Screen", visible=True), False, False, 0)
-        self.screen_image = Gtk.Image(visible=True)
-        vbox.pack_start(self.screen_image, False, False, 0)
-        hbox.pack_start(vbox, False, False, 0)
-
-        # Add the joystick grid
-        vbox = Gtk.Box(spacing=6, orientation=Gtk.Orientation.VERTICAL, visible=True)
-        vbox.pack_start(Gtk.Label(label="Joystick", visible=True), False, False, 0)
-        left_button = Gtk.Button(label="←", visible=True)
-        left_button.direction = SenseStick.KEY_LEFT
-        right_button = Gtk.Button(label="→", visible=True)
-        right_button.direction = SenseStick.KEY_RIGHT
-        up_button = Gtk.Button(label="↑", visible=True)
-        up_button.direction = SenseStick.KEY_UP
-        down_button = Gtk.Button(label="↓", visible=True)
-        down_button.direction = SenseStick.KEY_DOWN
-        enter_button = Gtk.Button(label="↵", visible=True)
-        enter_button.direction = SenseStick.KEY_ENTER
-        for button in (
-                left_button,
-                right_button,
-                up_button,
-                down_button,
-                enter_button):
-            button.connect('button-press-event', self.stick_pressed)
-            button.connect('button-release-event', self.stick_released)
-        grid = Gtk.Grid(visible=True)
-        grid.attach(up_button, 1, 0, 1, 1)
-        grid.attach(left_button, 0, 1, 1, 1)
-        grid.attach(enter_button, 1, 1, 1, 1)
-        grid.attach(right_button, 2, 1, 1, 1)
-        grid.attach(down_button, 1, 2, 1, 1)
-        vbox.pack_start(grid, False, False, 0)
-        hbox.pack_start(vbox, False, False, 0)
-
-        # Add a visual separator
-        hbox.pack_start(Gtk.Separator(orientation=Gtk.Orientation.VERTICAL, visible=True), False, False, 0)
-
-        # Add the temperature slider
-        vbox = Gtk.Box(spacing=6, orientation=Gtk.Orientation.VERTICAL, visible=True)
-        vbox.pack_start(Gtk.Label(label="Temp (°C)", visible=True), False, False, 0)
-        adj = Gtk.Adjustment(
-            lower=-30, upper=105, value=self.app.humidity.temperature,
-            step_increment=1, page_increment=10)
-        adj.connect('value_changed' ,self.temperature_changed)
-        temperature_scale = Gtk.Scale(
-            orientation=Gtk.Orientation.VERTICAL, adjustment=adj,
-            inverted=True, visible=True)
-        vbox.pack_start(temperature_scale, True, True, 0)
-        hbox.pack_start(vbox, True, True, 0)
-
-        # Add the pressure slider
-        vbox = Gtk.Box(spacing=6, orientation=Gtk.Orientation.VERTICAL, visible=True)
-        vbox.pack_start(Gtk.Label(label="Pressure (hPa)", visible=True), False, False, 0)
-        adj = Gtk.Adjustment(
-            lower=260, upper=1260, value=self.app.pressure.pressure,
-            step_increment=1, page_increment=100)
-        adj.connect('value_changed', self.pressure_changed)
-        pressure_scale = Gtk.Scale(
-            orientation=Gtk.Orientation.VERTICAL, adjustment=adj,
-            inverted=True, visible=True)
-        vbox.pack_start(pressure_scale, True, True, 0)
-        hbox.pack_start(vbox, True, True, 0)
-
-        # Add the humidity slider
-        vbox = Gtk.Box(spacing=6, orientation=Gtk.Orientation.VERTICAL, visible=True)
-        vbox.pack_start(Gtk.Label(label="Humidity (%)", visible=True), False, False, 0)
-        adj = Gtk.Adjustment(
-            lower=0, upper=100, value=self.app.humidity.humidity,
-            step_increment=1, page_increment=10)
-        adj.connect('value_changed', self.humidity_changed)
-        humidity_scale = Gtk.Scale(
-            orientation=Gtk.Orientation.VERTICAL, adjustment=adj,
-            inverted=True, visible=True)
-        vbox.pack_start(humidity_scale, True, True, 0)
-        hbox.pack_start(vbox, True, True, 0)
-
-        quit_button = Gtk.Button(label="_Quit", use_underline=True, visible=True)
-        quit_button.connect('clicked', self.close_clicked)
-        hbox.pack_start(quit_button, True, True, 0)
+        # Set up attributes for the joystick buttons
+        self._stick_held_id = 0
+        self.left_button.direction = SenseStick.KEY_LEFT
+        self.right_button.direction = SenseStick.KEY_RIGHT
+        self.up_button.direction = SenseStick.KEY_UP
+        self.down_button.direction = SenseStick.KEY_DOWN
+        self.enter_button.direction = SenseStick.KEY_ENTER
 
         # Set up a thread to constantly refresh the pixels from the screen
         # client object
-        self._screen_pb = None
         self._screen_pending = False
         self._screen_timestamp = 0.0
         self._screen_event = Event()
@@ -199,11 +140,20 @@ class EmuWindow(Gtk.ApplicationWindow):
         self._screen_thread.daemon = True
         self._screen_thread.start()
 
-        # Instance variable to contain the ID of the repeater used for stick
-        # held events
-        self._stick_held_id = 0
+        self.window.show_all()
 
-    def do_destroy(self):
+    @property
+    def application(self):
+        return self.window.props.application
+
+    @application.setter
+    def application(self, value):
+        self.window.props.application = value
+
+    def present(self):
+        self.window.present()
+
+    def close(self):
         try:
             self._screen_event.set()
             self._screen_thread.join()
@@ -211,20 +161,17 @@ class EmuWindow(Gtk.ApplicationWindow):
             # do_destroy gets called multiple times, and subsequent times lacks
             # the Python-added instance attributes
             pass
-        Gtk.ApplicationWindow.do_destroy(self)
-
-    def close_clicked(self, button):
-        self.app.quit()
+        self.window.destroy()
 
     def pressure_changed(self, adjustment):
-        self.app.pressure.pressure = adjustment.props.value
+        self.application.pressure.pressure = adjustment.props.value
 
     def humidity_changed(self, adjustment):
-        self.app.humidity.humidity = adjustment.props.value
+        self.application.humidity.humidity = adjustment.props.value
 
     def temperature_changed(self, adjustment):
-        self.app.pressure.temperature = adjustment.props.value
-        self.app.humidity.temperature = adjustment.props.value
+        self.application.pressure.temperature = adjustment.props.value
+        self.application.humidity.temperature = adjustment.props.value
 
     def stick_pressed(self, button, event):
         # XXX This shouldn't be necessary, but GTK seems to fire stick_pressed
@@ -257,16 +204,16 @@ class EmuWindow(Gtk.ApplicationWindow):
         tv_usec *= 1000000
         event_rec = struct.pack(SenseStick.EVENT_FORMAT,
             int(tv_sec), int(tv_usec), SenseStick.EV_KEY, direction, action)
-        self.app.stick.send(event_rec)
+        self.application.stick.send(event_rec)
 
     def _update_screen(self):
         while True:
             if not self._screen_pending:
-                ts = self.app.screen.timestamp
+                ts = self.application.screen.timestamp
                 if ts > self._screen_timestamp:
                     img = self.sense_image.copy()
                     pixels = GdkPixbuf.Pixbuf.new_from_bytes(
-                        GLib.Bytes.new(self.app.screen.rgb_array.tostring()),
+                        GLib.Bytes.new(self.application.screen.rgb_array.tostring()),
                         colorspace=GdkPixbuf.Colorspace.RGB, has_alpha=False,
                         bits_per_sample=8, width=8, height=8, rowstride=8 * 3)
                     pixels.composite(img, 31, 38, 128, 128, 31, 38, 16, 16,
@@ -279,9 +226,8 @@ class EmuWindow(Gtk.ApplicationWindow):
             if self._screen_event.wait(0.04):
                 break
 
-    def _copy_to_image(self, pb):
-        #self.screen_image.set_from_pixbuf(pb.scale_simple(128, 128, GdkPixbuf.InterpType.NEAREST))
-        self.screen_image.set_from_pixbuf(pb)
+    def _copy_to_image(self, pixbuf):
+        self.screen_image.set_from_pixbuf(pixbuf)
         self._screen_pending = False
         return False
 
