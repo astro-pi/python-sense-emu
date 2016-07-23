@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Generated with glade 3.18.3 -->
 <interface>
-  <requires lib="gtk+" version="3.12"/>
+  <requires lib="gtk+" version="3.0"/>
   <object class="GtkAdjustment" id="humidity">
     <property name="upper">100</property>
     <property name="value">50</property>
@@ -9,18 +9,59 @@
     <property name="page_increment">10</property>
     <signal name="value-changed" handler="humidity_changed" swapped="no"/>
   </object>
+  <object class="GtkAdjustment" id="pitch">
+    <property name="lower">-180</property>
+    <property name="upper">180</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">15</property>
+  </object>
+  <object class="GtkAdjustment" id="pressure">
+    <property name="lower">260</property>
+    <property name="upper">1260</property>
+    <property name="value">1000</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">100</property>
+    <signal name="value-changed" handler="pressure_changed" swapped="no"/>
+  </object>
+  <object class="GtkAdjustment" id="roll">
+    <property name="lower">-180</property>
+    <property name="upper">180</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">15</property>
+  </object>
+  <object class="GtkAdjustment" id="temperature">
+    <property name="lower">-30</property>
+    <property name="upper">105</property>
+    <property name="value">25</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">10</property>
+    <signal name="value-changed" handler="temperature_changed" swapped="no"/>
+  </object>
+  <object class="GtkAdjustment" id="yaw">
+    <property name="lower">-180</property>
+    <property name="upper">180</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">15</property>
+  </object>
   <object class="GtkApplicationWindow" id="window">
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">Sense HAT Emulator</property>
     <child>
-      <object class="GtkBox" id="root_box">
+      <object class="GtkGrid" id="root_grid">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
+        <property name="margin_left">6</property>
+        <property name="margin_right">6</property>
+        <property name="margin_top">6</property>
+        <property name="margin_bottom">6</property>
+        <property name="row_spacing">6</property>
+        <property name="column_spacing">6</property>
         <child>
           <object class="GtkBox" id="screen_box">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="orientation">vertical</property>
+            <property name="spacing">6</property>
             <child>
               <object class="GtkLabel" id="screen_label">
                 <property name="visible">True</property>
@@ -50,16 +91,152 @@
             </child>
           </object>
           <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="position">0</property>
+            <property name="left_attach">0</property>
+            <property name="top_attach">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkBox" id="environ_box">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="hexpand">True</property>
+            <property name="spacing">8</property>
+            <child>
+              <object class="GtkBox" id="temperature_box">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="orientation">vertical</property>
+                <property name="spacing">6</property>
+                <child>
+                  <object class="GtkLabel" id="temperature_label">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">Temperature (°C)</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkScale" id="temperature_scale">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="orientation">vertical</property>
+                    <property name="adjustment">temperature</property>
+                    <property name="inverted">True</property>
+                    <property name="round_digits">1</property>
+                    <property name="value_pos">bottom</property>
+                  </object>
+                  <packing>
+                    <property name="expand">True</property>
+                    <property name="fill">True</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkBox" id="pressure_box">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="orientation">vertical</property>
+                <property name="spacing">5</property>
+                <child>
+                  <object class="GtkLabel" id="pressure_label">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">Pressure (hPa)</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkScale" id="pressure_scale">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="orientation">vertical</property>
+                    <property name="adjustment">pressure</property>
+                    <property name="inverted">True</property>
+                    <property name="round_digits">1</property>
+                    <property name="value_pos">bottom</property>
+                  </object>
+                  <packing>
+                    <property name="expand">True</property>
+                    <property name="fill">True</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkBox" id="humidity_box">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="orientation">vertical</property>
+                <property name="spacing">6</property>
+                <child>
+                  <object class="GtkLabel" id="humidity_label">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">Humidity (%)</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkScale" id="humidity_scale">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="orientation">vertical</property>
+                    <property name="adjustment">humidity</property>
+                    <property name="inverted">True</property>
+                    <property name="round_digits">1</property>
+                    <property name="value_pos">bottom</property>
+                  </object>
+                  <packing>
+                    <property name="expand">True</property>
+                    <property name="fill">True</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">2</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="left_attach">1</property>
+            <property name="top_attach">0</property>
           </packing>
         </child>
         <child>
           <object class="GtkBox" id="joystick_box">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
+            <property name="vexpand">True</property>
             <property name="orientation">vertical</property>
+            <property name="spacing">6</property>
             <child>
               <object class="GtkLabel" id="joystick_label">
                 <property name="visible">True</property>
@@ -76,9 +253,15 @@
               <object class="GtkGrid" id="joystick_grid">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="halign">center</property>
+                <property name="valign">center</property>
+                <property name="row_spacing">6</property>
+                <property name="column_spacing">6</property>
                 <child>
                   <object class="GtkButton" id="up_button">
                     <property name="label" translatable="yes">↑</property>
+                    <property name="width_request">64</property>
+                    <property name="height_request">64</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
@@ -93,6 +276,8 @@
                 <child>
                   <object class="GtkButton" id="left_button">
                     <property name="label" translatable="yes">←</property>
+                    <property name="width_request">64</property>
+                    <property name="height_request">64</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
@@ -121,6 +306,8 @@
                 <child>
                   <object class="GtkButton" id="right_button">
                     <property name="label" translatable="yes">→</property>
+                    <property name="width_request">64</property>
+                    <property name="height_request">64</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
@@ -135,6 +322,8 @@
                 <child>
                   <object class="GtkButton" id="down_button">
                     <property name="label" translatable="yes">↓</property>
+                    <property name="width_request">64</property>
+                    <property name="height_request">64</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
@@ -160,58 +349,6 @@
                 </child>
               </object>
               <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="position">1</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkSeparator" id="separator3">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="orientation">vertical</property>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="position">2</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkBox" id="temperature_box">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="orientation">vertical</property>
-            <child>
-              <object class="GtkLabel" id="temperature_label">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="label" translatable="yes">Temperature (°C)</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkScale" id="temperature_scale">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="orientation">vertical</property>
-                <property name="adjustment">temperature</property>
-                <property name="inverted">True</property>
-                <property name="round_digits">1</property>
-                <property name="value_pos">bottom</property>
-              </object>
-              <packing>
                 <property name="expand">True</property>
                 <property name="fill">True</property>
                 <property name="position">1</property>
@@ -219,108 +356,100 @@
             </child>
           </object>
           <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="position">3</property>
+            <property name="left_attach">1</property>
+            <property name="top_attach">1</property>
           </packing>
         </child>
         <child>
-          <object class="GtkBox" id="pressure_box">
+          <object class="GtkGrid" id="gyro_grid">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="orientation">vertical</property>
+            <property name="hexpand">True</property>
+            <property name="vexpand">True</property>
+            <property name="row_spacing">6</property>
+            <property name="column_spacing">6</property>
             <child>
-              <object class="GtkLabel" id="pressure_label">
+              <object class="GtkLabel" id="pitch_label">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="label" translatable="yes">Pressure (hPa)</property>
+                <property name="vexpand">True</property>
+                <property name="label" translatable="yes">Pitch</property>
               </object>
               <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">0</property>
+                <property name="left_attach">0</property>
+                <property name="top_attach">0</property>
               </packing>
             </child>
             <child>
-              <object class="GtkScale" id="pressure_scale">
+              <object class="GtkLabel" id="roll_label">
                 <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="orientation">vertical</property>
-                <property name="adjustment">pressure</property>
-                <property name="inverted">True</property>
-                <property name="round_digits">1</property>
-                <property name="value_pos">bottom</property>
+                <property name="can_focus">False</property>
+                <property name="vexpand">True</property>
+                <property name="label" translatable="yes">Roll</property>
               </object>
               <packing>
-                <property name="expand">True</property>
-                <property name="fill">True</property>
-                <property name="position">1</property>
+                <property name="left_attach">0</property>
+                <property name="top_attach">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="yaw_label">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="vexpand">True</property>
+                <property name="label" translatable="yes">Yaw</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkScale" id="pitch_scale">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="hexpand">True</property>
+                <property name="adjustment">pitch</property>
+                <property name="round_digits">1</property>
+              </object>
+              <packing>
+                <property name="left_attach">1</property>
+                <property name="top_attach">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkScale" id="roll_scale">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="hexpand">True</property>
+                <property name="adjustment">roll</property>
+                <property name="round_digits">1</property>
+              </object>
+              <packing>
+                <property name="left_attach">1</property>
+                <property name="top_attach">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkScale" id="yaw_scale">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="hexpand">True</property>
+                <property name="adjustment">yaw</property>
+                <property name="round_digits">1</property>
+              </object>
+              <packing>
+                <property name="left_attach">1</property>
+                <property name="top_attach">2</property>
               </packing>
             </child>
           </object>
           <packing>
-            <property name="expand">True</property>
-            <property name="fill">True</property>
-            <property name="position">4</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkBox" id="humidity_box">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="orientation">vertical</property>
-            <child>
-              <object class="GtkLabel" id="humidity_label">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="label" translatable="yes">Humidity (%)</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkScale" id="humidity_scale">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="orientation">vertical</property>
-                <property name="adjustment">humidity</property>
-                <property name="inverted">True</property>
-                <property name="round_digits">1</property>
-                <property name="value_pos">bottom</property>
-              </object>
-              <packing>
-                <property name="expand">True</property>
-                <property name="fill">True</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">True</property>
-            <property name="fill">True</property>
-            <property name="position">5</property>
+            <property name="left_attach">0</property>
+            <property name="top_attach">1</property>
           </packing>
         </child>
       </object>
     </child>
-  </object>
-  <object class="GtkAdjustment" id="pressure">
-    <property name="lower">260</property>
-    <property name="upper">1260</property>
-    <property name="value">1000</property>
-    <property name="step_increment">1</property>
-    <property name="page_increment">100</property>
-    <signal name="value-changed" handler="pressure_changed" swapped="no"/>
-  </object>
-  <object class="GtkAdjustment" id="temperature">
-    <property name="lower">-30</property>
-    <property name="upper">105</property>
-    <property name="value">25</property>
-    <property name="step_increment">1</property>
-    <property name="page_increment">10</property>
-    <signal name="value-changed" handler="temperature_changed" swapped="no"/>
   </object>
 </interface>

@@ -161,6 +161,7 @@ class PressureServer(object):
             self._noise_event.set()
             self._noise_thread.join()
             self._noise_thread = None
+            self._noise_write()
 
     def _noise_loop(self):
         while not self._noise_event.wait(0.04):
