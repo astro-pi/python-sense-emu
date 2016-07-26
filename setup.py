@@ -23,11 +23,11 @@ try:
 except ImportError:
     pass
 
-__project__      = 'sense_emu'
+__project__      = 'sense-emu'
 __version__      = '0.1'
-__author__       = 'Dave Jones'
-__author_email__ = 'dave@waveform.org.uk'
-__url__          = 'http://sense_emu.readthedocs.io/'
+__author__       = 'Raspberry Pi Foundation'
+__author_email__ = 'info@raspberrypi.org'
+__url__          = 'http://sense-emu.readthedocs.io/'
 __platforms__    = 'ALL'
 
 __classifiers__ = [

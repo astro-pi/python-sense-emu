@@ -1,0 +1,50 @@
+Source: sensehat-emulator
+Maintainer: Dave Jones <dave@waveform.org.uk>
+Homepage: http://sense-emu.readthedocs.io/
+Section: python
+Priority: extra
+Build-Depends: debhelper (>= 8), python-all (>= 2.7), python-setuptools, python3-all, python3-setuptools, python-sphinx (>= 1.0.7+dfsg-1~)
+Standards-Version: 3.9.6
+X-Python-Version: >= 2.7
+X-Python3-Version: >= 3.2
+
+Package: python-sense-emu
+Architecture: all
+Section: python
+Depends: ${misc:Depends}, ${python:Depends}, python-numpy, python-pil, python-gi
+Suggests: python-spidev, python-gpiozero-docs
+Description: Emulates the Raspberry Pi Sense HAT.
+ sense-emu is an emulator of the Raspberry Pi Sense HAT which runs on multiple
+ platforms, and provides an emulation of each sensor on the HAT, along with the
+ pixel display and the joystick. The API is exactly the same as the official
+ API, meaning code developed against the emulator should require no more than
+ a one word change to run on the actual HAT.
+ .
+ This is the Python 2 version of the package.
+
+Package: python3-sense-emu
+Architecture: all
+Section: python
+Depends: ${misc:Depends}, ${python3:Depends}, python3-numpy, python3-pil, python3-gi
+Suggests: python3-spidev, python-gpiozero-docs
+Description: Emulates the Raspberry Pi Sense HAT.
+ sense-emu is an emulator of the Raspberry Pi Sense HAT which runs on multiple
+ platforms, and provides an emulation of each sensor on the HAT, along with the
+ pixel display and the joystick. The API is exactly the same as the official
+ API, meaning code developed against the emulator should require no more than
+ a one word change to run on the actual HAT.
+ .
+ This is the Python 3 version of the package.
+
+Package: python-sense-emu-doc
+Architecture: all
+Section: doc
+Depends: ${sphinxdoc:Depends}, ${misc:Depends}
+Description: Documentation for the Raspberry Pi Sense HAT emulator.
+ sense-emu is an emulator of the Raspberry Pi Sense HAT which runs on multiple
+ platforms, and provides an emulation of each sensor on the HAT, along with the
+ pixel display and the joystick. The API is exactly the same as the official
+ API, meaning code developed against the emulator should require no more than
+ a one word change to run on the actual HAT.
+ .
+ This is the version independent documentation for the package.

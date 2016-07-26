@@ -1,0 +1,10 @@
+Document: python-sense-emu
+Title: Sense HAT Emulator Reference
+Author: Raspberry Pi Foundation <info@raspberrypi.org>
+Abstract: Documentation for the Raspberry Pi Sense HAT Emulator
+Section: Programming/Python
+
+Format: HTML
+Index: /usr/share/doc/python-sense-emu-doc/html/index.html
+Files: /usr/share/doc/python-sense-emu-doc/html/*
+
