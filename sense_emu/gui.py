@@ -1,4 +1,9 @@
 # vim: set et sw=4 sts=4 fileencoding=utf-8:
+#
+# Raspberry Pi Sense HAT Emulator library for the Raspberry Pi
+# Copyright (c) 2016 Raspberry Pi Foundation <info@raspberrypi.org>
+#
+# All Rights Reserved.
 
 from __future__ import (
     unicode_literals,
@@ -23,6 +28,7 @@ import numpy as np
 import pkg_resources
 
 from .screen import ScreenClient
+from .imu import IMUServer, Vector
 from .pressure import PressureServer
 from .humidity import HumidityServer
 from .stick import StickServer, SenseStick
@@ -53,6 +59,7 @@ class EmuApplication(Gtk.Application):
         self.set_app_menu(builder.get_object('app-menu'))
 
         # Construct the emulator servers
+        self.imu = IMUServer()
         self.pressure = PressureServer()
         self.humidity = HumidityServer()
         self.screen = ScreenClient()
@@ -106,6 +113,9 @@ class EmuWindow(object):
             'down_button',
             'enter_button',
             'screen_image',
+            'yaw',
+            'pitch',
+            'roll',
             ):
             setattr(self, name, builder.get_object(name))
         self.application = application
@@ -172,6 +182,13 @@ class EmuWindow(object):
     def temperature_changed(self, adjustment):
         self.application.pressure.temperature = adjustment.props.value
         self.application.humidity.temperature = adjustment.props.value
+
+    def orientation_changed(self, adjustment):
+        self.application.imu.set_orientation(Vector(
+            self.yaw.props.value,
+            self.pitch.props.value,
+            self.roll.props.value,
+            ))
 
     def stick_pressed(self, button, event):
         # XXX This shouldn't be necessary, but GTK seems to fire stick_pressed

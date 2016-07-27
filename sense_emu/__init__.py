@@ -1,3 +1,12 @@
+#!/usr/bin/env python3
+
+# vim: set et sw=4 sts=4 fileencoding=utf-8:
+#
+# Raspberry Pi Sense HAT Emulator library for the Raspberry Pi
+# Copyright (c) 2016 Raspberry Pi Foundation <info@raspberrypi.org>
+#
+# All Rights Reserved.
+
 from __future__ import (
     unicode_literals,
     absolute_import,
