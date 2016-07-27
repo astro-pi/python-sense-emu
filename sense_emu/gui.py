@@ -27,11 +27,19 @@ from gi.repository import Gtk, Gdk, GdkPixbuf, Gio, GLib, GObject
 import numpy as np
 import pkg_resources
 
+from .vector import Vector
 from .screen import ScreenClient
-from .imu import IMUServer, Vector
+from .imu import IMUServer
 from .pressure import PressureServer
 from .humidity import HumidityServer
 from .stick import StickServer, SenseStick
+
+
+def load_png(filename):
+    loader = GdkPixbuf.PixbufLoader.new_with_type('png')
+    loader.write(pkg_resources.resource_string(__name__, filename))
+    loader.close()
+    return loader.get_pixbuf()
 
 
 class EmuApplication(Gtk.Application):
@@ -73,6 +81,7 @@ class EmuApplication(Gtk.Application):
         self.screen.close()
         self.humidity.close()
         self.pressure.close()
+        self.imu.close()
         Gtk.Application.do_shutdown(self)
 
     def do_activate(self):
@@ -116,22 +125,25 @@ class EmuWindow(object):
             'yaw',
             'pitch',
             'roll',
+            'yaw_image',
+            'pitch_image',
+            'roll_image',
             ):
             setattr(self, name, builder.get_object(name))
         self.application = application
+        self.pitch.props.value = self.application.imu.orientation.x
+        self.roll.props.value = self.application.imu.orientation.y
+        self.yaw.props.value = self.application.imu.orientation.z
         self.humidity.props.value = self.application.humidity.humidity
         self.pressure.props.value = self.application.pressure.pressure
         self.temperature.props.value = self.application.humidity.temperature
 
         # Load graphics assets
-        loader = GdkPixbuf.PixbufLoader.new_with_type('png')
-        loader.write(pkg_resources.resource_string(__name__, 'sense_emu.png'))
-        loader.close()
-        self.sense_image = loader.get_pixbuf()
-        loader = GdkPixbuf.PixbufLoader.new_with_type('png')
-        loader.write(pkg_resources.resource_string(__name__, 'pixel_grid.png'))
-        loader.close()
-        self.pixel_grid = loader.get_pixbuf()
+        self.sense_image = load_png('sense_emu.png')
+        self.pixel_grid = load_png('pixel_grid.png')
+        self.yaw_image.set_from_pixbuf(load_png('yaw.png'))
+        self.pitch_image.set_from_pixbuf(load_png('pitch.png'))
+        self.roll_image.set_from_pixbuf(load_png('roll.png'))
 
         # Set up attributes for the joystick buttons
         self._stick_held_id = 0
@@ -185,9 +197,9 @@ class EmuWindow(object):
 
     def orientation_changed(self, adjustment):
         self.application.imu.set_orientation(Vector(
-            self.yaw.props.value,
             self.pitch.props.value,
             self.roll.props.value,
+            self.yaw.props.value,
             ))
 
     def stick_pressed(self, button, event):

@@ -14,6 +14,7 @@
     <property name="upper">180</property>
     <property name="step_increment">1</property>
     <property name="page_increment">15</property>
+    <signal name="value-changed" handler="orientation_changed" swapped="no"/>
   </object>
   <object class="GtkAdjustment" id="pressure">
     <property name="lower">260</property>
@@ -28,6 +29,7 @@
     <property name="upper">180</property>
     <property name="step_increment">1</property>
     <property name="page_increment">15</property>
+    <signal name="value-changed" handler="orientation_changed" swapped="no"/>
   </object>
   <object class="GtkAdjustment" id="temperature">
     <property name="lower">-30</property>
@@ -42,6 +44,7 @@
     <property name="upper">180</property>
     <property name="step_increment">1</property>
     <property name="page_increment">15</property>
+    <signal name="value-changed" handler="orientation_changed" swapped="no"/>
   </object>
   <object class="GtkApplicationWindow" id="window">
     <property name="can_focus">False</property>
@@ -373,19 +376,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="vexpand">True</property>
-                <property name="label" translatable="yes">Pitch</property>
-              </object>
-              <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkLabel" id="roll_label">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="vexpand">True</property>
-                <property name="label" translatable="yes">Roll</property>
+                <property name="label" translatable="yes">Pitch (°)</property>
               </object>
               <packing>
                 <property name="left_attach">0</property>
@@ -393,15 +384,27 @@
               </packing>
             </child>
             <child>
-              <object class="GtkLabel" id="yaw_label">
+              <object class="GtkLabel" id="roll_label">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="vexpand">True</property>
-                <property name="label" translatable="yes">Yaw</property>
+                <property name="label" translatable="yes">Roll (°)</property>
               </object>
               <packing>
                 <property name="left_attach">0</property>
                 <property name="top_attach">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="yaw_label">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="vexpand">True</property>
+                <property name="label" translatable="yes">Yaw (°)</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">0</property>
               </packing>
             </child>
             <child>
@@ -411,10 +414,11 @@
                 <property name="hexpand">True</property>
                 <property name="adjustment">pitch</property>
                 <property name="round_digits">1</property>
+                <property name="value_pos">right</property>
               </object>
               <packing>
                 <property name="left_attach">1</property>
-                <property name="top_attach">0</property>
+                <property name="top_attach">1</property>
               </packing>
             </child>
             <child>
@@ -424,10 +428,11 @@
                 <property name="hexpand">True</property>
                 <property name="adjustment">roll</property>
                 <property name="round_digits">1</property>
+                <property name="value_pos">right</property>
               </object>
               <packing>
                 <property name="left_attach">1</property>
-                <property name="top_attach">1</property>
+                <property name="top_attach">2</property>
               </packing>
             </child>
             <child>
@@ -437,9 +442,43 @@
                 <property name="hexpand">True</property>
                 <property name="adjustment">yaw</property>
                 <property name="round_digits">1</property>
+                <property name="value_pos">right</property>
               </object>
               <packing>
                 <property name="left_attach">1</property>
+                <property name="top_attach">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkImage" id="yaw_image">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="stock">gtk-missing-image</property>
+              </object>
+              <packing>
+                <property name="left_attach">2</property>
+                <property name="top_attach">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkImage" id="pitch_image">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="stock">gtk-missing-image</property>
+              </object>
+              <packing>
+                <property name="left_attach">2</property>
+                <property name="top_attach">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkImage" id="roll_image">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="stock">gtk-missing-image</property>
+              </object>
+              <packing>
+                <property name="left_attach">2</property>
                 <property name="top_attach">2</property>
               </packing>
             </child>
