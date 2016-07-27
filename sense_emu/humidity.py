@@ -34,7 +34,7 @@ from .common import clamp
 
 # See HTS221 data-sheet for details of register values
 HUMIDITY_DATA = Struct(
-    '<'   # little endian
+    '@'   # native mode
     'B'   # humidity sensor type
     '6p'  # humidity sensor name
     'B'   # H0

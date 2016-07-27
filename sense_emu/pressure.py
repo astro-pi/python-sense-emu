@@ -34,7 +34,7 @@ from .common import clamp
 
 # See LPS25H data-sheet for details of register values
 PRESSURE_DATA = Struct(
-    '<'   # little endian
+    '@'   # native mode
     'B'   # pressure sensor type
     '6p'  # pressure sensor name
     'l'   # P_REF

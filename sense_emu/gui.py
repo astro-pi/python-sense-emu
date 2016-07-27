@@ -27,7 +27,7 @@ from gi.repository import Gtk, Gdk, GdkPixbuf, Gio, GLib, GObject
 import numpy as np
 import pkg_resources
 
-from .vector import Vector
+from .vector import Vector, O
 from .screen import ScreenClient
 from .imu import IMUServer
 from .pressure import PressureServer
@@ -113,6 +113,9 @@ class EmuWindow(object):
         builder.connect_signals(self)
         for name in (
             'window',
+            'humidity_scale',
+            'pressure_scale',
+            'temperature_scale',
             'humidity',
             'pressure',
             'temperature',
@@ -125,12 +128,23 @@ class EmuWindow(object):
             'yaw',
             'pitch',
             'roll',
+            'yaw_scale',
+            'pitch_scale',
+            'roll_scale',
             'yaw_image',
             'pitch_image',
             'roll_image',
             ):
             setattr(self, name, builder.get_object(name))
         self.application = application
+        # XXX Fixed points on environment scales?
+        #self.humidity_scale.add_mark(50, Gtk.PositionType.LEFT, None)
+        #self.temperature_scale.add_mark(0, Gtk.PositionType.LEFT, None)
+        #self.temperature_scale.add_mark(100, Gtk.PositionType.LEFT, None)
+        #self.pressure_scale.add_mark(1000, Gtk.PositionType.LEFT, None)
+        self.pitch_scale.add_mark(0, Gtk.PositionType.BOTTOM, None)
+        self.roll_scale.add_mark(0, Gtk.PositionType.BOTTOM, None)
+        self.yaw_scale.add_mark(0, Gtk.PositionType.BOTTOM, None)
         self.pitch.props.value = self.application.imu.orientation.x
         self.roll.props.value = self.application.imu.orientation.y
         self.yaw.props.value = self.application.imu.orientation.z
@@ -196,11 +210,13 @@ class EmuWindow(object):
         self.application.humidity.temperature = adjustment.props.value
 
     def orientation_changed(self, adjustment):
-        self.application.imu.set_orientation(Vector(
-            self.pitch.props.value,
-            self.roll.props.value,
-            self.yaw.props.value,
-            ))
+        self.application.imu.set_orientation(
+            Vector(
+                self.pitch.props.value,
+                self.roll.props.value,
+                self.yaw.props.value,
+                ), O)
+
 
     def stick_pressed(self, button, event):
         # XXX This shouldn't be necessary, but GTK seems to fire stick_pressed

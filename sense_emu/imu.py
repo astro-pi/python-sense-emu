@@ -18,28 +18,28 @@ import sys
 import os
 import io
 import mmap
+import time
 import errno
 import subprocess
 from struct import Struct
 from collections import namedtuple
-from random import Random
-from time import time
-from threading import Thread, Lock, Event
+from threading import Thread, Event
 
 from .common import clamp
-from .vector import Vector
+from .vector import Vector, X, Y, Z, O
 
 
 IMU_DATA = Struct(
-    '<'   # little endian
+    '@'   # native mode
     'B'   # IMU sensor type
     '20p' # IMU sensor name
+    'Q'   # timestamp
     'hhh' # OUT_X_G, OUT_Y_G, OUT_Z_G
     'hhh' # OUT_X_XL, OUT_Y_XL, OUT_Z_XL
     'hhh' # OUT_X_M, OUT_Y_M, OUT_Z_M
     )
 
-IMUData = namedtuple('IMUData', ('type', 'name', 'accel', 'gyro', 'compass'))
+IMUData = namedtuple('IMUData', ('type', 'name', 'timestamp', 'accel', 'gyro', 'compass'))
 
 
 def imu_filename():
@@ -83,78 +83,90 @@ def init_imu():
     return fd
 
 
+# Find the best available time-source for the timestamp() function. The best
+# source will preferably be monotonic, and high-resolution
+try:
+    clock = time.monotonic # 3.3+ (only guaranteed in 3.5+)
+except AttributeError:
+    try:
+        clock = time.perf_counter # 3.3+
+    except AttributeError:
+        clock = time.clock # fallback for 2.7
+def timestamp():
+    """
+    Returns a timestamp as an integer number of microseconds after some
+    arbitrary basis (only comparisons of consecutive calls are meaningful).
+    """
+    return int(clock() * 1000000)
+
+
 class IMUServer(object):
-    def __init__(self, simulate_noise=True):
-        self._random = Random()
+    def __init__(self, simulate_world=True):
         self._fd = init_imu()
         self._map = mmap.mmap(self._fd.fileno(), 0, access=mmap.ACCESS_WRITE)
         data = self._read()
+        self._gravity = Vector(0, 0, 1)
+        self._north = Vector(0, 1, 0)
         if data.type != 6:
-            self._write(IMUData(
-                6, b'LSM9DS1', Vector(0, 0, 0), Vector(0, 0, 0), Vector(0, 0, 0)))
-            self._accel = Vector(0.0, 0.0, 0.0)
-            self._gyro = Vector(0.0, 0.0, 0.0)
-            self._compass = Vector(0.0, 0.0, 0.0)
-            self._orientation = Vector(0.0, 0.0, 0.0)
+            self._write(IMUData(6, b'LSM9DS1', O, O, O))
+            self._accel = O
+            self._gyro = O
+            self._compass = O
+            self._orientation = O
+            self._position = O
         else:
-            self._accel = data.accel / 1000
-            self._gyro = data.gyro / 1000
-            self._compass = data.compass / 1000
-            self._orientation = Vector(0.0, 0.0, 0.0) # XXX calc orientation from accel and gravity
-        self._noise_thread = None
-        self._noise_event = Event()
-        self._noise_write()
-        self.simulate_noise = simulate_noise
+            self._accel = data.accel / 4081.6327
+            self._gyro = data.gyro / 57.142857
+            self._compass = data.compass / 7142.8571
+            self._orientation = O # XXX calc orientation from accel and gravity
+            self._position = O # XXX calc position from compass and north
+        self._world_thread = None
+        self._world_event = Event()
+        self._world_write()
+        self.simulate_world = simulate_world
 
     def close(self):
         if self._fd:
-            self.simulate_noise = False
+            self.simulate_world = False
             self._map.close()
             self._fd.close()
             self._fd = None
             self._map = None
 
-    def _perturb(self, value, error):
-        """
-        Return *value* perturbed by +/- *error* which is derived from a
-        gaussian random generator.
-        """
-        # We use an internal Random() instance here to avoid a threading issue
-        # with the gaussian generator (could use locks, but an instance of
-        # Random is easier and faster)
-        return Vector(
-            value.x + self._random.gauss(0, 0.2) * error,
-            value.y + self._random.gauss(0, 0.2) * error,
-            value.z + self._random.gauss(0, 0.2) * error,
-            )
-
     def _read(self):
-        type, name, ax, ay, az, gx, gy, gz, cx, cy, cz = IMU_DATA.unpack_from(self._map)
+        (
+            type, name, timestamp,
+            ax, ay, az,
+            gx, gy, gz,
+            cx, cy, cz
+            ) = IMU_DATA.unpack_from(self._map)
         return IMUData(
-            type, name, Vector(ax, ay, az), Vector(gx, gy, gz), Vector(cx, cy, cz))
+            type, name, timestamp,
+            Vector(ax, ay, az),
+            Vector(gx, gy, gz),
+            Vector(cx, cy, cz)
+            )
 
     def _write(self, value):
         value = (
-            value.type, value.name,
+            value.type, value.name, timestamp(),
             value.accel.x, value.accel.y, value.accel.z,
             value.gyro.x, value.gyro.y, value.gyro.z,
             value.compass.x, value.compass.y, value.compass.z,
             )
         IMU_DATA.pack_into(self._map, 0, *value)
 
-    def set_orientation(self, value):
-        self._orientation = value
-        # XXX Calculate accel, gyro, and compass from vector
-        if not self._noise_thread:
-            self._noise_write()
+    def set_orientation(self, orientation, position):
+        assert self.simulate_world
+        self._orientation = orientation
+        self._position = position
 
     def set_imu_values(self, accel, gyro, compass):
+        assert not self.simulate_world
         self._accel = accel
         self._gyro = gyro
         self._compass = compass
-        # XXX Calculate orientation from changes
-        if not self._noise_thread:
-            self._noise_write()
+        self._world_write()
 
     @property
     def accel(self):
@@ -173,50 +185,66 @@ class IMUServer(object):
         return self._orientation
 
     @property
-    def simulate_noise(self):
-        return self._noise_thread is not None
+    def position(self):
+        return self._position
 
-    @simulate_noise.setter
-    def simulate_noise(self, value):
-        if value and not self._noise_thread:
-            self._noise_event.clear()
-            self._noise_thread = Thread(target=self._noise_loop)
-            self._noise_thread.daemon = True
-            self._noise_thread.start()
-        elif self._noise_thread and not value:
-            self._noise_event.set()
-            self._noise_thread.join()
-            self._noise_thread = None
-            self._noise_write()
+    @property
+    def simulate_world(self):
+        return self._world_thread is not None
 
-    def _noise_loop(self):
-        while not self._noise_event.wait(0.016):
-            self._noise_write()
+    @simulate_world.setter
+    def simulate_world(self, value):
+        if value and not self._world_thread:
+            self._world_event.clear()
+            self._world_thread = Thread(target=self._world_loop)
+            self._world_thread.daemon = True
+            self._world_thread.start()
+        elif self._world_thread and not value:
+            self._world_event.set()
+            self._world_thread.join()
+            self._world_thread = None
+            self._world_write()
 
-    def _noise_write(self):
-        if self.simulate_noise:
-            accel = self._perturb(self.accel, 0.244 / 1000)
-            gyro = self._perturb(self.gyro, 17.50 / 1000)
-            compass = self._perturb(self.compass, 0.14 / 1000)
-        else:
-            accel = self.accel
-            gyro = self.gyro
-            compass = self.compass
+    def _world_loop(self):
+        while True:
+            old_position = self._position
+            old_orientation = self._orientation
+            if self._world_event.wait(0.016):
+                break
+            self._gyro = self._orientation - old_orientation
+            xp = X.rotate(self._orientation.z, about=Z)
+            yp = Y.rotate(self._orientation.z, about=Z)
+            zp = Z
+            xpp = xp
+            ypp = yp.rotate(self._orientation.x, about=xp)
+            zpp = zp.rotate(self._orientation.x, about=xp)
+            xf = xpp.rotate(self._orientation.y, about=ypp)
+            yf = ypp
+            zf = zpp.rotate(self._orientation.y, about=zpp)
+            self._accel = Vector(
+                xf.dot(self._gravity),
+                yf.dot(self._gravity),
+                zf.dot(self._gravity),
+                )
+            # XXX Simulate acceleration from position
+            self._world_write()
+
+    def _world_write(self):
         self._write(self._read()._replace(
             accel=Vector(
-                int(clamp(accel.x, -8, 8) * 1000),
-                int(clamp(accel.y, -8, 8) * 1000),
-                int(clamp(accel.z, -8, 8) * 1000),
+                int(clamp(self.accel.x, -8, 8) * 4081.6327),
+                int(clamp(self.accel.y, -8, 8) * 4081.6327),
+                int(clamp(self.accel.z, -8, 8) * 4081.6327),
                 ),
             gyro=Vector(
-                int(clamp(gyro.x, -500, 500) * 1000),
-                int(clamp(gyro.y, -500, 500) * 1000),
-                int(clamp(gyro.z, -500, 500) * 1000),
+                int(clamp(self.gyro.x, -500, 500) * 57.142857),
+                int(clamp(self.gyro.y, -500, 500) * 57.142857),
+                int(clamp(self.gyro.z, -500, 500) * 57.142857),
                 ),
             compass=Vector(
-                int(clamp(compass.x, -4, 4) * 1000),
-                int(clamp(compass.y, -4, 4) * 1000),
-                int(clamp(compass.z, -4, 4) * 1000),
+                int(clamp(self.compass.x, -4, 4) * 7142.8571),
+                int(clamp(self.compass.y, -4, 4) * 7142.8571),
+                int(clamp(self.compass.z, -4, 4) * 7142.8571),
                 )
             ))
 

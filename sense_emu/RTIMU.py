@@ -18,6 +18,7 @@ str = type('')
 import mmap
 from time import time
 
+from .vector import Vector
 from .pressure import init_pressure, PRESSURE_DATA, PressureData
 from .humidity import init_humidity, HUMIDITY_DATA, HumidityData
 from .imu import init_imu, IMU_DATA, IMUData
@@ -30,9 +31,10 @@ class Settings(object):
 
 class RTIMU(object):
     def __init__(self, settings):
-        self._settings = settings
-        self._initialized = False
-        self._imu_init = {}
+        self.settings = settings
+        self._fd = init_imu()
+        self._map = mmap.mmap(self._fd.fileno(), 0, access=mmap.ACCESS_READ)
+        self._last_data = None
         self._imu_data = {
             'accel':            (0.0, 0.0, 0.0),
             'accelValid':       False,
@@ -53,29 +55,62 @@ class RTIMU(object):
             'timestamp':        0,
             }
 
+    def _read(self):
+        (
+            type, name, timestamp,
+            ax, ay, az,
+            gx, gy, gz,
+            cx, cy, cz,
+            ) = IMU_DATA.unpack_from(self._map)
+        return IMUData(
+            type, name, timestamp,
+            Vector(ax, ay, az),
+            Vector(gx, gy, gz),
+            Vector(cx, cy, cz)
+            )
+
     def IMUInit(self):
-        # XXX set up mmap, read IMU type and name; return True if they're
-        # filled in
-        return bool(self._imu_init)
+        self._last_data = self._read()
+        return self._last_data.type != 0
 
     def IMUGetPollInterval(self):
-        return self._imu_init['poll'] # 3 in real unit
+        return 3
 
     def IMUGetGyroBiasValid(self):
         raise NotImplementedError
 
     def IMURead(self):
-        if self._initialized:
-            # XXX copy mmap data to internal struct
+        data = self._read()
+        if data.timestamp != self._last_data.timestamp:
+            self._last_data = data
+            self._imu_data = {
+                'accel':            tuple(data.accel / 4081.6327),
+                'accelValid':       True,
+                'compass':          tuple(data.compass / 7142.8571),
+                'compassValid':     True,
+                'fusionPose':       (0.0, 0.0, 0.0),
+                'fusionPoseValid':  False,
+                'fusionQPose':      (0.0, 0.0, 0.0, 0.0),
+                'fusionQPoseValid': False,
+                'gyro':             tuple(data.gyro / 57.142857),
+                'gyroValid':        True,
+                'humidity':         float('nan'),
+                'humidityValid':    False,
+                'pressure':         float('nan'),
+                'pressureValid':    False,
+                'temperature':      float('nan'),
+                'temperatureValid': False,
+                'timestamp':        data.timestamp,
+                }
             return True
         else:
             return False
 
     def IMUType(self):
-        return self._imu_init['type'] # 6 in real unit
+        return self._read().type # 6 in real unit
 
     def IMUName(self):
-        return self._imu_init['name'] # "LSM9DS1" in real unit
+        return self._read().name.decode('ascii') # "LSM9DS1" in real unit
 
     def getAccel(self):
         return self._imu_data['accel']
@@ -109,6 +144,15 @@ class RTIMU(object):
 
     def getMeasuredQPose(self):
         raise NotImplementedError
+
+    def setCompassEnable(self, value):
+        pass
+
+    def setGyroEnable(self, value):
+        pass
+
+    def setAccelEnable(self, value):
+        pass
 
 
 class RTPressure(object):
