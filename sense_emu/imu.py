@@ -108,7 +108,7 @@ class IMUServer(object):
         self._gravity = Vector(0, 0, 1)
         self._north = Vector(0, 1, 0)
         if data.type != 6:
-            self._write(IMUData(6, b'LSM9DS1', O, O, O))
+            self._write(IMUData(6, b'LSM9DS1', timestamp(), O, O, O))
             self._accel = O
             self._gyro = O
             self._compass = O
