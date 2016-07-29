@@ -41,8 +41,15 @@ DEB_SOURCES:=debian/changelog \
 	$(wildcard debian/*.docs) \
 	$(wildcard debian/*.doc-base) \
 	$(wildcard debian/*.desktop)
-DOC_SOURCES:=
-SUBDIRS:=
+DOC_SOURCES:=docs/conf.py \
+	$(wildcard docs/*.png) \
+	$(wildcard docs/*.svg) \
+	$(wildcard docs/*.dot) \
+	$(wildcard docs/*.mscgen) \
+	$(wildcard docs/*.gpi) \
+	$(wildcard docs/*.rst) \
+	$(wildcard docs/*.pdf)
+SUBDIRS:=icons
 
 # Calculate the name of all outputs
 DIST_EGG=dist/$(NAME)-$(VER)-$(PYVER).egg
@@ -51,6 +58,7 @@ DIST_ZIP=dist/$(NAME)-$(VER).zip
 DIST_DEB=dist/python-$(NAME)_$(VER)$(DEB_SUFFIX)_all.deb \
 	dist/python3-$(NAME)_$(VER)$(DEB_SUFFIX)_all.deb \
 	dist/python-$(NAME)-doc_$(VER)$(DEB_SUFFIX)_all.deb \
+	dist/$(NAME)-tools_$(VER)$(DEB_SUFFIX)_all.deb \
 	dist/$(NAME)_$(VER)$(DEB_SUFFIX)_$(DEB_ARCH).changes
 DIST_DSC=dist/$(NAME)_$(VER)$(DEB_SUFFIX).tar.gz \
 	dist/$(NAME)_$(VER)$(DEB_SUFFIX).dsc \
