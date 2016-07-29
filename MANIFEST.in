@@ -1,5 +1,6 @@
 prune debian
 prune docs
+prune icons
 include README.rst
 include LICENSE.txt
 include sense_emu/*.glade sense_emu/*.png sense_emu/*.xml
