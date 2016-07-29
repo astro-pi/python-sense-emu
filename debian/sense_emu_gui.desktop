@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Sense HAT Emulator
+Comment=GUI for controlling the emulated Sense HAT
+Exec=sense_emu_gui
+Icon=sense_emu_gui
+Terminal=false
+Type=Application
+Categories=Development
+StartupNotify=true
+
