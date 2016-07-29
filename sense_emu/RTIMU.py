@@ -18,10 +18,11 @@ str = type('')
 import mmap
 from time import time
 
-from .vector import Vector
+import numpy as np
+
 from .pressure import init_pressure, PRESSURE_DATA, PressureData
 from .humidity import init_humidity, HUMIDITY_DATA, HumidityData
-from .imu import init_imu, IMU_DATA, IMUData
+from .imu import init_imu, IMU_DATA, IMUData, ACCEL_FACTOR, GYRO_FACTOR, COMPASS_FACTOR
 
 
 class Settings(object):
@@ -64,9 +65,9 @@ class RTIMU(object):
             ) = IMU_DATA.unpack_from(self._map)
         return IMUData(
             type, name, timestamp,
-            Vector(ax, ay, az),
-            Vector(gx, gy, gz),
-            Vector(cx, cy, cz)
+            np.array((ax, ay, az)),
+            np.array((gx, gy, gz)),
+            np.array((cx, cy, cz)),
             )
 
     def IMUInit(self):
@@ -81,18 +82,20 @@ class RTIMU(object):
 
     def IMURead(self):
         data = self._read()
-        if data.timestamp != self._last_data.timestamp:
+        if data.timestamp == self._last_data.timestamp:
+            return False
+        else:
             self._last_data = data
             self._imu_data = {
-                'accel':            tuple(data.accel / 4081.6327),
+                'accel':            tuple(data.accel / ACCEL_FACTOR),
                 'accelValid':       True,
-                'compass':          tuple(data.compass / 7142.8571),
+                'compass':          tuple(data.compass / COMPASS_FACTOR),
                 'compassValid':     True,
                 'fusionPose':       (0.0, 0.0, 0.0),
                 'fusionPoseValid':  False,
                 'fusionQPose':      (0.0, 0.0, 0.0, 0.0),
                 'fusionQPoseValid': False,
-                'gyro':             tuple(data.gyro / 57.142857),
+                'gyro':             tuple(data.gyro / GYRO_FACTOR),
                 'gyroValid':        True,
                 'humidity':         float('nan'),
                 'humidityValid':    False,
@@ -103,8 +106,6 @@ class RTIMU(object):
                 'timestamp':        data.timestamp,
                 }
             return True
-        else:
-            return False
 
     def IMUType(self):
         return self._read().type # 6 in real unit

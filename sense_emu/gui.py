@@ -27,7 +27,6 @@ from gi.repository import Gtk, Gdk, GdkPixbuf, Gio, GLib, GObject
 import numpy as np
 import pkg_resources
 
-from .vector import Vector, O
 from .screen import ScreenClient
 from .imu import IMUServer
 from .pressure import PressureServer
@@ -145,9 +144,9 @@ class EmuWindow(object):
         self.pitch_scale.add_mark(0, Gtk.PositionType.BOTTOM, None)
         self.roll_scale.add_mark(0, Gtk.PositionType.BOTTOM, None)
         self.yaw_scale.add_mark(0, Gtk.PositionType.BOTTOM, None)
-        self.pitch.props.value = self.application.imu.orientation.x
-        self.roll.props.value = self.application.imu.orientation.y
-        self.yaw.props.value = self.application.imu.orientation.z
+        self.pitch.props.value = self.application.imu.orientation[0]
+        self.roll.props.value = self.application.imu.orientation[1]
+        self.yaw.props.value = self.application.imu.orientation[2]
         self.humidity.props.value = self.application.humidity.humidity
         self.pressure.props.value = self.application.pressure.pressure
         self.temperature.props.value = self.application.humidity.temperature
@@ -210,13 +209,11 @@ class EmuWindow(object):
         self.application.humidity.temperature = adjustment.props.value
 
     def orientation_changed(self, adjustment):
-        self.application.imu.set_orientation(
-            Vector(
-                self.pitch.props.value,
-                self.roll.props.value,
-                self.yaw.props.value,
-                ), O)
-
+        self.application.imu.set_orientation((
+            self.pitch.props.value,
+            self.roll.props.value,
+            self.yaw.props.value,
+            ))
 
     def stick_pressed(self, button, event):
         # XXX This shouldn't be necessary, but GTK seems to fire stick_pressed
