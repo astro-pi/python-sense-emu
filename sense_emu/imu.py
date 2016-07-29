@@ -228,7 +228,6 @@ class IMUServer(object):
             new_timestamp = timestamp()
             time_delta = new_timestamp - old_timestamp
             self._gyro = (self._orientation - old_orientation) / time_delta
-            print(self._gyro)
             # Construct a rotation matrix for the orientation; see
             # https://en.wikipedia.org/wiki/Euler_angles#Rotation_matrix
             x, y, z = np.deg2rad(self._orientation)

@@ -78,16 +78,15 @@ def init_stick_client():
     """
     family, sock_type, addr = stick_address()
     client = socket.socket(family, sock_type)
+    fname = 'rpi-sense-emu-client-%d' % os.getpid()
     if family == socket.AF_UNIX:
         addr_path = os.path.dirname(addr)
-        for i in range(100):
-            try:
-                client.bind(os.path.join(addr_path, 'client%d' % i))
-            except socket.error as e:
-                if e.errno != errno.EADDRINUSE:
-                    raise
-            else:
-                break
+        try:
+            os.unlink(os.path.join(addr_path, fname))
+        except OSError as e:
+            if e.errno != errno.ENOENT:
+                raise
+        client.bind(os.path.join(addr_path, fname))
         if not client.getsockname():
             raise RuntimeError('Failed to create client socket for stick emulation')
     else:
