@@ -12,7 +12,7 @@ Package: python-sense-emu
 Architecture: all
 Section: python
 Depends: ${misc:Depends}, ${python:Depends}, python-numpy, python-pil
-Suggests: python-spidev, python-gpiozero-docs
+Suggests: sense-emu-tools
 Description: Client library for the Raspberry Pi Sense HAT emulator.
  sense-emu is an emulator of the Raspberry Pi Sense HAT which runs on multiple
  platforms, and provides an emulation of each sensor on the HAT, along with the
@@ -27,7 +27,7 @@ Package: python3-sense-emu
 Architecture: all
 Section: python
 Depends: ${misc:Depends}, ${python3:Depends}, python3-numpy, python3-pil
-Suggests: python3-spidev, python-gpiozero-docs
+Suggests: sense-emu-tools
 Description: Client library for the Raspberry Pi Sense HAT emulator.
  sense-emu is an emulator of the Raspberry Pi Sense HAT which runs on multiple
  platforms, and provides an emulation of each sensor on the HAT, along with the
