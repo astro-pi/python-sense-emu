@@ -30,6 +30,7 @@ import numpy as np
 from .common import clamp
 
 
+# See LSM9DS1 data-sheet for details of register values
 ACCEL_FACTOR = 4081.6327
 GYRO_FACTOR = 57.142857
 COMPASS_FACTOR = 7142.8571
@@ -90,18 +91,18 @@ def init_imu():
 # Find the best available time-source for the timestamp() function. The best
 # source will preferably be monotonic, and high-resolution
 try:
-    clock = time.monotonic # 3.3+ (only guaranteed in 3.5+)
+    _time = time.monotonic # 3.3+ (only guaranteed in 3.5+)
 except AttributeError:
     try:
-        clock = time.perf_counter # 3.3+
+        _time = time.perf_counter # 3.3+
     except AttributeError:
-        clock = time.clock # fallback for 2.7
+        _time = time.time # fallback for 2.7
 def timestamp():
     """
     Returns a timestamp as an integer number of microseconds after some
     arbitrary basis (only comparisons of consecutive calls are meaningful).
     """
-    return int(clock() * 1000000)
+    return int(_time() * 1000000)
 
 
 # Some handy array definitions
@@ -226,11 +227,13 @@ class IMUServer(object):
         while not self._world_event.wait(0.016):
             # Gyro reading is simply the rate of change of the orientation
             new_timestamp = timestamp()
-            time_delta = new_timestamp - old_timestamp
-            self._gyro = (self._orientation - old_orientation) / time_delta
+            new_position = self._position
+            new_orientation = self._orientation
+            time_delta = (new_timestamp - old_timestamp) / 1000000
+            self._gyro = (new_orientation - old_orientation) / time_delta
             # Construct a rotation matrix for the orientation; see
             # https://en.wikipedia.org/wiki/Euler_angles#Rotation_matrix
-            x, y, z = np.deg2rad(self._orientation)
+            x, y, z = np.deg2rad(new_orientation)
             c1, c2, c3 = np.cos((z, x, y))
             s1, s2, s3 = np.sin((z, x, y))
             R = np.array([
@@ -242,8 +245,8 @@ class IMUServer(object):
             # XXX Simulate acceleration from position
             self._world_write(new_timestamp)
             old_timestamp = new_timestamp
-            old_position = self._position
-            old_orientation = self._orientation
+            old_position = new_position
+            old_orientation = new_orientation
 
     def _world_write(self, timestamp):
         self._write(self._read()._replace(

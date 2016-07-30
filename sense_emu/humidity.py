@@ -20,19 +20,19 @@ import io
 import mmap
 import errno
 from struct import Struct
-from collections import namedtuple, deque
+from collections import namedtuple
 from random import Random
 from time import time
 from threading import Thread, Event
-try:
-    from statistics import mean
-except ImportError:
-    from .compat import mean
+
+import numpy as np
 
 from .common import clamp
 
 
 # See HTS221 data-sheet for details of register values
+HUMIDITY_FACTOR = 256
+TEMP_FACTOR = 64
 HUMIDITY_DATA = Struct(
     '@'   # native mode
     'B'   # humidity sensor type
@@ -106,15 +106,15 @@ class HumidityServer(object):
             self._humidity = 45.0
             self._temperature = 20.0
         else:
-            self._humidity = data.H_OUT / 256
-            self._temperature = data.T_OUT / 64
+            self._humidity = data.H_OUT / HUMIDITY_FACTOR
+            self._temperature = data.T_OUT / TEMP_FACTOR
         self._noise_thread = None
         self._noise_event = Event()
         self._noise_write()
-        # The deque lengths are selected to accurately represent the response
+        # The queue lengths are selected to accurately represent the response
         # time of the sensors
-        self._humidities = deque(maxlen=77)
-        self._temperatures = deque(maxlen=31)
+        self._humidities = np.full((77,), self._humidity, dtype=np.float)
+        self._temperatures = np.full((31,), self._temperature, dtype=np.float)
         self.simulate_noise = simulate_noise
 
     def close(self):
@@ -184,20 +184,22 @@ class HumidityServer(object):
 
     def _noise_write(self):
         if self.simulate_noise:
-            self._humidities.append(self._perturb(self.humidity, (
+            self._humidities[:] = np.roll(self._humidities, 1)
+            self._humidities[0] = self._perturb(self.humidity, (
                 3.5 if 20 <= self.humidity <= 80 else
-                5.0)))
-            self._temperatures.append(self._perturb(self.temperature, (
+                5.0))
+            self._temperatures[:] = np.roll(self._temperatures, 1)
+            self._temperatures[0] = self._perturb(self.temperature, (
                 0.5 if 15 <= self.temperature <= 40 else
                 1.0 if 0 <= self.temperature <= 60 else
-                2.0)))
-            humidity = mean(self._humidities)
-            temperature = mean(self._temperatures)
+                2.0))
+            humidity = self._humidities.mean()
+            temperature = self._temperatures.mean()
         else:
             humidity = self.humidity
             temperature = self.temperature
         self._write(self._read()._replace(
-            H_OUT=int(clamp(humidity, 0, 100) * 256),
-            T_OUT=int(clamp(temperature, -40, 120) * 64)))
+            H_OUT=int(clamp(humidity, 0, 100) * HUMIDITY_FACTOR),
+            T_OUT=int(clamp(temperature, -40, 120) * TEMP_FACTOR)))
 
 

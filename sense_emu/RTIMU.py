@@ -20,7 +20,7 @@ from time import time
 
 import numpy as np
 
-from .pressure import init_pressure, PRESSURE_DATA, PressureData
+from .pressure import init_pressure, PRESSURE_DATA, PressureData, PRESSURE_FACTOR, TEMP_FACTOR, TEMP_OFFSET
 from .humidity import init_humidity, HUMIDITY_DATA, HumidityData
 from .imu import init_imu, IMU_DATA, IMUData, ACCEL_FACTOR, GYRO_FACTOR, COMPASS_FACTOR
 
@@ -75,7 +75,7 @@ class RTIMU(object):
         return self._last_data.type != 0
 
     def IMUGetPollInterval(self):
-        return 3
+        return 10 # 3 on the actual board
 
     def IMUGetGyroBiasValid(self):
         raise NotImplementedError
@@ -183,8 +183,8 @@ class RTPressure(object):
         else:
             d = self._read()
             return (
-                1, d.P_OUT / 4096,
-                1, d.T_OUT / 480 + 42.5,
+                1, d.P_OUT / PRESSURE_FACTOR,
+                1, d.T_OUT / TEMP_FACTOR + TEMP_OFFSET,
                 )
 
     def pressureType(self):

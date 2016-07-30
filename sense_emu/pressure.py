@@ -20,19 +20,20 @@ import io
 import mmap
 import errno
 from struct import Struct
-from collections import namedtuple, deque
+from collections import namedtuple
 from random import Random
 from time import time
 from threading import Thread, Event
-try:
-    from statistics import mean
-except ImportError:
-    from .compat import mean
+
+import numpy as np
 
 from .common import clamp
 
 
 # See LPS25H data-sheet for details of register values
+PRESSURE_FACTOR = 4096
+TEMP_OFFSET = 37
+TEMP_FACTOR = 480
 PRESSURE_DATA = Struct(
     '@'   # native mode
     'B'   # pressure sensor type
@@ -103,10 +104,10 @@ class PressureServer(object):
         self._noise_thread = None
         self._noise_event = Event()
         self._noise_write()
-        # The deque lengths are selected to accurately represent the response
+        # The queue lengths are selected to accurately represent the response
         # time of the sensors
-        self._pressures = deque(maxlen=25)
-        self._temperatures = deque(maxlen=75)
+        self._pressures = np.full((25,), self._pressure, dtype=np.float)
+        self._temperatures = np.full((25,), self._temperature, dtype=np.float)
         self.simulate_noise = simulate_noise
 
     def close(self):
@@ -176,19 +177,21 @@ class PressureServer(object):
 
     def _noise_write(self):
         if self.simulate_noise:
-            self._pressures.append(self._perturb(self.pressure, (
+            self._pressures[:] = np.roll(self._pressures, 1)
+            self._pressures[0] = self._perturb(self.pressure, (
                 0.2 if 800 <= self.pressure <= 1100 and 20 <= self.temperature <= 60 else
-                1.0)))
-            self._temperatures.append(self._perturb(self.temperature, (
+                1.0))
+            self._temperatures[:] = np.roll(self._temperatures, 1)
+            self._temperatures[0] = self._perturb(self.temperature, (
                 2.0 if 0 <= self.temperature <= 65 else
-                4.0)))
-            pressure = mean(self._pressures)
-            temperature = mean(self._temperatures)
+                4.0))
+            pressure = self._pressures.mean()
+            temperature = self._temperatures.mean()
         else:
             pressure = self.pressure
             temperature = self.temperature
         self._write(self._read()._replace(
-            P_OUT=int(clamp(pressure, 260, 1260) * 4096),
-            T_OUT=int((clamp(temperature, -30, 105) - 42.5) * 480)))
+            P_OUT=int(clamp(pressure, 260, 1260) * PRESSURE_FACTOR),
+            T_OUT=int((clamp(temperature, -30, 105) - TEMP_OFFSET) * TEMP_FACTOR)))
 
 
