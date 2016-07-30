@@ -184,11 +184,11 @@ class HumidityServer(object):
 
     def _noise_write(self):
         if self.simulate_noise:
-            self._humidities[:] = np.roll(self._humidities, 1)
+            self._humidities[1:] = self._humidities[:-1]
             self._humidities[0] = self._perturb(self.humidity, (
                 3.5 if 20 <= self.humidity <= 80 else
                 5.0))
-            self._temperatures[:] = np.roll(self._temperatures, 1)
+            self._temperatures[1:] = self._temperatures[:-1]
             self._temperatures[0] = self._perturb(self.temperature, (
                 0.5 if 15 <= self.temperature <= 40 else
                 1.0 if 0 <= self.temperature <= 60 else

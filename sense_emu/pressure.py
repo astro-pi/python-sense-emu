@@ -177,11 +177,11 @@ class PressureServer(object):
 
     def _noise_write(self):
         if self.simulate_noise:
-            self._pressures[:] = np.roll(self._pressures, 1)
+            self._pressures[1:] = self._pressures[:-1]
             self._pressures[0] = self._perturb(self.pressure, (
                 0.2 if 800 <= self.pressure <= 1100 and 20 <= self.temperature <= 60 else
                 1.0))
-            self._temperatures[:] = np.roll(self._temperatures, 1)
+            self._temperatures[1:] = self._temperatures[:-1]
             self._temperatures[0] = self._perturb(self.temperature, (
                 2.0 if 0 <= self.temperature <= 65 else
                 4.0))
