@@ -11,7 +11,6 @@ from __future__ import (
     print_function,
     division,
     )
-nstr = str
 str = type('')
 
 import sys

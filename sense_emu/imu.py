@@ -21,6 +21,7 @@ import mmap
 import time
 import errno
 import subprocess
+from random import Random
 from struct import Struct
 from collections import namedtuple
 from threading import Thread, Event
@@ -106,15 +107,16 @@ def timestamp():
 
 
 # Some handy array definitions
-O = np.array((0, 0, 0))
-X = np.array((1, 0, 0))
-Y = np.array((0, 1, 0))
-Z = np.array((0, 0, 1))
 V = lambda x, y, z: np.array((x, y, z))
+O = V(0, 0, 0)
+X = V(1, 0, 0)
+Y = V(0, 1, 0)
+Z = V(0, 0, 1)
 
 
 class IMUServer(object):
     def __init__(self, simulate_world=True):
+        self._random = Random()
         self._fd = init_imu()
         self._map = mmap.mmap(self._fd.fileno(), 0, access=mmap.ACCESS_WRITE)
         data = self._read()
@@ -136,6 +138,11 @@ class IMUServer(object):
         self._world_thread = None
         self._world_event = Event()
         self._world_write(timestamp())
+        # These queue lengths were arbitrarily selected to smooth the action of
+        # the orientation sliders in the GUI; they bear no particular relation
+        # to the hardware
+        self._gyros = np.full((10, 3), self._gyro, dtype=np.float)
+        self._accels = np.full((10, 3), self._accel, dtype=np.float)
         self.simulate_world = simulate_world
 
     def close(self):
@@ -168,6 +175,20 @@ class IMUServer(object):
             value.compass[0], value.compass[1], value.compass[2],
             )
         IMU_DATA.pack_into(self._map, 0, *value)
+
+    def _perturb(self, value, error):
+        """
+        Return *value* perturbed by +/- *error* which is derived from a
+        gaussian random generator.
+        """
+        # We use an internal Random() instance here to avoid a threading issue
+        # with the gaussian generator (could use locks, but an instance of
+        # Random is easier and faster)
+        return V(
+            value[0] + self._random.gauss(0, 0.2) * error,
+            value[1] + self._random.gauss(0, 0.2) * error,
+            value[2] + self._random.gauss(0, 0.2) * error,
+            )
 
     def set_orientation(self, orientation, position=None):
         assert self.simulate_world
@@ -249,17 +270,27 @@ class IMUServer(object):
             old_orientation = new_orientation
 
     def _world_write(self, timestamp):
+        if self.simulate_world:
+            self._gyros[1:, :] = self._gyros[:-1, :]
+            self._gyros[0, :] = self._perturb(self._gyro, 1.0)
+            gyro = self._gyros.mean(axis=0)
+            self._accels[1:, :] = self._accels[:-1, :]
+            self._accels[0, :] = self._perturb(self._accel, 0.1)
+            accel = self._accels.mean(axis=0)
+        else:
+            gyro = self._gyro
+            accel = self._accel
         self._write(self._read()._replace(
             timestamp=timestamp,
             accel=V(
-                int(clamp(self.accel[0], -8, 8) * ACCEL_FACTOR),
-                int(clamp(self.accel[1], -8, 8) * ACCEL_FACTOR),
-                int(clamp(self.accel[2], -8, 8) * ACCEL_FACTOR),
+                int(clamp(accel[0], -8, 8) * ACCEL_FACTOR),
+                int(clamp(accel[1], -8, 8) * ACCEL_FACTOR),
+                int(clamp(accel[2], -8, 8) * ACCEL_FACTOR),
                 ),
             gyro=V(
-                int(clamp(self.gyro[0], -500, 500) * GYRO_FACTOR),
-                int(clamp(self.gyro[1], -500, 500) * GYRO_FACTOR),
-                int(clamp(self.gyro[2], -500, 500) * GYRO_FACTOR),
+                int(clamp(gyro[0], -500, 500) * GYRO_FACTOR),
+                int(clamp(gyro[1], -500, 500) * GYRO_FACTOR),
+                int(clamp(gyro[2], -500, 500) * GYRO_FACTOR),
                 ),
             compass=V(
                 int(clamp(self.compass[0], -4, 4) * COMPASS_FACTOR),
