@@ -69,7 +69,7 @@ class PlayApplication(TerminalApplication):
             if data.timestamp < now:
                 logging.warning('Skipping record %d to catch up', rec)
             else:
-                sleep(now - data.timestamp)
+                sleep(data.timestamp - now)
             psensor.set_values(data.pressure, data.ptemp)
             hsensor.set_values(data.humidity, data.htemp)
             imu.set_imu_values(
