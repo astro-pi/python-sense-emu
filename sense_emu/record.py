@@ -60,8 +60,14 @@ class RecordApplication(TerminalApplication):
         settings = RTIMU.Settings(args.config[:-4])
         logging.info('Initializing sensors')
         imu = RTIMU.RTIMU(settings)
+        if not imu.IMUInit():
+            raise IOError('Failed to initialize Sense HAT IMU')
         pressure = RTIMU.RTPressure(settings)
+        if not pressure.pressureInit():
+            raise IOError('Failed to initialize Sense HAT pressure sensor')
         humidity = RTIMU.RTHumidity(settings)
+        if not humidity.humidityInit():
+            raise IOError('Failed to initialize Sense HAT humidity sensor')
         interval = imu.IMUGetPollInterval() / 1000.0 # seconds
         nan = float('nan')
         logging.info('Starting output')
