@@ -17,7 +17,11 @@ override_dh_auto_install:
 	rm -fr debian/sense-emu-tools/usr/share/pyshared
 	# Strip out binaries from the library packages
 	rm debian/python-sense-emu/usr/bin/sense_emu_gui
+	rm debian/python-sense-emu/usr/bin/sense_rec
+	rm debian/python-sense-emu/usr/bin/sense_play
 	rm debian/python3-sense-emu/usr/bin/sense_emu_gui
+	rm debian/python3-sense-emu/usr/bin/sense_rec
+	rm debian/python3-sense-emu/usr/bin/sense_play
 
 #override_dh_auto_test:
 #	# Don't run the tests!
