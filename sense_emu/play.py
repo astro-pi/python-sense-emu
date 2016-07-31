@@ -64,7 +64,6 @@ class PlayApplication(TerminalApplication):
         imu = IMUServer(simulate_world=False)
         psensor = PressureServer(simulate_noise=False)
         hsensor = HumidityServer(simulate_noise=False)
-        header_rec, = HEADER_REC.unpack(args.input.read(HEADER_REC.size))
         for rec, data in enumerate(self.source(args.input)):
             now = time()
             if data.timestamp < now:
