@@ -56,20 +56,22 @@ class RecordApplication(TerminalApplication):
                 'correctly installed')
         if not args.config.endswith('.ini'):
             raise argparse.ArgumentError('configuration filename must end with .ini')
+
         logging.info('Reading settings from %s', args.config)
         settings = RTIMU.Settings(args.config[:-4])
         logging.info('Initializing sensors')
         imu = RTIMU.RTIMU(settings)
         if not imu.IMUInit():
             raise IOError('Failed to initialize Sense HAT IMU')
-        pressure = RTIMU.RTPressure(settings)
-        if not pressure.pressureInit():
+        psensor = RTIMU.RTPressure(settings)
+        if not psensor.pressureInit():
             raise IOError('Failed to initialize Sense HAT pressure sensor')
-        humidity = RTIMU.RTHumidity(settings)
-        if not humidity.humidityInit():
+        hsensor = RTIMU.RTHumidity(settings)
+        if not hsensor.humidityInit():
             raise IOError('Failed to initialize Sense HAT humidity sensor')
         interval = imu.IMUGetPollInterval() / 1000.0 # seconds
         nan = float('nan')
+
         logging.info('Starting output')
         rec_count = 0
         args.output.write(HEADER_REC.pack(b'SENSEHAT'))
@@ -88,8 +90,8 @@ class RecordApplication(TerminalApplication):
                     gx, gy, gz = imu.getGyro()
                     cx, cy, cz = imu.getCompass()
                     ox, oy, oz = imu.getFusionData()
-                    pvalid, pressure, ptvalid, ptemp = pressure.pressureRead()
-                    hvalid, humidity, htvalid, htemp = humidity.humidityRead()
+                    pvalid, pressure, ptvalid, ptemp = psensor.pressureRead()
+                    hvalid, humidity, htvalid, htemp = hsensor.humidityRead()
                     args.output.write(DATA_REC.pack(
                         timestamp,
                         pressure if pvalid else nan,
