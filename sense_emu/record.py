@@ -66,7 +66,7 @@ class RecordApplication(TerminalApplication):
         nan = float('nan')
         logging.info('Starting output')
         rec_count = 0
-        args.output.write(HEADER_REC.pack('SENSEHAT'))
+        args.output.write(HEADER_REC.pack(b'SENSEHAT'))
         status_stop = Event()
         def status():
             while not status_stop.wait(1.0):
