@@ -1,3 +1,10 @@
+# vim: set et sw=4 sts=4 fileencoding=utf-8:
+#
+# Raspberry Pi Sense HAT Emulator library for the Raspberry Pi
+# Copyright (c) 2016 Raspberry Pi Foundation <info@raspberrypi.org>
+#
+# All Rights Reserved.
+
 from __future__ import (
     unicode_literals,
     absolute_import,
@@ -15,23 +22,7 @@ from struct import Struct
 
 from . import __version__
 from .terminal import TerminalApplication
-
-
-HEADER_REC = Struct(
-    '='  # native order, standard sizing
-    '8s' # magic number ("SENSEHAT")
-    )
-
-DATA_REC = Struct(
-    '='   # native order, standard sizing
-    'd'   # timestamp
-    'dd'  # pressure+temp readings
-    'dd'  # humidity+temp readings
-    'ddd' # raw accelerometer readings
-    'ddd' # raw gyro readings
-    'ddd' # raw compass readings
-    'ddd' # calculated pose
-    )
+from .common import HEADER_REC, DATA_REC
 
 
 class RecordApplication(TerminalApplication):
@@ -74,7 +65,7 @@ class RecordApplication(TerminalApplication):
 
         logging.info('Starting output')
         rec_count = 0
-        args.output.write(HEADER_REC.pack(b'SENSEHAT'))
+        args.output.write(HEADER_REC.pack(b'SENSEHAT', 1, time()))
         status_stop = Event()
         def status():
             while not status_stop.wait(1.0):

@@ -197,11 +197,15 @@ class IMUServer(object):
         self._orientation = V(*orientation)
         self._position = V(*position)
 
-    def set_imu_values(self, accel, gyro, compass):
+    def set_imu_values(self, accel, gyro, compass, orientation, position=None):
         assert not self.simulate_world
-        self._accel = accel
-        self._gyro = gyro
-        self._compass = compass
+        self._accel = V(*accel)
+        self._gyro = V(*gyro)
+        self._compass = V(*compass)
+        self._orientation = V(*orientation)
+        if position is None:
+            position = O
+        self._position = V(*position)
         self._world_write(timestamp())
 
     @property

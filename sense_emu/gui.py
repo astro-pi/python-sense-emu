@@ -199,14 +199,20 @@ class EmuWindow(object):
         self.window.destroy()
 
     def pressure_changed(self, adjustment):
-        self.application.pressure.pressure = adjustment.props.value
+        self.application.pressure.set_values(
+            self.pressure.props.value,
+            self.temperature.props.value,
+            )
 
     def humidity_changed(self, adjustment):
-        self.application.humidity.humidity = adjustment.props.value
+        self.application.humidity.set_values(
+            self.humidity.props.value,
+            self.temperature.props.value,
+            )
 
     def temperature_changed(self, adjustment):
-        self.application.pressure.temperature = adjustment.props.value
-        self.application.humidity.temperature = adjustment.props.value
+        self.pressure_changed(adjustment)
+        self.humidity_changed(adjustment)
 
     def orientation_changed(self, adjustment):
         self.application.imu.set_orientation((

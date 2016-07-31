@@ -74,6 +74,7 @@ if sys.version_info[:2] == (3, 2):
 __entry_points__ = {
     'console_scripts': [
         'sense_rec = sense_emu.record:app',
+        'sense_play = sense_emu.play:app',
         ],
     'gui_scripts': [
         'sense_emu_gui = sense_emu.gui:main',

@@ -144,19 +144,13 @@ class HumidityServer(object):
     def humidity(self):
         return self._humidity
 
-    @humidity.setter
-    def humidity(self, value):
-        self._humidity = value
-        if not self._noise_thread:
-            self._noise_write()
-
     @property
     def temperature(self):
         return self._temperature
 
-    @temperature.setter
-    def temperature(self, value):
-        self._temperature = value
+    def set_values(self, humidity, temperature):
+        self._humidity = humidity
+        self._temperature = temperature
         if not self._noise_thread:
             self._noise_write()
 

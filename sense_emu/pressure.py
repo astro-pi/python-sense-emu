@@ -137,19 +137,13 @@ class PressureServer(object):
     def pressure(self):
         return self._pressure
 
-    @pressure.setter
-    def pressure(self, value):
-        self._pressure = value
-        if not self._noise_thread:
-            self._noise_write()
-
     @property
     def temperature(self):
         return self._temperature
 
-    @temperature.setter
-    def temperature(self, value):
-        self._temperature = value
+    def set_values(self, pressure, temperature):
+        self._pressure = pressure
+        self._temperature = temperature
         if not self._noise_thread:
             self._noise_write()
 

@@ -13,6 +13,41 @@ from __future__ import (
     )
 
 
+from struct import Struct
+from collections import namedtuple
+
+
+# Structures for sense_rec and sense_play
+HEADER_REC = Struct(
+    '='  # native order, standard sizing
+    '8s' # magic number ("SENSEHAT")
+    'b'  # version number (1)
+    '7x' # padding
+    'd'  # initial timestamp
+    )
+
+DATA_REC = Struct(
+    '='   # native order, standard sizing
+    'd'   # timestamp
+    'dd'  # pressure+temp readings
+    'dd'  # humidity+temp readings
+    'ddd' # raw accelerometer readings
+    'ddd' # raw gyro readings
+    'ddd' # raw compass readings
+    'ddd' # calculated pose
+    )
+
+DataRecord = namedtuple('DataRecord', (
+    'timestamp',
+    'pressure', 'ptemp',
+    'humidity', 'htemp',
+    'ax', 'ay', 'az',
+    'gx', 'gy', 'gz',
+    'cx', 'cy', 'cz',
+    'ox', 'oy', 'oz',
+    ))
+
+
 def clamp(value, min_value, max_value):
     """
     Return *value* clipped to the range *min_value* to *max_value* inclusive.
