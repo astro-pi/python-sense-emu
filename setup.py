@@ -30,79 +30,63 @@ try:
 except ImportError:
     pass
 
-__project__      = 'sense-emu'
-__version__      = '0.1'
-__author__       = 'Raspberry Pi Foundation'
-__author_email__ = 'info@raspberrypi.org'
-__url__          = 'http://sense-emu.readthedocs.io/'
-__platforms__    = 'ALL'
+# Mock out dependency modules while installing
+class Mock(object):
+    __all__ = []
 
-__classifiers__ = [
-    'Development Status :: 4 - Beta',
-    'Environment :: Console',
-    'Environment :: X11 Applications',
-    'Intended Audience :: Developers',
-    'License :: OSI Approved :: BSD License',
-    'Operating System :: POSIX :: Linux',
-    'Operating System :: Microsoft :: Windows',
-    'Programming Language :: Python :: 2.7',
-    'Programming Language :: Python :: 3.2',
-    'Programming Language :: Python :: 3.3',
-    'Programming Language :: Python :: 3.4',
-    ]
+    def __init__(self, *args, **kw):
+        pass
 
-__keywords__ = [
-    'raspberrypi', 'sense', 'hat'
-    ]
+    def __call__(self, *args, **kw):
+        return Mock()
 
-__requires__ = [
-    'numpy', 'Pillow',
-    ]
+    def __mul__(self, other):
+        return Mock()
 
-__extra_requires__ = {
-    'doc':   ['sphinx'],
-    'test':  ['pytest', 'coverage', 'mock'],
-    }
+    def __and__(self, other):
+        return Mock()
 
-if sys.version_info[:2] == (3, 2):
-    # Particular versions are required for Python 3.2 compatibility
-    __extra_requires__['doc'].extend([
-        'Jinja2<2.7',
-        'MarkupSafe<0.16',
-        ])
-    __extra_requires__['test'][1] = 'coverage<4.0dev'
+    def __bool__(self):
+        return False
 
-__entry_points__ = {
-    'gui_scripts': [
-        'sense_emu_gui = sense_emu.gui:main',
-        ],
-    }
+    def __nonzero__(self):
+        return False
 
+    @classmethod
+    def __getattr__(cls, name):
+        if name in ('__file__', '__path__'):
+            return '/dev/null'
+        else:
+            return Mock()
 
 def main():
+    sys.modules['numpy'] = Mock()
+    sys.modules['RTIMU'] = Mock()
+    sys.modules['PIL'] = Mock()
     import io
+    import sense_emu as app
     with io.open(os.path.join(HERE, 'README.rst'), 'r') as readme:
         setup(
-            name                 = __project__,
-            version              = __version__,
-            description          = __doc__,
+            name                 = app.__project__,
+            version              = app.__version__,
+            description          = app.__doc__,
             long_description     = readme.read(),
-            classifiers          = __classifiers__,
-            author               = __author__,
-            author_email         = __author_email__,
-            url                  = __url__,
+            classifiers          = app.__classifiers__,
+            author               = app.__author__,
+            author_email         = app.__author_email__,
+            url                  = app.__url__,
             license              = [
                 c.rsplit('::', 1)[1].strip()
-                for c in __classifiers__
+                for c in app.__classifiers__
                 if c.startswith('License ::')
                 ][0],
-            keywords             = __keywords__,
+            keywords             = app.__keywords__,
             packages             = find_packages(),
             include_package_data = True,
-            platforms            = __platforms__,
-            install_requires     = __requires__,
-            extras_require       = __extra_requires__,
-            entry_points         = __entry_points__,
+            platforms            = app.__platforms__,
+            install_requires     = app.__requires__,
+            extras_require       = app.__extra_requires__,
+            entry_points         = app.__entry_points__,
             )
 
 

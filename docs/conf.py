@@ -4,7 +4,7 @@ import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
-import setup as _setup
+import sense_emu as _setup
 
 # Mock out certain modules while building documentation
 class Mock(object):
@@ -36,6 +36,7 @@ class Mock(object):
             return Mock()
 
 sys.modules['numpy'] = Mock()
+sys.modules['RTIMU'] = Mock()
 sys.modules['PIL'] = Mock()
 
 # -- General configuration ------------------------------------------------
