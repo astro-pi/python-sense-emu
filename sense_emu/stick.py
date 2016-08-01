@@ -311,6 +311,8 @@ class SenseStick(object):
         The function to be called when the joystick is pushed up. The function
         can either take a parameter which will be the :class:`InputEvent` tuple
         that has occurred, or the function can take no parameters at all.
+
+        Assign ``None`` to prevent this event from being fired.
         """
         return self._callbacks.get(DIRECTION_UP)
 

@@ -14,11 +14,12 @@ from __future__ import (
 str = type('')
 
 
+import io
 import sys
 import atexit
 import struct
 import math
-from time import time
+from time import time, sleep
 from threading import Thread, Lock, Event
 
 import gi
@@ -32,6 +33,7 @@ from .imu import IMUServer
 from .pressure import PressureServer
 from .humidity import HumidityServer
 from .stick import StickServer, SenseStick
+from .common import HEADER_REC, DATA_REC, DataRecord
 
 
 def load_png(filename):
@@ -55,6 +57,10 @@ class EmuApplication(Gtk.Application):
 
         action = Gio.SimpleAction.new('about', None)
         action.connect('activate', self.on_about)
+        self.add_action(action)
+
+        action = Gio.SimpleAction.new('play', None)
+        action.connect('activate', self.on_play)
         self.add_action(action)
 
         action = Gio.SimpleAction.new('quit', None)
@@ -95,11 +101,76 @@ class EmuApplication(Gtk.Application):
         return 0
 
     def on_about(self, action, param):
-        about_dialog = Gtk.AboutDialog(transient_for=self.window, modal=True)
+        about_dialog = Gtk.AboutDialog(
+            transient_for=self.window.window, modal=True)
         about_dialog.present()
+
+    def on_play(self, action, param):
+        open_dialog = Gtk.FileChooserDialog(
+            title='Select the recording to play', transient_for=self.window.window,
+            action=Gtk.FileChooserAction.OPEN)
+        open_dialog.add_button(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL)
+        open_dialog.add_button(Gtk.STOCK_OPEN, Gtk.ResponseType.ACCEPT)
+        try:
+            response = open_dialog.run()
+            if response == Gtk.ResponseType.ACCEPT:
+                play_thread = Thread(target=self.play_filename, args=(open_dialog.get_filename(),))
+                play_thread.start()
+        finally:
+            open_dialog.destroy()
 
     def on_quit(self, action, param):
         self.quit()
+
+    def play_decoder(self, f):
+        magic, ver, offset = HEADER_REC.unpack(f.read(HEADER_REC.size))
+        if magic != b'SENSEHAT':
+            raise IOError('Invalid magic number at start of input')
+        if ver != 1:
+            raise IOError('Unrecognized file version number (%d)' % ver)
+        offset = time() - offset
+        while True:
+            buf = f.read(DATA_REC.size)
+            if not buf:
+                break
+            elif len(buf) < DATA_REC.size:
+                raise IOError('Incomplete data record at end of file')
+            else:
+                data = DataRecord(*DATA_REC.unpack(buf))
+                yield data._replace(timestamp=data.timestamp + offset)
+
+    def play_filename(self, filename):
+        with io.open(filename, 'rb') as f:
+            self.pressure.simulate_noise = False
+            self.humidity.simulate_noise = False
+            self.imu.simulate_world = False
+            try:
+                rec_total = (f.seek(0, io.SEEK_END) - HEADER_REC.size) // DATA_REC.size
+                f.seek(0)
+                skipped = 0
+                for rec, data in enumerate(self.play_decoder(f)):
+                    now = time()
+                    if data.timestamp < now:
+                        skipped += 1
+                        continue
+                    else:
+                        sleep(data.timestamp - now)
+                    self.pressure.set_values(data.pressure, data.ptemp)
+                    self.humidity.set_values(data.humidity, data.htemp)
+                    self.imu.set_imu_values(
+                        (data.ax, data.ay, data.az),
+                        (data.gx, data.gy, data.gz),
+                        (data.cx, data.cy, data.cz),
+                        (data.ox, data.oy, data.oz),
+                        )
+                # XXX Message dialog for skipped?
+            except IOError as e:
+                # XXX Message dialog for IOError
+                pass
+            finally:
+                self.imu.simulate_world = True
+                self.humidity.simulate_noise = True
+                self.pressure.simulate_noise = True
 
 
 class EmuWindow(object):
