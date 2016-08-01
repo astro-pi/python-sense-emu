@@ -37,6 +37,25 @@ from .screen import init_screen, GAMMA_DEFAULT, GAMMA_LOW
 
 
 class SenseHat(object):
+    """
+    The main interface the Raspberry Pi Sense HAT.
+
+    This class provides properties to query the various sensors on the Sense
+    HAT (:attr:`temp`, :attr:`pressure`, :attr:`humidity`, :attr:`gyro`, etc.)
+    and methods to control the LED "screen" on the HAT (:meth:`set_pixel`,
+    :meth:`set_pixels`).
+
+    The *imu_settings_file* parameter specifies the base name of the
+    configuration file used to calibrate the sensors on the HAT. An ".ini"
+    suffix will be implicitly added to this filename. If a file with the
+    resulting name is present in :file:`~/.config/sense_hat`, it will be used
+    in the configuration.  Otherwise, the file will be located within
+    :file:`/etc`, and will be copied to :file:`~/.config/sense_hat` before use.
+
+    The *text_assets* parameter provides the base name of the PNG image and
+    text file which will be used to define the font used by the
+    :meth:`show_message` method.
+    """
 
     SENSE_HAT_FB_NAME = 'RPi-Sense FB'
     SENSE_HAT_FB_FBIOGET_GAMMA = 61696
@@ -194,6 +213,9 @@ class SenseHat(object):
 
     @property
     def stick(self):
+        """
+        A :class:`SenseStick` object representing the Sense HAT's joystick.
+        """
         return self._stick
 
     ####
@@ -276,7 +298,7 @@ class SenseHat(object):
 
     def set_pixels(self, pixel_list):
         """
-        Accepts a list containing 64 smaller lists of [R,G,B] pixels and
+        Accepts a list containing 64 smaller lists of ``[R,G,B]`` pixels and
         updates the LED matrix. R,G,B elements must intergers between 0
         and 255
         """
@@ -301,7 +323,7 @@ class SenseHat(object):
 
     def get_pixels(self):
         """
-        Returns a list containing 64 smaller lists of [R,G,B] pixels
+        Returns a list containing 64 smaller lists of ``[R,G,B]`` pixels
         representing what is currently displayed on the LED matrix
         """
 
@@ -317,8 +339,8 @@ class SenseHat(object):
 
     def set_pixel(self, x, y, *args):
         """
-        Updates the single [R,G,B] pixel specified by x and y on the LED matrix
-        Top left = 0,0 Bottom right = 7,7
+        Updates the single ``[R,G,B]`` pixel specified by x and y on the LED
+        matrix Top left = 0,0 Bottom right = 7,7
 
         e.g. ap.set_pixel(x, y, r, g, b)
         or

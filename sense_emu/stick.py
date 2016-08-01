@@ -44,7 +44,29 @@ ACTION_RELEASED = 'released'
 ACTION_HELD     = 'held'
 
 
-InputEvent = namedtuple('InputEvent', ('timestamp', 'direction', 'action'))
+class InputEvent(namedtuple('InputEvent', ('timestamp', 'direction', 'action'))):
+    """
+    A :func:`~collections.namedtuple` derivative representing a joystick
+    event. The following attributes are present:
+
+    .. attribute:: timestamp
+
+        The time at which the event occurred, represented as the number of
+        seconds since the UNIX epoch (same output as :func:`~time.time`).
+
+    .. attribute:: direction
+
+        The direction in which the joystick was pushed (or released from), as
+        one of the constants :data:`DIRECTION_UP`, :data:`DIRECTION_DOWN`,
+        :data:`DIRECTION_LEFT`, :data:`DIRECTION_RIGHT`,
+        :data:`DIRECTION_MIDDLE`
+
+    .. attribute:: action
+
+        The action that occurred, as one of the constants
+        :data:`ACTION_PRESSED`, :data:`ACTION_RELEASED`, or
+        :data:`ACTION_HELD`.
+    """
 
 
 def stick_address():
@@ -162,8 +184,8 @@ class SenseStick(object):
     def _read(self):
         """
         Reads a single event from the joystick, blocking until one is
-        available. Returns `None` if a non-key event was read, or an
-        `InputEvent` tuple describing the event otherwise.
+        available. Returns ``None`` if a non-key event was read, or an
+        :class:`InputEvent` tuple describing the event otherwise.
         """
         event = self._stick_file.read(self.EVENT_SIZE)
         (tv_sec, tv_usec, type, code, value) = struct.unpack(self.EVENT_FORMAT, event)
@@ -188,7 +210,7 @@ class SenseStick(object):
     def _wait(self, timeout=None):
         """
         Waits *timeout* seconds until an event is available from the
-        joystick. Returns `True` if an event became available, and `False`
+        joystick. Returns ``True`` if an event became available, and ``False``
         if the timeout expired.
         """
         r, w, x = select.select([self._stick_file], [], [], timeout)
@@ -255,9 +277,9 @@ class SenseStick(object):
     def wait_for_event(self, emptybuffer=False):
         """
         Waits until a joystick event becomes available.  Returns the event, as
-        an `InputEvent` tuple.
+        an :class:`InputEvent` tuple.
 
-        If *emptybuffer* is `True` (it defaults to `False`), any pending
+        If *emptybuffer* is ``True`` (it defaults to ``False``), any pending
         events will be thrown away first. This is most useful if you are only
         interested in "pressed" events.
         """
@@ -272,8 +294,8 @@ class SenseStick(object):
     def get_events(self):
         """
         Returns a list of all joystick events that have occurred since the last
-        call to `get_events`. The list contains events in the order that they
-        occurred. If no events have occurred in the intervening time, the
+        call to :meth:`get_events`. The list contains events in the order that
+        they occurred. If no events have occurred in the intervening time, the
         result is an empty list.
         """
         result = []
@@ -287,8 +309,8 @@ class SenseStick(object):
     def direction_up(self):
         """
         The function to be called when the joystick is pushed up. The function
-        can either take a parameter which will be the `InputEvent` tuple that
-        has occurred, or the function can take no parameters at all.
+        can either take a parameter which will be the :class:`InputEvent` tuple
+        that has occurred, or the function can take no parameters at all.
         """
         return self._callbacks.get(DIRECTION_UP)
 
@@ -301,10 +323,11 @@ class SenseStick(object):
     def direction_down(self):
         """
         The function to be called when the joystick is pushed down. The
-        function can either take a parameter which will be the `InputEvent`
-        tuple that has occurred, or the function can take no parameters at all.
+        function can either take a parameter which will be the
+        :class:`InputEvent` tuple that has occurred, or the function can take
+        no parameters at all.
 
-        Assign `None` to prevent this event from being fired.
+        Assign ``None`` to prevent this event from being fired.
         """
         return self._callbacks.get(DIRECTION_DOWN)
 
@@ -317,10 +340,11 @@ class SenseStick(object):
     def direction_left(self):
         """
         The function to be called when the joystick is pushed left. The
-        function can either take a parameter which will be the `InputEvent`
-        tuple that has occurred, or the function can take no parameters at all.
+        function can either take a parameter which will be the
+        :class:`InputEvent` tuple that has occurred, or the function can take
+        no parameters at all.
 
-        Assign `None` to prevent this event from being fired.
+        Assign ``None`` to prevent this event from being fired.
         """
         return self._callbacks.get(DIRECTION_LEFT)
 
@@ -333,10 +357,11 @@ class SenseStick(object):
     def direction_right(self):
         """
         The function to be called when the joystick is pushed right. The
-        function can either take a parameter which will be the `InputEvent`
-        tuple that has occurred, or the function can take no parameters at all.
+        function can either take a parameter which will be the
+        :class:`InputEvent` tuple that has occurred, or the function can take
+        no parameters at all.
 
-        Assign `None` to prevent this event from being fired.
+        Assign ``None`` to prevent this event from being fired.
         """
         return self._callbacks.get(DIRECTION_RIGHT)
 
@@ -348,11 +373,12 @@ class SenseStick(object):
     @property
     def direction_middle(self):
         """
-        The function to be called when the joystick middle click is pressed. The
-        function can either take a parameter which will be the `InputEvent` tuple
-        that has occurred, or the function can take no parameters at all.
+        The function to be called when the joystick middle click is pressed.
+        The function can either take a parameter which will be the
+        :class:`InputEvent` tuple that has occurred, or the function can take
+        no parameters at all.
 
-        Assign `None` to prevent this event from being fired.
+        Assign ``None`` to prevent this event from being fired.
         """
         return self._callbacks.get(DIRECTION_MIDDLE)
 
@@ -364,12 +390,13 @@ class SenseStick(object):
     @property
     def direction_any(self):
         """
-        The function to be called when the joystick is used. The function
-        can either take a parameter which will be the `InputEvent` tuple that
-        has occurred, or the function can take no parameters at all.
+        The function to be called when the joystick is used. The function can
+        either take a parameter which will be the :class:`InputEvent` tuple
+        that has occurred, or the function can take no parameters at all.
 
         This event will always be called *after* events associated with a
-        specific action. Assign `None` to prevent this event from being fired.
+        specific action. Assign ``None`` to prevent this event from being
+        fired.
         """
         return self._callbacks.get('*')
 

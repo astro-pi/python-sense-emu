@@ -19,6 +19,7 @@ import sys
 from .sense_hat import SenseHat, SenseHat as AstroPi
 from .stick import (
     SenseStick,
+    InputEvent,
     DIRECTION_UP,
     DIRECTION_DOWN,
     DIRECTION_LEFT,
