@@ -14,6 +14,7 @@ from __future__ import (
 str = type('')
 
 
+import sys
 import os
 import csv
 import logging
@@ -36,14 +37,18 @@ class DumpApplication(TerminalApplication):
     def __init__(self):
         super(DumpApplication, self).__init__(__version__)
         self.parser.add_argument(
-            '--timestamp-format', action='store', default='%Y-%m-%dT%H:%M:%S',
+            '--timestamp-format', action='store', default='%Y-%m-%dT%H:%M:%S.%f', metavar='FMT',
             help='the format to use when outputting the record timestamp '
             '(default: %(default)s)')
         self.parser.add_argument(
             '--header', action='store_true', default=False,
             help='if specified, output column headers')
         self.parser.add_argument('input', type=FileType('rb'))
-        self.parser.add_argument('output', type=FileType('w'))
+        # Eurgh ... csv module under Python 2 only outputs byte-strings
+        if sys.version_info.major == 2:
+            self.parser.add_argument('output', type=FileType('wb'))
+        else:
+            self.parser.add_argument('output', type=FileType('w', encoding='utf-8'))
 
     def source(self, f):
         logging.info('Reading header')
@@ -54,7 +59,7 @@ class DumpApplication(TerminalApplication):
             raise IOError('Unrecognized file version number (%d)' % ver)
         logging.info(
             'Dumping recording taken at %s',
-            dt.datetime.fromtimestamp(offset).strftime('%Y-%m-%d %H:%M:%S'))
+            dt.datetime.fromtimestamp(offset).strftime('%c'))
         offset = time() - offset
         while True:
             buf = f.read(DATA_REC.size)
@@ -77,7 +82,7 @@ class DumpApplication(TerminalApplication):
                 'compass_x', 'compass_y', 'compass_z',
                 'orient_x', 'orient_y', 'orient_z',
                 ))
-        for data in self.source(args.input):
+        for rec, data in enumerate(self.source(args.input)):
             writer.writerow((
                 dt.datetime.fromtimestamp(data.timestamp).strftime(args.timestamp_format),
                 data.pressure, data.ptemp,
@@ -87,6 +92,7 @@ class DumpApplication(TerminalApplication):
                 data.cx, data.cy, data.cz,
                 data.ox, data.oy, data.oz,
                 ))
+        logging.info('Converted %d records', rec)
 
 
 app = DumpApplication()

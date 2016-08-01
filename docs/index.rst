@@ -8,6 +8,10 @@ Table of Contents
 
     install
     examples
+    sense_rec
+    sense_play
+    sense_csv
+    sense_emu_gui
     api
     changelog
     license

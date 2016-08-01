@@ -34,16 +34,18 @@ class RecordApplication(TerminalApplication):
     def __init__(self):
         super(RecordApplication, self).__init__(__version__)
         self.parser.add_argument(
-            '-c', '--config', dest='config', action='store', default='/etc/RTIMULib.ini',
+            '-c', '--config', dest='config', action='store',
+            default='/etc/RTIMULib.ini', metavar='FILE',
             help='the Sense HAT configuration file to use (default: %(default)s)')
         self.parser.add_argument(
-            '-d', '--duration', dest='duration', action='store', default=0.0, type=float,
+            '-d', '--duration', dest='duration', action='store', default=0.0,
+            type=float, metavar='SECS',
             help='the duration to record for in seconds (default: record '
             'until terminated with Ctrl+C)')
         self.parser.add_argument(
             '-f', '--flush', dest='flush', action='store_true', default=False,
             help='flush every record to disk immediately; reduces chances of '
-            'truncated data, but greatly increases disk activity')
+            'truncated data on power loss, but greatly increases disk activity')
         self.parser.add_argument('output', type=FileType('wb'))
 
     def main(self, args):

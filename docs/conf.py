@@ -133,7 +133,12 @@ latex_documents = [
 
 # -- Options for manual page output ---------------------------------------
 
-man_pages = []
+man_pages = [
+    ('sense_emu_gui',  'sense_emu_gui',  'Sense HAT emulator',            [_setup.__author__], 1),
+    ('sense_rec',      'sense_rec',      'Sense HAT data recorder',       [_setup.__author__], 1),
+    ('sense_play',     'sense_play',     'Sense HAT emulator playback',   [_setup.__author__], 1),
+    ('sense_csv',      'sense_csv',      'Sense HAT CSV conversion tool', [_setup.__author__], 1),
+    ]
 
 #man_show_urls = False
 

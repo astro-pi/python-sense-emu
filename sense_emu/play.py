@@ -47,7 +47,7 @@ class PlayApplication(TerminalApplication):
             raise IOError('Unrecognized file version number (%d)' % ver)
         logging.info(
             'Playing back recording taken at %s',
-            dt.datetime.fromtimestamp(offset).strftime('%Y-%m-%d %H:%M:%S'))
+            dt.datetime.fromtimestamp(offset).strftime('%c'))
         offset = time() - offset
         while True:
             buf = f.read(DATA_REC.size)
@@ -63,10 +63,14 @@ class PlayApplication(TerminalApplication):
         imu = IMUServer(simulate_world=False)
         psensor = PressureServer(simulate_noise=False)
         hsensor = HumidityServer(simulate_noise=False)
+        skipped = 0
         for rec, data in enumerate(self.source(args.input)):
             now = time()
             if data.timestamp < now:
-                logging.warning('Skipping record %d to catch up', rec)
+                if not skipped:
+                    logging.warning('Skipping records to catch up')
+                skipped += 1
+                continue
             else:
                 sleep(data.timestamp - now)
             psensor.set_values(data.pressure, data.ptemp)
@@ -77,7 +81,9 @@ class PlayApplication(TerminalApplication):
                 (data.cx, data.cy, data.cz),
                 (data.ox, data.oy, data.oz),
                 )
-        logging.info('Finished playback')
+        if skipped:
+            logging.warning('Skipped %d records during playback', skipped)
+        logging.info('Finished playback of %d records', rec)
 
 
 app = PlayApplication()
