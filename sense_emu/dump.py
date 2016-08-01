@@ -23,7 +23,7 @@ from time import time, sleep
 from struct import Struct
 
 from . import __version__
-from .terminal import TerminalApplication
+from .terminal import TerminalApplication, FileType
 from .common import HEADER_REC, DATA_REC, DataRecord
 
 
@@ -42,8 +42,8 @@ class DumpApplication(TerminalApplication):
         self.parser.add_argument(
             '--header', action='store_true', default=False,
             help='if specified, output column headers')
-        self.parser.add_argument('input', type=argparse.FileType('rb'))
-        self.parser.add_argument('output', type=argparse.FileType('w'))
+        self.parser.add_argument('input', type=FileType('rb'))
+        self.parser.add_argument('output', type=FileType('w'))
 
     def source(self, f):
         logging.info('Reading header')

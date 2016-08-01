@@ -33,12 +33,23 @@ from __future__ import (
 str = type('')
 
 import sys
+import io
 import os
 import argparse
 import textwrap
 import logging
 import locale
 import traceback
+try:
+    from gettext import gettext as _, ngettext
+except ImportError:
+    def _(message):
+        return message
+    def ngettext(singular, plural, n):
+        if n == 1:
+            return singular
+        else:
+            return plural
 
 from . import configparser
 
@@ -59,6 +70,48 @@ _CONSOLE = logging.StreamHandler(sys.stderr)
 _CONSOLE.setFormatter(logging.Formatter('%(message)s'))
 _CONSOLE.setLevel(logging.DEBUG)
 logging.getLogger().addHandler(_CONSOLE)
+
+
+class FileType(object):
+    # Variant of argparse.FileType that handles binary stdin/stdout streams
+    # correctly under Python 3, and handles encoded text files correctly under
+    # Python 2
+    def __init__(self, mode='r', bufsize=-1, encoding=None, errors=None):
+        self._mode = mode
+        self._bufsize = bufsize
+        self._encoding = encoding
+        self._errors = errors
+
+    def __call__(self, string):
+        if string == '-':
+            if 'r' in self._mode:
+                if 'b' in self._mode:
+                    try:
+                        return sys.stdin.buffer
+                    except AttributeError:
+                        pass
+                return sys.stdin
+            elif 'w' in self._mode:
+                if 'b' in self._mode:
+                    try:
+                        return sys.stdout.buffer
+                    except AttributeError:
+                        pass
+                return sys.stdout
+            else:
+                raise ValueError(_('argument "-" with mode %r') % self._mode)
+        try:
+            return io.open(string, self._mode, self._bufsize, self._encoding, self._errors)
+        except IOError as e:
+            raise argparse.ArgumentTypeError(_("can't open '%s': %s") % (string, e))
+
+    def __repr__(self):
+        args = self._mode, self._bufsize
+        kwargs = [('encoding', self._encoding), ('errors', self._errors)]
+        args_str = ', '.join([repr(arg) for arg in args if arg != -1] +
+                             ['%s=%r' % (kw, arg) for kw, arg in kwargs
+                              if arg is not None])
+        return '%s(%s)' % (type(self).__name__, args_str)
 
 
 class TerminalApplication(object):

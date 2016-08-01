@@ -21,7 +21,7 @@ from time import time, sleep
 from struct import Struct
 
 from . import __version__
-from .terminal import TerminalApplication
+from .terminal import TerminalApplication, FileType
 from .common import HEADER_REC, DATA_REC
 
 
@@ -44,7 +44,7 @@ class RecordApplication(TerminalApplication):
             '-f', '--flush', dest='flush', action='store_true', default=False,
             help='flush every record to disk immediately; reduces chances of '
             'truncated data, but greatly increases disk activity')
-        self.parser.add_argument('output', type=argparse.FileType('wb'))
+        self.parser.add_argument('output', type=FileType('wb'))
 
     def main(self, args):
         try:

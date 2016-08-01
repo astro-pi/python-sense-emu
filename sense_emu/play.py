@@ -21,7 +21,7 @@ from time import time, sleep
 from struct import Struct
 
 from . import __version__
-from .terminal import TerminalApplication
+from .terminal import TerminalApplication, FileType
 from .common import HEADER_REC, DATA_REC, DataRecord
 from .imu import IMUServer
 from .pressure import PressureServer
@@ -36,7 +36,7 @@ class PlayApplication(TerminalApplication):
 
     def __init__(self):
         super(PlayApplication, self).__init__(__version__)
-        self.parser.add_argument('input', type=argparse.FileType('rb'))
+        self.parser.add_argument('input', type=FileType('rb'))
 
     def source(self, f):
         logging.info('Reading header')
