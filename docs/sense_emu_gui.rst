@@ -22,7 +22,7 @@ Usage
 
 The main window is divided into four parts. At the top left is a visual
 representation of the Sense HAT. Scripts using the emulator library
-(:ref:`sense_emu`) to set the HAT's LEDs will display the result here.
+(:mod:`sense_emu`) to set the HAT's LEDs will display the result here.
 
 At the top right, three sliders represent the temperature, pressure, and
 humidity of the emulated HAT's environment.
@@ -50,7 +50,7 @@ and that North is in the direction of the X axis.
 .. note::
 
     The emulator must be run prior to starting any scripts which expect to use
-    the :ref:`sense_emu` library. However, the emulator can be terminated (and
+    the :mod:`sense_emu` library. However, the emulator can be terminated (and
     restarted) while scripts using the library are running (obviously, when the
     emulator isn't running sensor errors can't be emulated and all sensor
     readings will appear fixed). Attempting to spawn more than one instance of
