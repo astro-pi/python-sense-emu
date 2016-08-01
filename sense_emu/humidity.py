@@ -11,6 +11,7 @@ from __future__ import (
     print_function,
     division,
     )
+nstr = str
 str = type('')
 
 import sys
@@ -32,7 +33,7 @@ from .common import clamp
 # See HTS221 data-sheet for details of register values
 HUMIDITY_FACTOR = 256
 TEMP_FACTOR = 64
-HUMIDITY_DATA = Struct(
+HUMIDITY_DATA = Struct(nstr(
     '@'   # native mode
     'B'   # humidity sensor type
     '6p'  # humidity sensor name
@@ -46,7 +47,7 @@ HUMIDITY_DATA = Struct(
     'h'   # T1_OUT
     'h'   # H_OUT
     'h'   # T_OUT
-    )
+    ))
 
 HumidityData = namedtuple('HumidityData',
     ('type', 'name', 'H0', 'H1', 'T0', 'T1', 'H0_OUT', 'H1_OUT', 'T0_OUT', 'T1_OUT', 'H_OUT', 'T_OUT'))

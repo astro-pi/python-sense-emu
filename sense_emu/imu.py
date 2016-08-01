@@ -35,7 +35,7 @@ from .common import clamp
 ACCEL_FACTOR = 4081.6327
 GYRO_FACTOR = 57.142857
 COMPASS_FACTOR = 7142.8571
-IMU_DATA = Struct(
+IMU_DATA = Struct(nstr(
     '@'   # native mode
     'B'   # IMU sensor type
     '20p' # IMU sensor name
@@ -43,7 +43,7 @@ IMU_DATA = Struct(
     'hhh' # OUT_X_G, OUT_Y_G, OUT_Z_G
     'hhh' # OUT_X_XL, OUT_Y_XL, OUT_Z_XL
     'hhh' # OUT_X_M, OUT_Y_M, OUT_Z_M
-    )
+    ))
 
 IMUData = namedtuple('IMUData', ('type', 'name', 'timestamp', 'accel', 'gyro', 'compass'))
 

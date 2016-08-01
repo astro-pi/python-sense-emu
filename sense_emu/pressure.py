@@ -11,6 +11,7 @@ from __future__ import (
     print_function,
     division,
     )
+nstr = str
 str = type('')
 
 import sys
@@ -33,14 +34,14 @@ from .common import clamp
 PRESSURE_FACTOR = 4096
 TEMP_OFFSET = 37
 TEMP_FACTOR = 480
-PRESSURE_DATA = Struct(
+PRESSURE_DATA = Struct(nstr(
     '@'   # native mode
     'B'   # pressure sensor type
     '6p'  # pressure sensor name
     'l'   # P_REF
     'l'   # P_OUT
     'h'   # T_OUT
-    )
+    ))
 
 PressureData = namedtuple('PressureData',
     ('type', 'name', 'P_REF', 'P_OUT', 'T_OUT'))
