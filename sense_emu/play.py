@@ -17,7 +17,6 @@ import os
 import logging
 import argparse
 import datetime as dt
-from threading import Thread, Event
 from time import time, sleep
 from struct import Struct
 

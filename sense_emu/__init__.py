@@ -75,6 +75,7 @@ __entry_points__ = {
     'console_scripts': [
         'sense_rec = sense_emu.record:app',
         'sense_play = sense_emu.play:app',
+        'sense_csv = sense_emu.dump:app',
         ],
     'gui_scripts': [
         'sense_emu_gui = sense_emu.gui:main',

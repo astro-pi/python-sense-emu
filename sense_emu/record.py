@@ -36,6 +36,14 @@ class RecordApplication(TerminalApplication):
         self.parser.add_argument(
             '-c', '--config', dest='config', action='store', default='/etc/RTIMULib.ini',
             help='the Sense HAT configuration file to use (default: %(default)s)')
+        self.parser.add_argument(
+            '-d', '--duration', dest='duration', action='store', default=0.0, type=float,
+            help='the duration to record for in seconds (default: record '
+            'until terminated with Ctrl+C)')
+        self.parser.add_argument(
+            '-f', '--flush', dest='flush', action='store_true', default=False,
+            help='flush every record to disk immediately; reduces chances of '
+            'truncated data, but greatly increases disk activity')
         self.parser.add_argument('output', type=argparse.FileType('wb'))
 
     def main(self, args):
@@ -65,6 +73,10 @@ class RecordApplication(TerminalApplication):
 
         logging.info('Starting output')
         rec_count = 0
+        if args.duration:
+            terminate_at = time() + args.duration
+        else:
+            terminate_at = time() + 1e100
         args.output.write(HEADER_REC.pack(b'SENSEHAT', 1, time()))
         status_stop = Event()
         def status():
@@ -94,7 +106,11 @@ class RecordApplication(TerminalApplication):
                         cx, cy, cz,
                         ox, oy, oz,
                         ))
+                    if args.flush:
+                        args.output.flush()
                     rec_count += 1
+                if timestamp > terminate_at:
+                    break
                 delay = max(0.0, timestamp + interval - time())
                 if delay:
                     sleep(delay)
