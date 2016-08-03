@@ -24,6 +24,7 @@ from collections import namedtuple
 from random import Random
 from time import time
 from threading import Thread, Event
+from math import isnan
 
 import numpy as np
 
@@ -41,10 +42,12 @@ PRESSURE_DATA = Struct(nstr(
     'l'   # P_REF
     'l'   # P_OUT
     'h'   # T_OUT
+    'B'   # P_VALID
+    'B'   # T_VALID
     ))
 
 PressureData = namedtuple('PressureData',
-    ('type', 'name', 'P_REF', 'P_OUT', 'T_OUT'))
+    ('type', 'name', 'P_REF', 'P_OUT', 'T_OUT', 'P_VALID', 'T_VALID'))
 
 
 def pressure_filename():
@@ -95,7 +98,7 @@ class PressureServer(object):
         self._map = mmap.mmap(self._fd.fileno(), 0, access=mmap.ACCESS_WRITE)
         data = self._read()
         if data.type != 3:
-            self._write(PressureData(3, b'LPS25H', 0, 0, 0))
+            self._write(PressureData(3, b'LPS25H', 0, 0, 0, 0, 0))
             self._pressure = 1013.0
             self._temperature = 20.0
         else:
@@ -185,7 +188,10 @@ class PressureServer(object):
             pressure = self.pressure
             temperature = self.temperature
         self._write(self._read()._replace(
-            P_OUT=int(clamp(pressure, 260, 1260) * PRESSURE_FACTOR),
-            T_OUT=int((clamp(temperature, -30, 105) - TEMP_OFFSET) * TEMP_FACTOR)))
+            P_VALID=not isnan(pressure),
+            T_VALID=not isnan(temperature),
+            P_OUT=0 if isnan(pressure) else int(clamp(pressure, 260, 1260) * PRESSURE_FACTOR),
+            T_OUT=0 if isnan(temperature) else int((clamp(temperature, -30, 105) - TEMP_OFFSET) * TEMP_FACTOR),
+            ))
 
 

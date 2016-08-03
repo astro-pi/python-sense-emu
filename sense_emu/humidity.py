@@ -24,6 +24,7 @@ from collections import namedtuple
 from random import Random
 from time import time
 from threading import Thread, Event
+from math import isnan
 
 import numpy as np
 
@@ -47,10 +48,14 @@ HUMIDITY_DATA = Struct(nstr(
     'h'   # T1_OUT
     'h'   # H_OUT
     'h'   # T_OUT
+    'B'   # H_VALID
+    'B'   # T_VALID
     ))
 
-HumidityData = namedtuple('HumidityData',
-    ('type', 'name', 'H0', 'H1', 'T0', 'T1', 'H0_OUT', 'H1_OUT', 'T0_OUT', 'T1_OUT', 'H_OUT', 'T_OUT'))
+HumidityData = namedtuple('HumidityData', (
+    'type', 'name', 'H0', 'H1', 'T0', 'T1', 'H0_OUT', 'H1_OUT',
+    'T0_OUT', 'T1_OUT', 'H_OUT', 'T_OUT', 'H_VALID', 'T_VALID')
+    )
 
 
 def humidity_filename():
@@ -102,7 +107,7 @@ class HumidityServer(object):
         self._map = mmap.mmap(self._fd.fileno(), 0, access=mmap.ACCESS_WRITE)
         data = self._read()
         if data.type != 2:
-            self._write(HumidityData(2, b'HTS221', 0, 100, 0, 100, 0, 25600, 0, 6400, 0, 0))
+            self._write(HumidityData(2, b'HTS221', 0, 100, 0, 100, 0, 25600, 0, 6400, 0, 0, 0, 0))
             self._humidity = 45.0
             self._temperature = 20.0
         else:
@@ -193,7 +198,10 @@ class HumidityServer(object):
             humidity = self.humidity
             temperature = self.temperature
         self._write(self._read()._replace(
-            H_OUT=int(clamp(humidity, 0, 100) * HUMIDITY_FACTOR),
-            T_OUT=int(clamp(temperature, -40, 120) * TEMP_FACTOR)))
+            H_VALID=not isnan(humidity),
+            T_VALID=not isnan(temperature),
+            H_OUT=0 if isnan(humidity) else int(clamp(humidity, 0, 100) * HUMIDITY_FACTOR),
+            T_OUT=0 if isnan(temperature) else int(clamp(temperature, -40, 120) * TEMP_FACTOR),
+            ))
 
 

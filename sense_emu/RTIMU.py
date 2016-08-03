@@ -183,8 +183,8 @@ class RTPressure(object):
         else:
             d = self._read()
             return (
-                1, d.P_OUT / PRESSURE_FACTOR,
-                1, d.T_OUT / TEMP_FACTOR + TEMP_OFFSET,
+                d.P_VALID, d.P_OUT / PRESSURE_FACTOR,
+                d.T_VALID, d.T_OUT / TEMP_FACTOR + TEMP_OFFSET,
                 )
 
     def pressureType(self):
@@ -230,8 +230,8 @@ class RTHumidity(object):
         else:
             d = self._read()
             return (
-                1, d.H_OUT * self._humidity_m + self._humidity_c,
-                1, d.T_OUT * self._temp_m + self._temp_c,
+                d.H_VALID, d.H_OUT * self._humidity_m + self._humidity_c,
+                d.T_VALID, d.T_OUT * self._temp_m + self._temp_c,
                 )
 
     def humidityType(self):

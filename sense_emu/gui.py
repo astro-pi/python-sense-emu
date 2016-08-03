@@ -15,6 +15,7 @@ str = type('')
 
 
 import io
+import os
 import sys
 import atexit
 import struct
@@ -80,7 +81,7 @@ class EmuApplication(Gtk.Application):
 
     def do_shutdown(self):
         if self.window:
-            self.window.close()
+            self.window.destroy()
             self.window = None
         self.stick.close()
         self.screen.close()
@@ -91,7 +92,7 @@ class EmuApplication(Gtk.Application):
 
     def do_activate(self):
         if not self.window:
-            self.window = EmuWindow(application=self)
+            self.window = EmuWindow(application=self, title="Sense HAT Emulator")
         self.window.present()
 
     def do_command_line(self, command_line):
@@ -101,196 +102,139 @@ class EmuApplication(Gtk.Application):
         return 0
 
     def on_about(self, action, param):
-        about_dialog = Gtk.AboutDialog(
-            transient_for=self.window.window, modal=True)
+        about_dialog = Gtk.AboutDialog(transient_for=self.window, modal=True)
         about_dialog.present()
 
     def on_play(self, action, param):
         open_dialog = Gtk.FileChooserDialog(
-            title='Select the recording to play', transient_for=self.window.window,
+            title='Select the recording to play', transient_for=self.window,
             action=Gtk.FileChooserAction.OPEN)
         open_dialog.add_button(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL)
         open_dialog.add_button(Gtk.STOCK_OPEN, Gtk.ResponseType.ACCEPT)
         try:
             response = open_dialog.run()
+            open_dialog.hide()
             if response == Gtk.ResponseType.ACCEPT:
-                play_thread = Thread(target=self.play_filename, args=(open_dialog.get_filename(),))
-                play_thread.start()
+                self.window.play(open_dialog.get_filename())
         finally:
             open_dialog.destroy()
 
     def on_quit(self, action, param):
         self.quit()
 
-    def play_decoder(self, f):
-        magic, ver, offset = HEADER_REC.unpack(f.read(HEADER_REC.size))
-        if magic != b'SENSEHAT':
-            raise IOError('Invalid magic number at start of input')
-        if ver != 1:
-            raise IOError('Unrecognized file version number (%d)' % ver)
-        offset = time() - offset
-        while True:
-            buf = f.read(DATA_REC.size)
-            if not buf:
-                break
-            elif len(buf) < DATA_REC.size:
-                raise IOError('Incomplete data record at end of file')
-            else:
-                data = DataRecord(*DATA_REC.unpack(buf))
-                yield data._replace(timestamp=data.timestamp + offset)
 
-    def play_filename(self, filename):
-        with io.open(filename, 'rb') as f:
-            self.pressure.simulate_noise = False
-            self.humidity.simulate_noise = False
-            self.imu.simulate_world = False
-            try:
-                rec_total = (f.seek(0, io.SEEK_END) - HEADER_REC.size) // DATA_REC.size
-                f.seek(0)
-                skipped = 0
-                for rec, data in enumerate(self.play_decoder(f)):
-                    now = time()
-                    if data.timestamp < now:
-                        skipped += 1
-                        continue
-                    else:
-                        sleep(data.timestamp - now)
-                    self.pressure.set_values(data.pressure, data.ptemp)
-                    self.humidity.set_values(data.humidity, data.htemp)
-                    self.imu.set_imu_values(
-                        (data.ax, data.ay, data.az),
-                        (data.gx, data.gy, data.gz),
-                        (data.cx, data.cy, data.cz),
-                        (data.ox, data.oy, data.oz),
-                        )
-                # XXX Message dialog for skipped?
-            except IOError as e:
-                # XXX Message dialog for IOError
-                pass
-            finally:
-                self.imu.simulate_world = True
-                self.humidity.simulate_noise = True
-                self.pressure.simulate_noise = True
+class BuilderUi(object):
+    def __init__(self, owner, filename):
+        # Load the GUI definitions (see __getattr__ for how we tie the loaded
+        # objects into instance variables) and connect all handlers to methods
+        # on this object
+        self._builder = Gtk.Builder.new_from_string(
+            pkg_resources.resource_string(__name__, filename).decode('utf-8'), -1)
+        self._builder.connect_signals(owner)
+
+    def __getattr__(self, name):
+        result = self._builder.get_object(name)
+        if result is None:
+            raise AttributeError('No such attribute %r' % name)
+        setattr(self, name, result)
+        return result
 
 
-class EmuWindow(object):
-    def __init__(self, application):
-        super(EmuWindow, self).__init__()
+class EmuWindow(Gtk.ApplicationWindow):
+    def __init__(self, *args, **kwargs):
+        super(EmuWindow, self).__init__(*args, **kwargs)
 
-        # Load the GUI definitions and connect the handlers
-        builder = Gtk.Builder.new_from_string(
-            pkg_resources.resource_string(__name__, 'sense_emu_gui.glade').decode('utf-8'), -1)
-        builder.connect_signals(self)
-        for name in (
-            'window',
-            'humidity_scale',
-            'pressure_scale',
-            'temperature_scale',
-            'humidity',
-            'pressure',
-            'temperature',
-            'left_button',
-            'right_button',
-            'up_button',
-            'down_button',
-            'enter_button',
-            'screen_image',
-            'yaw',
-            'pitch',
-            'roll',
-            'yaw_scale',
-            'pitch_scale',
-            'roll_scale',
-            'yaw_image',
-            'pitch_image',
-            'roll_image',
-            ):
-            setattr(self, name, builder.get_object(name))
-        self.application = application
-        # XXX Fixed points on environment scales?
-        #self.humidity_scale.add_mark(50, Gtk.PositionType.LEFT, None)
-        #self.temperature_scale.add_mark(0, Gtk.PositionType.LEFT, None)
-        #self.temperature_scale.add_mark(100, Gtk.PositionType.LEFT, None)
-        #self.pressure_scale.add_mark(1000, Gtk.PositionType.LEFT, None)
-        self.pitch_scale.add_mark(0, Gtk.PositionType.BOTTOM, None)
-        self.roll_scale.add_mark(0, Gtk.PositionType.BOTTOM, None)
-        self.yaw_scale.add_mark(0, Gtk.PositionType.BOTTOM, None)
-        self.pitch.props.value = self.application.imu.orientation[0]
-        self.roll.props.value = self.application.imu.orientation[1]
-        self.yaw.props.value = self.application.imu.orientation[2]
-        self.humidity.props.value = self.application.humidity.humidity
-        self.pressure.props.value = self.application.pressure.pressure
-        self.temperature.props.value = self.application.humidity.temperature
+        # Build the UI; this is a bit round-about because of Gtk's weird UI
+        # handling. One can't just use a UI file to setup an existing Window
+        # instance (as in Qt); instead one must use a separate handler object
+        # (in which case overriding do_destroy is impossible) or construct a
+        # whole new Window, remove its components, add them to ourselves and
+        # then ditch the Window.
+        self._ui = BuilderUi(self, 'sense_emu_gui.glade')
+        self.ui.window.remove(self.ui.root_grid)
+        self.add(self.ui.root_grid)
+        self.ui.window.destroy()
+
+        # Set up the objects for the playback thread
+        self._play_event = Event()
+        self._play_thread = None
+
+        # Set initial positions on sliders (and add some marks)
+        self.ui.pitch_scale.add_mark(0, Gtk.PositionType.BOTTOM, None)
+        self.ui.roll_scale.add_mark(0, Gtk.PositionType.BOTTOM, None)
+        self.ui.yaw_scale.add_mark(0, Gtk.PositionType.BOTTOM, None)
+        self.ui.pitch.props.value = self.props.application.imu.orientation[0]
+        self.ui.roll.props.value = self.props.application.imu.orientation[1]
+        self.ui.yaw.props.value = self.props.application.imu.orientation[2]
+        self.ui.humidity.props.value = self.props.application.humidity.humidity
+        self.ui.pressure.props.value = self.props.application.pressure.pressure
+        self.ui.temperature.props.value = self.props.application.humidity.temperature
 
         # Load graphics assets
         self.sense_image = load_png('sense_emu.png')
         self.pixel_grid = load_png('pixel_grid.png')
-        self.yaw_image.set_from_pixbuf(load_png('yaw.png'))
-        self.pitch_image.set_from_pixbuf(load_png('pitch.png'))
-        self.roll_image.set_from_pixbuf(load_png('roll.png'))
+        self.ui.yaw_image.set_from_pixbuf(load_png('yaw.png'))
+        self.ui.pitch_image.set_from_pixbuf(load_png('pitch.png'))
+        self.ui.roll_image.set_from_pixbuf(load_png('roll.png'))
 
         # Set up attributes for the joystick buttons
         self._stick_held_id = 0
-        self.left_button.direction = SenseStick.KEY_LEFT
-        self.right_button.direction = SenseStick.KEY_RIGHT
-        self.up_button.direction = SenseStick.KEY_UP
-        self.down_button.direction = SenseStick.KEY_DOWN
-        self.enter_button.direction = SenseStick.KEY_ENTER
+        self.ui.left_button.direction = SenseStick.KEY_LEFT
+        self.ui.right_button.direction = SenseStick.KEY_RIGHT
+        self.ui.up_button.direction = SenseStick.KEY_UP
+        self.ui.down_button.direction = SenseStick.KEY_DOWN
+        self.ui.enter_button.direction = SenseStick.KEY_ENTER
 
         # Set up a thread to constantly refresh the pixels from the screen
         # client object
         self._screen_pending = False
         self._screen_timestamp = 0.0
         self._screen_event = Event()
-        self._screen_thread = Thread(target=self._update_screen)
+        self._screen_thread = Thread(target=self._screen_run)
         self._screen_thread.daemon = True
         self._screen_thread.start()
 
-        self.window.show_all()
-
     @property
-    def application(self):
-        return self.window.props.application
+    def ui(self):
+        return self._ui
 
-    @application.setter
-    def application(self, value):
-        self.window.props.application = value
-
-    def present(self):
-        self.window.present()
-
-    def close(self):
+    def do_destroy(self):
         try:
+            self._play_stop()
             self._screen_event.set()
             self._screen_thread.join()
         except AttributeError:
             # do_destroy gets called multiple times, and subsequent times lacks
             # the Python-added instance attributes
             pass
-        self.window.destroy()
+        Gtk.ApplicationWindow.do_destroy(self)
 
     def pressure_changed(self, adjustment):
-        self.application.pressure.set_values(
-            self.pressure.props.value,
-            self.temperature.props.value,
-            )
+        if not self._play_thread:
+            self.props.application.pressure.set_values(
+                self.ui.pressure.props.value,
+                self.ui.temperature.props.value,
+                )
 
     def humidity_changed(self, adjustment):
-        self.application.humidity.set_values(
-            self.humidity.props.value,
-            self.temperature.props.value,
-            )
+        if not self._play_thread:
+            self.props.application.humidity.set_values(
+                self.ui.humidity.props.value,
+                self.ui.temperature.props.value,
+                )
 
     def temperature_changed(self, adjustment):
-        self.pressure_changed(adjustment)
-        self.humidity_changed(adjustment)
+        if not self._play_thread:
+            self.pressure_changed(adjustment)
+            self.humidity_changed(adjustment)
 
     def orientation_changed(self, adjustment):
-        self.application.imu.set_orientation((
-            self.pitch.props.value,
-            self.roll.props.value,
-            self.yaw.props.value,
-            ))
+        if not self._play_thread:
+            self.props.application.imu.set_orientation((
+                self.ui.pitch.props.value,
+                self.ui.roll.props.value,
+                self.ui.yaw.props.value,
+                ))
 
     def stick_pressed(self, button, event):
         # XXX This shouldn't be necessary, but GTK seems to fire stick_pressed
@@ -323,16 +267,21 @@ class EmuWindow(object):
         tv_usec *= 1000000
         event_rec = struct.pack(SenseStick.EVENT_FORMAT,
             int(tv_sec), int(tv_usec), SenseStick.EV_KEY, direction, action)
-        self.application.stick.send(event_rec)
+        self.props.application.stick.send(event_rec)
 
-    def _update_screen(self):
+    def _screen_run(self):
+        # This method runs in the background _screen_thread
         while True:
+            # Only update the screen if there's no idle callback pending from
+            # a prior update
             if not self._screen_pending:
-                ts = self.application.screen.timestamp
+                # Only update if the screen's modification timestamp indicates
+                # that the data has changed since last time
+                ts = self.props.application.screen.timestamp
                 if ts > self._screen_timestamp:
                     img = self.sense_image.copy()
                     pixels = GdkPixbuf.Pixbuf.new_from_bytes(
-                        GLib.Bytes.new(self.application.screen.rgb_array.tostring()),
+                        GLib.Bytes.new(self.props.application.screen.rgb_array.tostring()),
                         colorspace=GdkPixbuf.Colorspace.RGB, has_alpha=False,
                         bits_per_sample=8, width=8, height=8, rowstride=8 * 3)
                     pixels.composite(img, 31, 38, 128, 128, 31, 38, 16, 16,
@@ -341,14 +290,122 @@ class EmuWindow(object):
                         GdkPixbuf.InterpType.NEAREST, 255)
                     self._screen_pending = True
                     self._screen_timestamp = ts
-                    GLib.idle_add(self._copy_to_image, img)
+                    # GTK updates must be done by the main thread; schedule
+                    # the image to be redrawn when the app is idle. It would
+                    # be better to use custom signals for this ... but then
+                    # pixman bugs start appearing
+                    self._screen_pixbuf = img
+                    GLib.idle_add(self._update_screen, img)
+            # The following wait ensures a maximum update rate of 25fps (the
+            # actual HAT is faster, but on small Pi's increasing the rate
+            # reduces performance)
             if self._screen_event.wait(0.04):
                 break
 
-    def _copy_to_image(self, pixbuf):
-        self.screen_image.set_from_pixbuf(pixbuf)
+    def _update_screen(self, pixbuf):
+        self.ui.screen_image.set_from_pixbuf(self._screen_pixbuf)
         self._screen_pending = False
         return False
+
+    def _play_run(self, f):
+        try:
+            rec_total = (f.seek(0, io.SEEK_END) - HEADER_REC.size) // DATA_REC.size
+            f.seek(0)
+            skipped = 0
+            for rec, data in enumerate(self._play_source(f)):
+                now = time()
+                if data.timestamp < now:
+                    skipped += 1
+                    continue
+                else:
+                    if self._play_event.wait(data.timestamp - now):
+                        break
+                self.props.application.pressure.set_values(data.pressure, data.ptemp)
+                self.props.application.humidity.set_values(data.humidity, data.htemp)
+                self.props.application.imu.set_imu_values(
+                    (data.ax, data.ay, data.az),
+                    (data.gx, data.gy, data.gz),
+                    (data.cx, data.cy, data.cz),
+                    (data.ox, data.oy, data.oz),
+                    )
+                # Again, would be better to use custom signals here but
+                # attempting to do so just results in seemingly random
+                # segfaults ...
+                GLib.idle_add(self._play_update_controls, rec / rec_total)
+        finally:
+            f.close()
+            # Get the main thread to re-enable the controls at the end of
+            # playback
+            GLib.idle_add(self._play_controls_finish)
+
+    def play_stop_clicked(self, button):
+        self._play_stop()
+
+    def _play_stop(self):
+        if self._play_thread:
+            self._play_event.set()
+            self._play_thread.join()
+            self._play_thread = None
+
+    def _play_source(self, f):
+        magic, ver, offset = HEADER_REC.unpack(f.read(HEADER_REC.size))
+        if magic != b'SENSEHAT':
+            raise IOError('Invalid magic number at start of input')
+        if ver != 1:
+            raise IOError('Unrecognized file version number (%d)' % ver)
+        offset = time() - offset
+        while True:
+            buf = f.read(DATA_REC.size)
+            if not buf:
+                break
+            elif len(buf) < DATA_REC.size:
+                raise IOError('Incomplete data record at end of file')
+            else:
+                data = DataRecord(*DATA_REC.unpack(buf))
+                yield data._replace(timestamp=data.timestamp + offset)
+
+    def _play_controls_setup(self, filename):
+        # Disable simulation threads as we're going to manipulate the
+        # values precisely
+        self.props.application.pressure.simulate_noise = False
+        self.props.application.humidity.simulate_noise = False
+        self.props.application.imu.simulate_world = False
+        # Disable all the associated user controls while playing back
+        self.ui.environ_box.props.sensitive = False
+        self.ui.gyro_grid.props.sensitive = False
+        # Show the playback bar
+        self.ui.play_label.props.label = "Playing %s" % os.path.basename(filename)
+        self.ui.play_progressbar.props.fraction = 0.0
+        self.ui.play_box.props.visible = True
+
+    def _play_controls_finish(self):
+        self.ui.environ_box.props.sensitive = True
+        self.ui.gyro_grid.props.sensitive = True
+        self.props.application.imu.simulate_world = True
+        self.props.application.humidity.simulate_noise = True
+        self.props.application.pressure.simulate_noise = True
+        self.ui.play_box.props.visible = False
+        self._play_stop()
+
+    def _play_update_controls(self, fraction):
+        self.ui.play_progressbar.props.fraction = fraction
+        if not math.isnan(self.props.application.humidity.temperature):
+            self.ui.temperature.props.value = self.props.application.humidity.temperature
+        if not math.isnan(self.props.application.pressure.pressure):
+            self.ui.pressure.props.value = self.props.application.pressure.pressure
+        if not math.isnan(self.props.application.humidity.humidity):
+            self.ui.humidity.props.value = self.props.application.humidity.humidity
+        self.ui.yaw.props.value = math.degrees(self.props.application.imu.orientation[2])
+        self.ui.pitch.props.value = math.degrees(self.props.application.imu.orientation[1])
+        self.ui.roll.props.value = math.degrees(self.props.application.imu.orientation[0])
+        return False
+
+    def play(self, filename):
+        self._play_stop()
+        self._play_controls_setup(filename)
+        self._play_thread = Thread(target=self._play_run, args=(io.open(filename, 'rb'),))
+        self._play_event.clear()
+        self._play_thread.start()
 
 
 def main():
