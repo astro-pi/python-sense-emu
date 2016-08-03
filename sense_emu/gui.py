@@ -373,26 +373,26 @@ class EmuWindow(Gtk.ApplicationWindow):
                 yield data._replace(timestamp=data.timestamp + offset)
 
     def _play_controls_setup(self, filename):
+        # Disable all the associated user controls while playing back
+        self.ui.environ_box.props.sensitive = False
+        self.ui.gyro_grid.props.sensitive = False
         # Disable simulation threads as we're going to manipulate the
         # values precisely
         self.props.application.pressure.simulate_noise = False
         self.props.application.humidity.simulate_noise = False
         self.props.application.imu.simulate_world = False
-        # Disable all the associated user controls while playing back
-        self.ui.environ_box.props.sensitive = False
-        self.ui.gyro_grid.props.sensitive = False
         # Show the playback bar
         self.ui.play_label.props.label = "Playing %s" % os.path.basename(filename)
         self.ui.play_progressbar.props.fraction = 0.0
         self.ui.play_box.props.visible = True
 
     def _play_controls_finish(self):
-        self.ui.environ_box.props.sensitive = True
-        self.ui.gyro_grid.props.sensitive = True
+        self.ui.play_box.props.visible = False
         self.props.application.imu.simulate_world = True
         self.props.application.humidity.simulate_noise = True
         self.props.application.pressure.simulate_noise = True
-        self.ui.play_box.props.visible = False
+        self.ui.environ_box.props.sensitive = True
+        self.ui.gyro_grid.props.sensitive = True
         self._play_stop()
 
     def _play_update_controls(self, fraction):
