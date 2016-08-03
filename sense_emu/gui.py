@@ -164,6 +164,8 @@ class EmuWindow(Gtk.ApplicationWindow):
         self.ui.window.destroy()
 
         # Set up the objects for the playback thread
+        self._play_update_lock = Lock()
+        self._play_update_id = 0
         self._play_event = Event()
         self._play_thread = None
 
@@ -186,6 +188,7 @@ class EmuWindow(Gtk.ApplicationWindow):
         self.ui.roll_image.set_from_pixbuf(load_image('roll.png'))
 
         # Set up attributes for the joystick buttons
+        self._stick_held_lock = Lock()
         self._stick_held_id = 0
         self.ui.left_button.direction = SenseStick.KEY_LEFT
         self.ui.right_button.direction = SenseStick.KEY_RIGHT
@@ -248,21 +251,24 @@ class EmuWindow(Gtk.ApplicationWindow):
         # XXX This shouldn't be necessary, but GTK seems to fire stick_pressed
         # twice in quick succession (with no intervening stick_released) when
         # a button is double-clicked
-        if self._stick_held_id:
-            GLib.source_remove(self._stick_held_id)
-        self._stick_held_id = GLib.timeout_add(250, self.stick_held_first, button)
+        with self._stick_held_lock:
+            if self._stick_held_id:
+                GLib.source_remove(self._stick_held_id)
+            self._stick_held_id = GLib.timeout_add(250, self.stick_held_first, button)
         self._stick_send(button.direction, SenseStick.STATE_PRESS)
         return False
 
     def stick_released(self, button, event):
-        if self._stick_held_id:
-            GLib.source_remove(self._stick_held_id)
-            self._stick_held_id = 0
+        with self._stick_held_lock:
+            if self._stick_held_id:
+                GLib.source_remove(self._stick_held_id)
+                self._stick_held_id = 0
         self._stick_send(button.direction, SenseStick.STATE_RELEASE)
         return False
 
     def stick_held_first(self, button):
-        self._stick_held_id = GLib.timeout_add(50, self.stick_held, button)
+        with self._stick_held_lock:
+            self._stick_held_id = GLib.timeout_add(50, self.stick_held, button)
         self._stick_send(button.direction, SenseStick.STATE_HOLD)
         return False
 
@@ -339,12 +345,36 @@ class EmuWindow(Gtk.ApplicationWindow):
                 # Again, would be better to use custom signals here but
                 # attempting to do so just results in seemingly random
                 # segfaults ...
-                GLib.idle_add(self._play_update_controls, rec / rec_total)
+                with self._play_update_lock:
+                    if self._play_update_id == 0:
+                        self._play_update_id = GLib.idle_add(self._play_update_controls, rec / rec_total)
         finally:
             f.close()
+            # Must ensure that controls are only re-enabled *after* all pending
+            # control updates have run
+            while True:
+                with self._play_update_lock:
+                    if self._play_update_id == 0:
+                        break
+                sleep(0.01)
             # Get the main thread to re-enable the controls at the end of
             # playback
             GLib.idle_add(self._play_controls_finish)
+
+    def _play_update_controls(self, fraction):
+        self.ui.play_progressbar.props.fraction = fraction
+        if not math.isnan(self.props.application.humidity.temperature):
+            self.ui.temperature.props.value = self.props.application.humidity.temperature
+        if not math.isnan(self.props.application.pressure.pressure):
+            self.ui.pressure.props.value = self.props.application.pressure.pressure
+        if not math.isnan(self.props.application.humidity.humidity):
+            self.ui.humidity.props.value = self.props.application.humidity.humidity
+        self.ui.yaw.props.value = math.degrees(self.props.application.imu.orientation[2])
+        self.ui.pitch.props.value = math.degrees(self.props.application.imu.orientation[1])
+        self.ui.roll.props.value = math.degrees(self.props.application.imu.orientation[0])
+        with self._play_update_lock:
+            self._play_update_id = 0
+        return False
 
     def play_stop_clicked(self, button):
         self._play_stop()
@@ -394,19 +424,6 @@ class EmuWindow(Gtk.ApplicationWindow):
         self.ui.environ_box.props.sensitive = True
         self.ui.gyro_grid.props.sensitive = True
         self._play_stop()
-
-    def _play_update_controls(self, fraction):
-        self.ui.play_progressbar.props.fraction = fraction
-        if not math.isnan(self.props.application.humidity.temperature):
-            self.ui.temperature.props.value = self.props.application.humidity.temperature
-        if not math.isnan(self.props.application.pressure.pressure):
-            self.ui.pressure.props.value = self.props.application.pressure.pressure
-        if not math.isnan(self.props.application.humidity.humidity):
-            self.ui.humidity.props.value = self.props.application.humidity.humidity
-        self.ui.yaw.props.value = math.degrees(self.props.application.imu.orientation[2])
-        self.ui.pitch.props.value = math.degrees(self.props.application.imu.orientation[1])
-        self.ui.roll.props.value = math.degrees(self.props.application.imu.orientation[0])
-        return False
 
     def play(self, filename):
         self._play_stop()
