@@ -352,11 +352,10 @@ class EmuWindow(Gtk.ApplicationWindow):
             f.close()
             # Must ensure that controls are only re-enabled *after* all pending
             # control updates have run
-            while True:
-                with self._play_update_lock:
-                    if self._play_update_id == 0:
-                        break
-                sleep(0.01)
+            with self._play_update_lock:
+                if self._play_update_id:
+                    GLib.source_remove(self._play_update_id)
+                    self._play_update_id = 0
             # Get the main thread to re-enable the controls at the end of
             # playback
             GLib.idle_add(self._play_controls_finish)
