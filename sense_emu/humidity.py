@@ -118,7 +118,7 @@ class HumidityServer(object):
         self._noise_write()
         # The queue lengths are selected to accurately represent the response
         # time of the sensors
-        self._humidities = np.full((77,), self._humidity, dtype=np.float)
+        self._humidities = np.full((10,), self._humidity, dtype=np.float)
         self._temperatures = np.full((31,), self._temperature, dtype=np.float)
         self.simulate_noise = simulate_noise
 

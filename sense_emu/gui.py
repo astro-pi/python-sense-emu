@@ -29,6 +29,7 @@ from gi.repository import Gtk, Gdk, GdkPixbuf, Gio, GLib, GObject
 import numpy as np
 import pkg_resources
 
+from . import __version__, __author__, __author_email__, __url__
 from .screen import ScreenClient
 from .imu import IMUServer
 from .pressure import PressureServer
@@ -37,8 +38,8 @@ from .stick import StickServer, SenseStick
 from .common import HEADER_REC, DATA_REC, DataRecord
 
 
-def load_png(filename):
-    loader = GdkPixbuf.PixbufLoader.new_with_type('png')
+def load_image(filename, format='png'):
+    loader = GdkPixbuf.PixbufLoader.new_with_type(format)
     loader.write(pkg_resources.resource_string(__name__, filename))
     loader.close()
     return loader.get_pixbuf()
@@ -50,6 +51,7 @@ class EmuApplication(Gtk.Application):
                 *args, application_id='org.raspberrypi.sense_hat_emu',
                 flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE,
                 **kwargs)
+        GLib.set_application_name('Sense HAT Emulator')
         self.window = None
 
     def do_startup(self):
@@ -92,7 +94,7 @@ class EmuApplication(Gtk.Application):
 
     def do_activate(self):
         if not self.window:
-            self.window = EmuWindow(application=self, title="Sense HAT Emulator")
+            self.window = EmuWindow(application=self)
         self.window.present()
 
     def do_command_line(self, command_line):
@@ -102,8 +104,14 @@ class EmuApplication(Gtk.Application):
         return 0
 
     def on_about(self, action, param):
-        about_dialog = Gtk.AboutDialog(transient_for=self.window, modal=True)
-        about_dialog.present()
+        logo = load_image('sense_emu_gui.svg', format='svg')
+        about_dialog = Gtk.AboutDialog(
+            transient_for=self.window, modal=True,
+            authors=['%s <%s>' % (__author__, __author_email__)],
+            license_type=Gtk.License.BSD, logo=logo,
+            version=__version__, website=__url__)
+        about_dialog.run()
+        about_dialog.destroy()
 
     def on_play(self, action, param):
         open_dialog = Gtk.FileChooserDialog(
@@ -171,11 +179,11 @@ class EmuWindow(Gtk.ApplicationWindow):
         self.ui.temperature.props.value = self.props.application.humidity.temperature
 
         # Load graphics assets
-        self.sense_image = load_png('sense_emu.png')
-        self.pixel_grid = load_png('pixel_grid.png')
-        self.ui.yaw_image.set_from_pixbuf(load_png('yaw.png'))
-        self.ui.pitch_image.set_from_pixbuf(load_png('pitch.png'))
-        self.ui.roll_image.set_from_pixbuf(load_png('roll.png'))
+        self.sense_image = load_image('sense_emu.png')
+        self.pixel_grid = load_image('pixel_grid.png')
+        self.ui.yaw_image.set_from_pixbuf(load_image('yaw.png'))
+        self.ui.pitch_image.set_from_pixbuf(load_image('pitch.png'))
+        self.ui.roll_image.set_from_pixbuf(load_image('roll.png'))
 
         # Set up attributes for the joystick buttons
         self._stick_held_id = 0

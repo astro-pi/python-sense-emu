@@ -99,8 +99,8 @@ By default, only the data is output, with the columns defined as follows:
 
 14. Compass Z-axis.
 
-15. Orientation X-axis - the computed orientation of the HAT as degrees
-    rotation about the X-axis.
+15. Orientation X-axis - the computed orientation of the HAT as radians
+    rotation (-π to +π) about the X-axis.
 
 16. Orientation Y-axis.
 
