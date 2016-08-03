@@ -322,6 +322,7 @@ class EmuWindow(Gtk.ApplicationWindow):
         return False
 
     def _play_run(self, f):
+        err = None
         try:
             rec_total = (f.seek(0, io.SEEK_END) - HEADER_REC.size) // DATA_REC.size
             f.seek(0)
@@ -348,6 +349,8 @@ class EmuWindow(Gtk.ApplicationWindow):
                 with self._play_update_lock:
                     if self._play_update_id == 0:
                         self._play_update_id = GLib.idle_add(self._play_update_controls, rec / rec_total)
+        except Exception as e:
+            err = e
         finally:
             f.close()
             # Must ensure that controls are only re-enabled *after* all pending
@@ -358,9 +361,11 @@ class EmuWindow(Gtk.ApplicationWindow):
                     self._play_update_id = 0
             # Get the main thread to re-enable the controls at the end of
             # playback
-            GLib.idle_add(self._play_controls_finish)
+            GLib.idle_add(self._play_controls_finish, err)
 
     def _play_update_controls(self, fraction):
+        with self._play_update_lock:
+            self._play_update_id = 0
         self.ui.play_progressbar.props.fraction = fraction
         if not math.isnan(self.props.application.humidity.temperature):
             self.ui.temperature.props.value = self.props.application.humidity.temperature
@@ -371,8 +376,6 @@ class EmuWindow(Gtk.ApplicationWindow):
         self.ui.yaw.props.value = math.degrees(self.props.application.imu.orientation[2])
         self.ui.pitch.props.value = math.degrees(self.props.application.imu.orientation[1])
         self.ui.roll.props.value = math.degrees(self.props.application.imu.orientation[0])
-        with self._play_update_lock:
-            self._play_update_id = 0
         return False
 
     def play_stop_clicked(self, button):
@@ -387,16 +390,16 @@ class EmuWindow(Gtk.ApplicationWindow):
     def _play_source(self, f):
         magic, ver, offset = HEADER_REC.unpack(f.read(HEADER_REC.size))
         if magic != b'SENSEHAT':
-            raise IOError('Invalid magic number at start of input')
+            raise IOError('%s is not a Sense HAT recording' % f.name)
         if ver != 1:
-            raise IOError('Unrecognized file version number (%d)' % ver)
+            raise IOError('%s has unrecognized file version number (%d)' % (f.name, ver))
         offset = time() - offset
         while True:
             buf = f.read(DATA_REC.size)
             if not buf:
                 break
             elif len(buf) < DATA_REC.size:
-                raise IOError('Incomplete data record at end of file')
+                raise IOError('Incomplete data record at end of %s' % f.name)
             else:
                 data = DataRecord(*DATA_REC.unpack(buf))
                 yield data._replace(timestamp=data.timestamp + offset)
@@ -415,7 +418,7 @@ class EmuWindow(Gtk.ApplicationWindow):
         self.ui.play_progressbar.props.fraction = 0.0
         self.ui.play_box.props.visible = True
 
-    def _play_controls_finish(self):
+    def _play_controls_finish(self, exc):
         self.ui.play_box.props.visible = False
         self.props.application.imu.simulate_world = True
         self.props.application.humidity.simulate_noise = True
@@ -423,6 +426,13 @@ class EmuWindow(Gtk.ApplicationWindow):
         self.ui.environ_box.props.sensitive = True
         self.ui.gyro_grid.props.sensitive = True
         self._play_stop()
+        if exc:
+            dialog = Gtk.MessageDialog(
+                self, 0, Gtk.MessageType.ERROR, Gtk.ButtonsType.CLOSE,
+                'Error while replaying recording')
+            dialog.format_secondary_text(str(exc))
+            dialog.run()
+            dialog.destroy()
 
     def play(self, filename):
         self._play_stop()
