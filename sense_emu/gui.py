@@ -414,11 +414,12 @@ class EmuWindow(Gtk.ApplicationWindow):
         self.props.application.humidity.simulate_noise = False
         self.props.application.imu.simulate_world = False
         # Show the playback bar
-        self.ui.play_label.props.label = "Playing %s" % os.path.basename(filename)
+        self.ui.play_label.props.label = 'Playing %s' % os.path.basename(filename)
         self.ui.play_progressbar.props.fraction = 0.0
         self.ui.play_box.props.visible = True
 
     def _play_controls_finish(self, exc):
+        # Reverse _play_controls_setup
         self.ui.play_box.props.visible = False
         self.props.application.imu.simulate_world = True
         self.props.application.humidity.simulate_noise = True
@@ -426,10 +427,13 @@ class EmuWindow(Gtk.ApplicationWindow):
         self.ui.environ_box.props.sensitive = True
         self.ui.gyro_grid.props.sensitive = True
         self._play_stop()
+        # If an exception occurred in the background thread, display the
+        # error in an appropriate dialog
         if exc:
             dialog = Gtk.MessageDialog(
-                self, 0, Gtk.MessageType.ERROR, Gtk.ButtonsType.CLOSE,
-                'Error while replaying recording')
+                self, 0, message_type=Gtk.MessageType.ERROR,
+                buttons=Gtk.ButtonsType.CLOSE, title='Error',
+                text='Error while replaying recording')
             dialog.format_secondary_text(str(exc))
             dialog.run()
             dialog.destroy()
@@ -443,7 +447,7 @@ class EmuWindow(Gtk.ApplicationWindow):
 
 
 def main():
-    # ensure any resources we extract get cleaned up interpreter shutdown
+    # Ensure any resources we extract get cleaned up interpreter shutdown
     atexit.register(pkg_resources.cleanup_resources)
     # threads_init isn't required since PyGObject 3.10.2, but just in case
     # we're on something ancient...
