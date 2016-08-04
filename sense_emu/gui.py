@@ -81,7 +81,7 @@ class EmuApplication(Gtk.Application):
         self.add_action(action)
 
         builder = Gtk.Builder.new_from_string(
-            pkg_resources.resource_string(__name__, 'sense_emu_menu.glade').decode('utf-8'), -1)
+            pkg_resources.resource_string(__name__, 'sense_emu_menu.ui').decode('utf-8'), -1)
         self.set_app_menu(builder.get_object('app-menu'))
 
         # Construct the emulator servers
@@ -168,7 +168,7 @@ class EmuWindow(Gtk.ApplicationWindow):
         # (in which case overriding do_destroy is impossible) or construct a
         # whole new Window, remove its components, add them to ourselves and
         # then ditch the Window.
-        self._ui = BuilderUi(self, 'sense_emu_gui.glade')
+        self._ui = BuilderUi(self, 'sense_emu_gui.ui')
         self.ui.window.remove(self.ui.root_grid)
         self.add(self.ui.root_grid)
         self.ui.window.destroy()
@@ -407,7 +407,7 @@ class EmuWindow(Gtk.ApplicationWindow):
         if magic != b'SENSEHAT':
             raise IOError(_('%s is not a Sense HAT recording') % f.name)
         if ver != 1:
-            raise IOError(_('%s has unrecognized file version number (%d)') % (f.name, ver))
+            raise IOError(_('%s has unrecognized file version number') % f.name)
         offset = time() - offset
         while True:
             buf = f.read(DATA_REC.size)

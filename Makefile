@@ -6,6 +6,7 @@ PIP=pip
 PYTEST=py.test
 COVERAGE=coverage
 PYFLAGS=
+XGETTEXT=xgettext
 DEST_DIR=/
 
 # Horrid hack to ensure setuptools is installed in our python environment. This
@@ -64,6 +65,7 @@ DIST_DSC=dist/$(NAME)_$(VER)$(DEB_SUFFIX).tar.gz \
 	dist/$(NAME)_$(VER)$(DEB_SUFFIX).dsc \
 	dist/$(NAME)_$(VER)$(DEB_SUFFIX)_source.changes
 MAN_PAGES=man/sense_rec.1 man/sense_play.1 man/sense_csv.1 man/sense_emu_gui.1
+POT_FILE=$(NAME)/translations/$(NAME).pot
 
 
 # Default target
@@ -131,6 +133,9 @@ $(MAN_PAGES): $(DOC_SOURCES)
 	$(PYTHON) $(PYFLAGS) setup.py build_sphinx -b man
 	mkdir -p man/
 	cp build/sphinx/man/*.[0-9] man/
+
+$(POT_FILE): $(PY_SOURCES)
+	$(XGETTEXT) -o $@ $(filter %.py,$^) $(filter %.ui,$^)
 
 $(DIST_TAR): $(PY_SOURCES) $(SUBDIRS)
 	$(PYTHON) $(PYFLAGS) setup.py sdist --formats gztar

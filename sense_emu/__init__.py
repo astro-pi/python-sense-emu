@@ -30,7 +30,7 @@ from .stick import (
     ACTION_HELD,
     )
 
-__project__      = 'sense-emu'
+__project__      = 'sense_emu'
 __version__      = '0.1'
 __author__       = 'Raspberry Pi Foundation'
 __author_email__ = 'info@raspberrypi.org'
@@ -62,15 +62,7 @@ __requires__ = [
 __extra_requires__ = {
     'doc':   ['sphinx'],
     'test':  ['pytest', 'coverage', 'mock'],
-    'i18n':  ['babel', 'babelgladeextractor==0.3dev-r0'],
     }
-
-# Babel Glade Extractor versions on PyPI are broken (0.1 yields incorrect
-# number of elements, 0.2 is just plain broken); need to get the 0.3dev version
-# from SVN...
-__dependency_links__ = [
-    'svn+https://svn.edgewall.org/repos/babel/contrib/glade#egg=babelgladeextractor-0.3dev-r0',
-    ]
 
 if sys.version_info[:2] == (3, 2):
     # Particular versions are required for Python 3.2 compatibility

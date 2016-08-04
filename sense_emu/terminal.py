@@ -54,7 +54,7 @@ except ImportError:
 # Set up a console logging handler which just prints messages without any other
 # adornments. This will be used for logging messages sent before we "properly"
 # configure logging according to the user's preferences
-translations.init()
+init_i18n()
 _CONSOLE = logging.StreamHandler(sys.stderr)
 _CONSOLE.setFormatter(logging.Formatter('%(message)s'))
 _CONSOLE.setLevel(logging.DEBUG)
@@ -92,7 +92,8 @@ class FileType(object):
         try:
             return io.open(string, self._mode, self._bufsize, self._encoding, self._errors)
         except IOError as e:
-            raise argparse.ArgumentTypeError(_("can't open '%s': %s") % (string, e))
+            raise argparse.ArgumentTypeError(
+                    _("can't open '%(name)s': %(error)s") % {'name': string, 'error': e})
 
     def __repr__(self):
         args = self._mode, self._bufsize
@@ -123,7 +124,6 @@ class TerminalApplication(object):
             self, version, description=None, config_files=None,
             config_section=None, config_bools=None):
         super(TerminalApplication, self).__init__()
-        init_i18n()
         if description is None:
             description = self.__doc__
         self.parser = argparse.ArgumentParser(

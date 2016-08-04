@@ -85,15 +85,8 @@ def main():
             include_package_data = True,
             platforms            = app.__platforms__,
             install_requires     = app.__requires__,
-            dependency_links     = app.__dependency_links__,
             extras_require       = app.__extra_requires__,
             entry_points         = app.__entry_points__,
-            message_extractors   = {
-                app.__name__: [
-                    ('**.py',    'python', None),
-                    ('**.glade', 'glade', None),
-                    ],
-                },
             )
 
 
