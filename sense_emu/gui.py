@@ -61,7 +61,7 @@ class EmuApplication(Gtk.Application):
                 *args, application_id='org.raspberrypi.sense_hat_emu',
                 flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE,
                 **kwargs)
-        GLib.set_application_name('Sense HAT Emulator')
+        GLib.set_application_name(_('Sense HAT Emulator'))
         self.window = None
 
     def do_startup(self):
@@ -125,7 +125,7 @@ class EmuApplication(Gtk.Application):
 
     def on_play(self, action, param):
         open_dialog = Gtk.FileChooserDialog(
-            title='Select the recording to play', transient_for=self.window,
+            title=_('Select the recording to play'), transient_for=self.window,
             action=Gtk.FileChooserAction.OPEN)
         open_dialog.add_button(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL)
         open_dialog.add_button(Gtk.STOCK_OPEN, Gtk.ResponseType.ACCEPT)
@@ -153,7 +153,7 @@ class BuilderUi(object):
     def __getattr__(self, name):
         result = self._builder.get_object(name)
         if result is None:
-            raise AttributeError('No such attribute %r' % name)
+            raise AttributeError(_('No such attribute %r') % name)
         setattr(self, name, result)
         return result
 
@@ -405,16 +405,16 @@ class EmuWindow(Gtk.ApplicationWindow):
     def _play_source(self, f):
         magic, ver, offset = HEADER_REC.unpack(f.read(HEADER_REC.size))
         if magic != b'SENSEHAT':
-            raise IOError('%s is not a Sense HAT recording' % f.name)
+            raise IOError(_('%s is not a Sense HAT recording') % f.name)
         if ver != 1:
-            raise IOError('%s has unrecognized file version number (%d)' % (f.name, ver))
+            raise IOError(_('%s has unrecognized file version number (%d)') % (f.name, ver))
         offset = time() - offset
         while True:
             buf = f.read(DATA_REC.size)
             if not buf:
                 break
             elif len(buf) < DATA_REC.size:
-                raise IOError('Incomplete data record at end of %s' % f.name)
+                raise IOError(_('Incomplete data record at end of %s') % f.name)
             else:
                 data = DataRecord(*DATA_REC.unpack(buf))
                 yield data._replace(timestamp=data.timestamp + offset)
@@ -429,7 +429,7 @@ class EmuWindow(Gtk.ApplicationWindow):
         self.props.application.humidity.simulate_noise = False
         self.props.application.imu.simulate_world = False
         # Show the playback bar
-        self.ui.play_label.props.label = 'Playing %s' % os.path.basename(filename)
+        self.ui.play_label.props.label = _('Playing %s') % os.path.basename(filename)
         self.ui.play_progressbar.props.fraction = 0.0
         self.ui.play_box.props.visible = True
 
@@ -448,7 +448,7 @@ class EmuWindow(Gtk.ApplicationWindow):
             dialog = Gtk.MessageDialog(
                 self, 0, message_type=Gtk.MessageType.ERROR,
                 buttons=Gtk.ButtonsType.CLOSE, title='Error',
-                text='Error while replaying recording')
+                text=_('Error while replaying recording'))
             dialog.format_secondary_text(str(exc))
             dialog.run()
             dialog.destroy()

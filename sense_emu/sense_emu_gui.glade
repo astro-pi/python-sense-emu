@@ -69,7 +69,7 @@
               <object class="GtkLabel" id="screen_label">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="label" translatable="yes">Screen</property>
+                <property name="label" translatable="yes" comments="Title above the emulated Sense HAT screen">Screen</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -247,7 +247,7 @@
               <object class="GtkLabel" id="joystick_label">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="label" translatable="yes">Joystick</property>
+                <property name="label" translatable="yes" comments="Title above emulated Sense HAT joystick buttons">Joystick</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -499,7 +499,7 @@
               <object class="GtkLabel" id="play_label">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="label" translatable="yes">Playing foo.hat</property>
+                <property name="label">Playing foo.hat</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -521,7 +521,7 @@
             </child>
             <child>
               <object class="GtkButton" id="play_stop_button">
-                <property name="label" translatable="yes">Stop</property>
+                <property name="label" translatable="yes" comments="Cancels playback of a recording">Stop</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>

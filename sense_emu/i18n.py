@@ -40,3 +40,4 @@ def init_i18n(languages=None):
     _TRANSLATIONS = _gettext.translation(
         __project__, pkg_resources.resource_filename(__name__, 'translations'),
         languages, fallback=True)
+
