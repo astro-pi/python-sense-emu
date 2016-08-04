@@ -81,7 +81,7 @@ class EmuApplication(Gtk.Application):
         self.add_action(action)
 
         builder = Gtk.Builder.new_from_string(
-            pkg_resources.resource_string(__name__, 'app_menu.xml').decode('utf-8'), -1)
+            pkg_resources.resource_string(__name__, 'sense_emu_menu.glade').decode('utf-8'), -1)
         self.set_app_menu(builder.get_object('app-menu'))
 
         # Construct the emulator servers

@@ -265,7 +265,7 @@
                 <property name="column_spacing">6</property>
                 <child>
                   <object class="GtkButton" id="up_button">
-                    <property name="label" translatable="yes">↑</property>
+                    <property name="label">↑</property>
                     <property name="width_request">64</property>
                     <property name="height_request">64</property>
                     <property name="visible">True</property>
@@ -281,7 +281,7 @@
                 </child>
                 <child>
                   <object class="GtkButton" id="left_button">
-                    <property name="label" translatable="yes">←</property>
+                    <property name="label">←</property>
                     <property name="width_request">64</property>
                     <property name="height_request">64</property>
                     <property name="visible">True</property>
@@ -297,7 +297,7 @@
                 </child>
                 <child>
                   <object class="GtkButton" id="enter_button">
-                    <property name="label" translatable="yes">↵</property>
+                    <property name="label">↵</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
@@ -311,7 +311,7 @@
                 </child>
                 <child>
                   <object class="GtkButton" id="right_button">
-                    <property name="label" translatable="yes">→</property>
+                    <property name="label">→</property>
                     <property name="width_request">64</property>
                     <property name="height_request">64</property>
                     <property name="visible">True</property>
@@ -327,7 +327,7 @@
                 </child>
                 <child>
                   <object class="GtkButton" id="down_button">
-                    <property name="label" translatable="yes">↓</property>
+                    <property name="label">↓</property>
                     <property name="width_request">64</property>
                     <property name="height_request">64</property>
                     <property name="visible">True</property>
