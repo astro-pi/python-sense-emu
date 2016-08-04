@@ -248,12 +248,17 @@ class EmuWindow(Gtk.ApplicationWindow):
                 ))
 
     def stick_pressed(self, button, event):
-        # XXX This shouldn't be necessary, but GTK seems to fire stick_pressed
-        # twice in quick succession (with no intervening stick_released) when
-        # a button is double-clicked
+        # When a button is double-clicked, GTK fires two pressed events for the
+        # second click with no intervening released event (so there's one
+        # pressed event for the first click, followed by a released event, then
+        # two pressed events for the second click followed by a single released
+        # event). This isn't documented, so it could be a bug, but it seems
+        # more like a deliberate behaviour. Anyway, we work around the
+        # redundant press by detecting it with the non-zero stick_held_id and
+        # ignoring the redundant event
         with self._stick_held_lock:
             if self._stick_held_id:
-                GLib.source_remove(self._stick_held_id)
+                return True
             self._stick_held_id = GLib.timeout_add(250, self.stick_held_first, button)
         self._stick_send(button.direction, SenseStick.STATE_PRESS)
         return False
@@ -307,7 +312,7 @@ class EmuWindow(Gtk.ApplicationWindow):
                     # GTK updates must be done by the main thread; schedule
                     # the image to be redrawn when the app is idle. It would
                     # be better to use custom signals for this ... but then
-                    # pixman bugs start appearing
+                    # pixman region copy bugs start appearing
                     self._screen_pixbuf = img
                     GLib.idle_add(self._update_screen, img)
             # The following wait ensures a maximum update rate of 25fps (the
@@ -345,7 +350,7 @@ class EmuWindow(Gtk.ApplicationWindow):
                     )
                 # Again, would be better to use custom signals here but
                 # attempting to do so just results in seemingly random
-                # segfaults ...
+                # segfaults during playback
                 with self._play_update_lock:
                     if self._play_update_id == 0:
                         self._play_update_id = GLib.idle_add(self._play_update_controls, rec / rec_total)
