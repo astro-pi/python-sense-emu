@@ -21,31 +21,30 @@ from time import time, sleep
 from struct import Struct
 
 from . import __version__
+from .i18n import _
 from .terminal import TerminalApplication, FileType
 from .common import HEADER_REC, DATA_REC
 
 
 class RecordApplication(TerminalApplication):
-    """
-    Records the readings from a Raspberry Pi Sense HAT in real time, outputting
-    the results to the specified file.
-    """
-
     def __init__(self):
-        super(RecordApplication, self).__init__(__version__)
+        super(RecordApplication, self).__init__(
+            version=__version__,
+            description=_("Records the readings from a Raspberry Pi Sense HAT "
+                "in real time, outputting the results to the specified file."))
         self.parser.add_argument(
             '-c', '--config', dest='config', action='store',
             default='/etc/RTIMULib.ini', metavar='FILE',
-            help='the Sense HAT configuration file to use (default: %(default)s)')
+            help=_('the Sense HAT configuration file to use (default: %(default)s)'))
         self.parser.add_argument(
             '-d', '--duration', dest='duration', action='store', default=0.0,
             type=float, metavar='SECS',
-            help='the duration to record for in seconds (default: record '
-            'until terminated with Ctrl+C)')
+            help=_('the duration to record for in seconds (default: record '
+            'until terminated with Ctrl+C)'))
         self.parser.add_argument(
             '-f', '--flush', dest='flush', action='store_true', default=False,
-            help='flush every record to disk immediately; reduces chances of '
-            'truncated data on power loss, but greatly increases disk activity')
+            help=_('flush every record to disk immediately; reduces chances of '
+            'truncated data on power loss, but greatly increases disk activity'))
         self.parser.add_argument('output', type=FileType('wb'))
 
     def main(self, args):
@@ -53,27 +52,27 @@ class RecordApplication(TerminalApplication):
             import RTIMU
         except ImportError:
             raise IOError(
-                'unable to import RTIMU; ensure the Sense HAT library is '
-                'correctly installed')
+                _('unable to import RTIMU; ensure the Sense HAT library is '
+                'correctly installed'))
         if not args.config.endswith('.ini'):
-            raise argparse.ArgumentError('configuration filename must end with .ini')
+            raise argparse.ArgumentError(_('configuration filename must end with .ini'))
 
-        logging.info('Reading settings from %s', args.config)
+        logging.info(_('Reading settings from %s'), args.config)
         settings = RTIMU.Settings(args.config[:-4])
-        logging.info('Initializing sensors')
+        logging.info(_('Initializing sensors'))
         imu = RTIMU.RTIMU(settings)
         if not imu.IMUInit():
-            raise IOError('Failed to initialize Sense HAT IMU')
+            raise IOError(_('Failed to initialize Sense HAT IMU'))
         psensor = RTIMU.RTPressure(settings)
         if not psensor.pressureInit():
-            raise IOError('Failed to initialize Sense HAT pressure sensor')
+            raise IOError(_('Failed to initialize Sense HAT pressure sensor'))
         hsensor = RTIMU.RTHumidity(settings)
         if not hsensor.humidityInit():
-            raise IOError('Failed to initialize Sense HAT humidity sensor')
+            raise IOError(_('Failed to initialize Sense HAT humidity sensor'))
         interval = imu.IMUGetPollInterval() / 1000.0 # seconds
         nan = float('nan')
 
-        logging.info('Starting output')
+        logging.info(_('Starting recording'))
         rec_count = 0
         if args.duration:
             terminate_at = time() + args.duration
@@ -83,7 +82,7 @@ class RecordApplication(TerminalApplication):
         status_stop = Event()
         def status():
             while not status_stop.wait(1.0):
-                logging.info('%d records written', rec_count)
+                logging.info(_('%d records written'), rec_count)
         status_thread = Thread(target=status)
         status_thread.daemon = True
         status_thread.start()
@@ -119,7 +118,7 @@ class RecordApplication(TerminalApplication):
         finally:
             status_stop.set()
             status_thread.join()
-            logging.info('Closing output after %d records', rec_count)
+            logging.info(_('Finishing recording after %d records'), rec_count)
             args.output.close()
 
 

@@ -21,6 +21,7 @@ from time import time, sleep
 from struct import Struct
 
 from . import __version__
+from .i18n import _
 from .terminal import TerminalApplication, FileType
 from .common import HEADER_REC, DATA_REC, DataRecord
 from .imu import IMUServer
@@ -29,24 +30,22 @@ from .humidity import HumidityServer
 
 
 class PlayApplication(TerminalApplication):
-    """
-    Replays readings recorded from a Raspberry Pi Sense HAT, via the
-    Sense HAT emulation library.
-    """
-
     def __init__(self):
-        super(PlayApplication, self).__init__(__version__)
+        super(PlayApplication, self).__init__(
+            version=__version__,
+            description=_("Replays readings recorded from a Raspberry Pi "
+                "Sense HAT, via the Sense HAT emulation library."))
         self.parser.add_argument('input', type=FileType('rb'))
 
     def source(self, f):
-        logging.info('Reading header')
+        logging.info(_('Reading header'))
         magic, ver, offset = HEADER_REC.unpack(f.read(HEADER_REC.size))
         if magic != b'SENSEHAT':
-            raise IOError('Invalid magic number at start of input')
+            raise IOError(_('Invalid magic number at start of input'))
         if ver != 1:
-            raise IOError('Unrecognized file version number (%d)' % ver)
+            raise IOError(_('Unrecognized file version number (%d)') % ver)
         logging.info(
-            'Playing back recording taken at %s',
+            _('Playing back recording taken at %s'),
             dt.datetime.fromtimestamp(offset).strftime('%c'))
         offset = time() - offset
         while True:
@@ -54,7 +53,7 @@ class PlayApplication(TerminalApplication):
             if not buf:
                 break
             elif len(buf) < DATA_REC.size:
-                raise IOError('Incomplete data record at end of file')
+                raise IOError(_('Incomplete data record at end of file'))
             else:
                 data = DataRecord(*DATA_REC.unpack(buf))
                 yield data._replace(timestamp=data.timestamp + offset)
@@ -68,7 +67,7 @@ class PlayApplication(TerminalApplication):
             now = time()
             if data.timestamp < now:
                 if not skipped:
-                    logging.warning('Skipping records to catch up')
+                    logging.warning(_('Skipping records to catch up'))
                 skipped += 1
                 continue
             else:
@@ -82,8 +81,8 @@ class PlayApplication(TerminalApplication):
                 (data.ox, data.oy, data.oz),
                 )
         if skipped:
-            logging.warning('Skipped %d records during playback', skipped)
-        logging.info('Finished playback of %d records', rec)
+            logging.warning(_('Skipped %d records during playback'), skipped)
+        logging.info(_('Finished playback of %d records'), rec)
 
 
 app = PlayApplication()

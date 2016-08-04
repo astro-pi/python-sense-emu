@@ -30,12 +30,22 @@ import numpy as np
 import pkg_resources
 
 from . import __version__, __author__, __author_email__, __url__
+from .i18n import init_i18n, _
 from .screen import ScreenClient
 from .imu import IMUServer
 from .pressure import PressureServer
 from .humidity import HumidityServer
 from .stick import StickServer, SenseStick
 from .common import HEADER_REC, DATA_REC, DataRecord
+
+
+def main():
+    init_i18n()
+    # threads_init isn't required since PyGObject 3.10.2, but just in case
+    # we're on something ancient...
+    GObject.threads_init()
+    app = EmuApplication()
+    app.run(sys.argv)
 
 
 def load_image(filename, format='png'):
@@ -450,13 +460,4 @@ class EmuWindow(Gtk.ApplicationWindow):
         self._play_event.clear()
         self._play_thread.start()
 
-
-def main():
-    # Ensure any resources we extract get cleaned up interpreter shutdown
-    atexit.register(pkg_resources.cleanup_resources)
-    # threads_init isn't required since PyGObject 3.10.2, but just in case
-    # we're on something ancient...
-    GObject.threads_init()
-    app = EmuApplication()
-    app.run(sys.argv)
 

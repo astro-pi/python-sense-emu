@@ -24,25 +24,24 @@ from time import time, sleep
 from struct import Struct
 
 from . import __version__
+from .i18n import _
 from .terminal import TerminalApplication, FileType
 from .common import HEADER_REC, DATA_REC, DataRecord
 
 
 class DumpApplication(TerminalApplication):
-    """
-    Converts a Sense HAT recording to CSV format, for the purposes of
-    debugging or analysis.
-    """
-
     def __init__(self):
-        super(DumpApplication, self).__init__(__version__)
+        super(DumpApplication, self).__init__(
+            version=__version__,
+            description=_("Converts a Sense HAT recording to CSV format, for "
+                "the purposes of debugging or analysis."))
         self.parser.add_argument(
             '--timestamp-format', action='store', default='%Y-%m-%dT%H:%M:%S.%f', metavar='FMT',
-            help='the format to use when outputting the record timestamp '
-            '(default: %(default)s)')
+            help=_('the format to use when outputting the record timestamp '
+            '(default: %(default)s)'))
         self.parser.add_argument(
             '--header', action='store_true', default=False,
-            help='if specified, output column headers')
+            help=_('if specified, output column headers'))
         self.parser.add_argument('input', type=FileType('rb'))
         # Eurgh ... csv module under Python 2 only outputs byte-strings
         if sys.version_info.major == 2:
@@ -51,14 +50,14 @@ class DumpApplication(TerminalApplication):
             self.parser.add_argument('output', type=FileType('w', encoding='utf-8'))
 
     def source(self, f):
-        logging.info('Reading header')
+        logging.info(_('Reading header'))
         magic, ver, offset = HEADER_REC.unpack(f.read(HEADER_REC.size))
         if magic != b'SENSEHAT':
-            raise IOError('Invalid magic number at start of input')
+            raise IOError(_('Invalid magic number at start of input'))
         if ver != 1:
-            raise IOError('Unrecognized file version number (%d)' % ver)
+            raise IOError(_('Unrecognized file version number (%d)') % ver)
         logging.info(
-            'Dumping recording taken at %s',
+            _('Dumping recording taken at %s'),
             dt.datetime.fromtimestamp(offset).strftime('%c'))
         offset = time() - offset
         while True:
@@ -66,7 +65,7 @@ class DumpApplication(TerminalApplication):
             if not buf:
                 break
             elif len(buf) < DATA_REC.size:
-                raise IOError('Incomplete data record at end of file')
+                raise IOError(_('Incomplete data record at end of file'))
             else:
                 yield DataRecord(*DATA_REC.unpack(buf))
 
@@ -92,7 +91,7 @@ class DumpApplication(TerminalApplication):
                 data.cx, data.cy, data.cz,
                 data.ox, data.oy, data.oz,
                 ))
-        logging.info('Converted %d records', rec)
+        logging.info(_('Converted %d records'), rec)
 
 
 app = DumpApplication()

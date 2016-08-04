@@ -40,18 +40,9 @@ import textwrap
 import logging
 import locale
 import traceback
-try:
-    from gettext import gettext as _, ngettext
-except ImportError:
-    def _(message):
-        return message
-    def ngettext(singular, plural, n):
-        if n == 1:
-            return singular
-        else:
-            return plural
 
 from . import configparser
+from .i18n import init_i18n, _
 
 try:
     # Optionally import argcomplete (for auto-completion) if it's installed
@@ -60,12 +51,10 @@ except ImportError:
     argcomplete = None
 
 
-# Use the user's default locale instead of C
-locale.setlocale(locale.LC_ALL, '')
-
 # Set up a console logging handler which just prints messages without any other
 # adornments. This will be used for logging messages sent before we "properly"
 # configure logging according to the user's preferences
+translations.init()
 _CONSOLE = logging.StreamHandler(sys.stderr)
 _CONSOLE.setFormatter(logging.Formatter('%(message)s'))
 _CONSOLE.setLevel(logging.DEBUG)
@@ -134,6 +123,7 @@ class TerminalApplication(object):
             self, version, description=None, config_files=None,
             config_section=None, config_bools=None):
         super(TerminalApplication, self).__init__()
+        init_i18n()
         if description is None:
             description = self.__doc__
         self.parser = argparse.ArgumentParser(
@@ -148,26 +138,26 @@ class TerminalApplication(object):
             self.config_bools = config_bools
             self.parser.add_argument(
                 '-c', '--config', metavar='FILE',
-                help='specify the configuration file to load')
+                help=_('specify the configuration file to load'))
         else:
             self.config = None
         self.parser.set_defaults(log_level=logging.WARNING)
         self.parser.add_argument(
             '-q', '--quiet', dest='log_level', action='store_const',
-            const=logging.ERROR, help='produce less console output')
+            const=logging.ERROR, help=_('produce less console output'))
         self.parser.add_argument(
             '-v', '--verbose', dest='log_level', action='store_const',
-            const=logging.INFO, help='produce more console output')
+            const=logging.INFO, help=_('produce more console output'))
         opt = self.parser.add_argument(
             '-l', '--log-file', metavar='FILE',
-            help='log messages to the specified file')
+            help=_('log messages to the specified file'))
         if argcomplete:
             # XXX Complete with *.log, *.txt
             #opt.completer = ???
             pass
         self.parser.add_argument(
             '-P', '--pdb', dest='debug', action='store_true', default=False,
-            help='run under PDB (debug mode)')
+            help=_('run under PDB (debug mode)'))
 
     def __call__(self, args=None):
         if args is None:
@@ -200,7 +190,7 @@ class TerminalApplication(object):
         if conf_args.config:
             self.config_files.append(conf_args.config)
         logging.info(
-            'Reading configuration from %s', ', '.join(self.config_files))
+            _('Reading configuration from %s'), ', '.join(self.config_files))
         conf_read = self.config.read(self.config_files)
         if conf_args.config and conf_args.config not in conf_read:
             self.parser.error('unable to read %s' % conf_args.config)
@@ -213,7 +203,7 @@ class TerminalApplication(object):
                 self.config_section = self.config.sections()[0]
             if not self.config_section in self.config.sections():
                 self.parser.error(
-                    'unable to locate [%s] section in configuration' % self.config_section)
+                    _('unable to locate [%s] section in configuration') % self.config_section)
             self.parser.set_defaults(**{
                 key:
                 self.config.getboolean(self.config_section, key)
@@ -248,7 +238,7 @@ class TerminalApplication(object):
             # For option parser errors output the error along with a message
             # indicating how the help page can be displayed
             logging.critical(str(exc_value))
-            logging.critical('Try the --help option for more information.')
+            logging.critical(_('Try the --help option for more information.'))
             return 2
         elif issubclass(exc_type, (IOError,)):
             # For simple errors like IOError just output the message which
