@@ -30,7 +30,7 @@ from .stick import (
     ACTION_HELD,
     )
 
-__project__      = 'sense_emu'
+__project__      = 'sense-emu'
 __version__      = '0.1'
 __author__       = 'Raspberry Pi Foundation'
 __author_email__ = 'info@raspberrypi.org'

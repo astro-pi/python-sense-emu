@@ -3,5 +3,4 @@ include LICENSE.txt
 include sense_emu/*.ui
 include sense_emu/*.png
 include sense_emu/*.txt
-include sense_emu/translations/*/LC_MESSAGES/sense_emu_gui.po
-include sense_emu/translations/*/LC_MESSAGES/sense_emu_gui.mo
+include sense_emu/locale/*/LC_MESSAGES/*.mo

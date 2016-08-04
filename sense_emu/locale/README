@@ -1,0 +1,15 @@
+To construct new translations, just use the standard gettext tools to create
+new .po files in this directory. For example, to create a translation for
+French:
+
+$ msginit -lfr_FR
+
+Fill out the .po file accordingly, then the Makefile will take care of
+construction of the .mo files during the package build. To force construction
+of .mo files for testing, use "i18n" target:
+
+$ make i18n
+
+Note that .mo files shouldn't be stored in the repo (the .gitignore already
+excludes them), and likewise the .pot and .po files won't be included in
+package builds, just the .mo outputs (see MANIFEST.in for details).

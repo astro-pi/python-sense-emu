@@ -29,7 +29,7 @@ from gi.repository import Gtk, Gdk, GdkPixbuf, Gio, GLib, GObject
 import numpy as np
 import pkg_resources
 
-from . import __version__, __author__, __author_email__, __url__
+from . import __project__, __version__, __author__, __author_email__, __url__
 from .i18n import init_i18n, _
 from .screen import ScreenClient
 from .imu import IMUServer
@@ -80,8 +80,9 @@ class EmuApplication(Gtk.Application):
         action.connect('activate', self.on_quit)
         self.add_action(action)
 
-        builder = Gtk.Builder.new_from_string(
-            pkg_resources.resource_string(__name__, 'sense_emu_menu.ui').decode('utf-8'), -1)
+        builder = Gtk.Builder(translation_domain=__project__)
+        builder.add_from_string(
+            pkg_resources.resource_string(__name__, 'sense_emu_menu.ui').decode('utf-8'))
         self.set_app_menu(builder.get_object('app-menu'))
 
         # Construct the emulator servers
@@ -146,8 +147,9 @@ class BuilderUi(object):
         # Load the GUI definitions (see __getattr__ for how we tie the loaded
         # objects into instance variables) and connect all handlers to methods
         # on this object
-        self._builder = Gtk.Builder.new_from_string(
-            pkg_resources.resource_string(__name__, filename).decode('utf-8'), -1)
+        self._builder = Gtk.Builder(translation_domain=__project__)
+        self._builder.add_from_string(
+            pkg_resources.resource_string(__name__, filename).decode('utf-8'))
         self._builder.connect_signals(owner)
 
     def __getattr__(self, name):

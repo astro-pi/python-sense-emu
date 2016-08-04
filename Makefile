@@ -6,6 +6,9 @@ PIP=pip
 PYTEST=py.test
 COVERAGE=coverage
 PYFLAGS=
+MSGINIT=msginit
+MSGMERGE=msgmerge
+MSGFMT=msgfmt
 XGETTEXT=xgettext
 DEST_DIR=/
 
@@ -20,6 +23,7 @@ endif
 # Calculate the base names of the distribution, the location of all source,
 # documentation, packaging, icon, and executable script files
 NAME:=$(shell $(PYTHON) $(PYFLAGS) setup.py --name)
+PKG_DIR:=$(subst -,_,$(NAME))
 VER:=$(shell $(PYTHON) $(PYFLAGS) setup.py --version)
 ifeq ($(shell lsb_release -si),Ubuntu)
 DEB_SUFFIX:=ubuntu1
@@ -65,13 +69,16 @@ DIST_DSC=dist/$(NAME)_$(VER)$(DEB_SUFFIX).tar.gz \
 	dist/$(NAME)_$(VER)$(DEB_SUFFIX).dsc \
 	dist/$(NAME)_$(VER)$(DEB_SUFFIX)_source.changes
 MAN_PAGES=man/sense_rec.1 man/sense_play.1 man/sense_csv.1 man/sense_emu_gui.1
-POT_FILE=$(NAME)/translations/$(NAME).pot
+POT_FILE=$(PKG_DIR)/locale/$(NAME).pot
+PO_FILES:=$(wildcard $(PKG_DIR)/locale/*.po)
+MO_FILES:=$(patsubst $(PKG_DIR)/locale/%.po,$(PKG_DIR)/locale/%/LC_MESSAGES/$(NAME).mo,$(PO_FILES))
 
 
 # Default target
 all:
 	@echo "make install - Install on local system"
 	@echo "make develop - Install symlinks for development"
+	@echo "make i18n - Update translation files"
 	@echo "make test - Run tests"
 	@echo "make doc - Generate HTML and PDF documentation"
 	@echo "make source - Create source package"
@@ -104,11 +111,13 @@ deb: $(DIST_DEB) $(DIST_DSC)
 
 dist: $(DIST_EGG) $(DIST_DEB) $(DIST_DSC) $(DIST_TAR) $(DIST_ZIP)
 
+i18n: $(MO_FILES) $(PO_FILES) $(POT_FILE)
+
 develop: tags
 	@# These have to be done separately to avoid a cockup...
 	$(PIP) install -U setuptools
 	$(PIP) install -U pip
-	$(PIP) install -e .[doc,test,i18n]
+	$(PIP) install -e .[doc,test]
 
 test:
 	$(COVERAGE) run -m $(PYTEST) tests -v
@@ -117,7 +126,7 @@ test:
 clean:
 	$(PYTHON) $(PYFLAGS) setup.py clean
 	$(MAKE) -f $(CURDIR)/debian/rules clean
-	rm -fr build/ dist/ $(NAME).egg-info/ tags
+	rm -fr build/ dist/ $(NAME).egg-info/ tags $(MO_FILES)
 	for dir in $(SUBDIRS); do \
 		$(MAKE) -C $$dir clean; \
 	done
@@ -135,18 +144,25 @@ $(MAN_PAGES): $(DOC_SOURCES)
 	cp build/sphinx/man/*.[0-9] man/
 
 $(POT_FILE): $(PY_SOURCES)
-	$(XGETTEXT) -o $@ $(filter %.py,$^) $(filter %.ui,$^)
+	$(XGETTEXT) -cI18N -o $@ $(filter %.py,$^) $(filter %.ui,$^)
 
-$(DIST_TAR): $(PY_SOURCES) $(SUBDIRS)
+$(PO_FILES): $(POT_FILE)
+	$(MSGMERGE) -U $@ $<
+
+$(MO_FILES): $(PO_FILES)
+	mkdir -p $(dir $@)
+	$(MSGFMT) $(patsubst $(PKG_DIR)/locale/%/LC_MESSAGES/$(NAME).mo,$(PKG_DIR)/locale/%.po,$@) -o $@
+
+$(DIST_TAR): $(PY_SOURCES) $(MO_FILES) $(SUBDIRS)
 	$(PYTHON) $(PYFLAGS) setup.py sdist --formats gztar
 
-$(DIST_ZIP): $(PY_SOURCES) $(SUBDIRS)
+$(DIST_ZIP): $(PY_SOURCES) $(MO_FILES) $(SUBDIRS)
 	$(PYTHON) $(PYFLAGS) setup.py sdist --formats zip
 
-$(DIST_EGG): $(PY_SOURCES) $(SUBDIRS)
+$(DIST_EGG): $(PY_SOURCES) $(MO_FILES) $(SUBDIRS)
 	$(PYTHON) $(PYFLAGS) setup.py bdist_egg
 
-$(DIST_DEB): $(PY_SOURCES) $(SUBDIRS) $(DEB_SOURCES) $(MAN_PAGES)
+$(DIST_DEB): $(PY_SOURCES) $(MO_FILES) $(SUBDIRS) $(DEB_SOURCES) $(MAN_PAGES)
 	# build the binary package in the parent directory then rename it to
 	# project_version.orig.tar.gz
 	$(PYTHON) $(PYFLAGS) setup.py sdist --dist-dir=../
@@ -155,7 +171,7 @@ $(DIST_DEB): $(PY_SOURCES) $(SUBDIRS) $(DEB_SOURCES) $(MAN_PAGES)
 	mkdir -p dist/
 	for f in $(DIST_DEB); do cp ../$${f##*/} dist/; done
 
-$(DIST_DSC): $(PY_SOURCES) $(SUBDIRS) $(DEB_SOURCES) $(MAN_PAGES)
+$(DIST_DSC): $(PY_SOURCES) $(MO_FILES) $(SUBDIRS) $(DEB_SOURCES) $(MAN_PAGES)
 	# build the source package in the parent directory then rename it to
 	# project_version.orig.tar.gz
 	$(PYTHON) $(PYFLAGS) setup.py sdist --dist-dir=../
@@ -164,7 +180,7 @@ $(DIST_DSC): $(PY_SOURCES) $(SUBDIRS) $(DEB_SOURCES) $(MAN_PAGES)
 	mkdir -p dist/
 	for f in $(DIST_DSC); do cp ../$${f##*/} dist/; done
 
-release: $(PY_SOURCES) $(DOC_SOURCES) $(DEB_SOURCES)
+release: $(PY_SOURCES) $(MO_FILES) $(DOC_SOURCES) $(DEB_SOURCES)
 	$(MAKE) clean
 	# ensure there are no current uncommitted changes
 	test -z "$(shell git status --porcelain)"
@@ -176,7 +192,7 @@ release: $(PY_SOURCES) $(DOC_SOURCES) $(DEB_SOURCES)
 	# update the package's registration on PyPI (in case any metadata's changed)
 	$(PYTHON) $(PYFLAGS) setup.py register
 
-upload: $(PY_SOURCES) $(DOC_SOURCES) $(DIST_DEB) $(DIST_DSC)
+upload: $(PY_SOURCES) $(MO_FILES) $(DOC_SOURCES) $(DIST_DEB) $(DIST_DSC)
 	# build a source archive and upload to PyPI
 	$(PYTHON) $(PYFLAGS) setup.py sdist upload
 	# build the deb source archive and upload to Raspbian
