@@ -60,11 +60,11 @@ Replay
 ======
 
 Recordings of actual sensor readings from a Sense HAT can be replayed within
-the emulator. From the menu, select :guilabel:`Re&play recording`. From the
-file selection dialog that appears, select the recording you wish to replay
-and click :guilabel:`Open`. The replay will immediately begin, with progress
-displayed in a bar at the bottom of the main window. You can click :guilabel:`Stop`
-(next to the progress bar) to terminate playback of the recording.
+the emulator. From the menu, select "Replay recording". From the file selection
+dialog that appears, select the recording you wish to replay and click "Open".
+The replay will immediately begin, with progress displayed in a bar at the
+bottom of the main window. You can click "Stop" (next to the progress bar) to
+terminate playback of the recording.
 
 .. image:: gui_replay.png
     :align: center
