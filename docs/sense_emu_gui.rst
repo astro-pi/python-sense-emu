@@ -17,7 +17,7 @@ Synopsis
 Usage
 =====
 
-.. image:: screenshot1.png
+.. image:: gui_overview.png
     :align: center
 
 The main window is divided into four parts. At the top left is a visual
@@ -56,3 +56,20 @@ and that North is in the direction of the X axis.
     readings will appear fixed). Attempting to spawn more than one instance of
     the emulator will simply activate the existing instance.
 
+Replay
+======
+
+Recordings of actual sensor readings from a Sense HAT can be replayed within
+the emulator. From the menu, select :guilabel:`Re&play recording`. From the
+file selection dialog that appears, select the recording you wish to replay
+and click :guilabel:`Open`. The replay will immediately begin, with progress
+displayed in a bar at the bottom of the main window. You can click :guilabel:`Stop`
+(next to the progress bar) to terminate playback of the recording.
+
+.. image:: gui_replay.png
+    :align: center
+
+During playback, the sensor sliders will move according to the data in the
+recording but will be disabled (to prevent the user affecting the replay). At
+the end of the replay (or immediately after termination of playback), the
+sliders will be left at their present positions and re-enabled.
