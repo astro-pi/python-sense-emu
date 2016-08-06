@@ -537,7 +537,7 @@ class SenseHat(object):
             raise ValueError('Gamma values must be bewteen 0 and 31')
 
         if not isinstance(buffer, array.array):
-            buffer = array.array('B', buffer)
+            buffer = array.array(nstr('B'), buffer)
 
         with open(self._fb_device, 'rb+') as f:
             f.seek(128)
