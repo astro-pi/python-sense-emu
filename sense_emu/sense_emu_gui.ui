@@ -271,6 +271,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
+                    <signal name="activate" handler="stick_activated" swapped="no"/>
                     <signal name="button-press-event" handler="stick_pressed" swapped="no"/>
                     <signal name="button-release-event" handler="stick_released" swapped="no"/>
                   </object>
@@ -287,6 +288,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
+                    <signal name="activate" handler="stick_activated" swapped="no"/>
                     <signal name="button-press-event" handler="stick_pressed" swapped="no"/>
                     <signal name="button-release-event" handler="stick_released" swapped="no"/>
                   </object>
@@ -301,6 +303,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
+                    <signal name="activate" handler="stick_activated" swapped="no"/>
                     <signal name="button-press-event" handler="stick_pressed" swapped="no"/>
                     <signal name="button-release-event" handler="stick_released" swapped="no"/>
                   </object>
@@ -317,6 +320,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
+                    <signal name="activate" handler="stick_activated" swapped="no"/>
                     <signal name="button-press-event" handler="stick_pressed" swapped="no"/>
                     <signal name="button-release-event" handler="stick_released" swapped="no"/>
                   </object>
@@ -333,6 +337,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
+                    <signal name="activate" handler="stick_activated" swapped="no"/>
                     <signal name="button-press-event" handler="stick_pressed" swapped="no"/>
                     <signal name="button-release-event" handler="stick_released" swapped="no"/>
                   </object>

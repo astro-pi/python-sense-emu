@@ -275,6 +275,26 @@ class EmuWindow(Gtk.ApplicationWindow):
         self._stick_send(button.direction, SenseStick.STATE_PRESS)
         return False
 
+    def stick_activated(self, button):
+        # According to the GTK docs "applications should never connect to this
+        # signal ... use clicked instead".  Unfortunately, pressed and released
+        # are emitted by mouse clicks on the button (useful for emulating the
+        # pressed, released, and held events of the joystick) ... but not when
+        # the keyboard is used to control the button.
+        #
+        # Activated *is* emitted when the keyboard is used (but not the mouse),
+        # while clicked is emitted both when the keyboard is used *and* the
+        # mouse (after the released event) which makes it rather useless for
+        # just responding to keyboard presses (unless we also track state with
+        # pressed and released which would just be redundant).
+        #
+        # This does mean we can't emulate "held" events with the keyboard
+        # (because we can't detect key down and key up), but key-repeat will
+        # handle repeatedly firing pressed and released, which is probably
+        # good enough for the vast majority of scripts.
+        self.stick_pressed(button, None)
+        self.stick_released(button, None)
+
     def stick_released(self, button, event):
         with self._stick_held_lock:
             if self._stick_held_id:
