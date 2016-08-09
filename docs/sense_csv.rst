@@ -13,8 +13,7 @@ Synopsis
 ::
 
     sense_csv [-h] [--version] [-q] [-v] [-l FILE] [-P]
-              [--timestamp-format TIMESTAMP_FORMAT] [--header]
-              input output
+              [--timestamp-format TIMESTAMP_FORMAT] [--header] input output
 
 Description
 ===========

@@ -13,8 +13,7 @@ Synopsis
 ::
 
     sense_rec [-h] [--version] [-q] [-v] [-l FILE] [-P] [-c CONFIG]
-              [-d DURATION] [-f]
-              output
+              [-d DURATION] [-f] output
 
 Description
 ===========
