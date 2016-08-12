@@ -12,7 +12,10 @@ an actual HAT.
 Links
 =====
 
-* The code is licensed under the ???
+* The library code is licensed under the `LGPL version 2.1`_ or above, while
+  the applications :program:`sense_emu_gui`, :program:`sense_rec`,
+  :program:`sense_play`, and :program:`sense_csv` are licensed under the `GPL
+  version 2.0`_ or above.
 * The `source code`_ can be obtained from GitHub, which also hosts the `bug
   tracker`_
 * The `documentation`_ (which includes installation, API reference and example
@@ -25,4 +28,6 @@ Links
 .. _bug tracker: https://github.com/RPi-Distro/python-sense-emu/issues
 .. _documentation: https://sense-emu.readthedocs.io
 .. _PyPI: https://pypi.python.org/pypi/sense_emu/
+.. _LGPL version 2.1: https://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html
+.. _GPL version 2.0: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 

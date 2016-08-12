@@ -35,7 +35,7 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="5.6"
-     inkscape:cx="83.88906"
+     inkscape:cx="39.960489"
      inkscape:cy="59.055432"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
@@ -59,6 +59,8 @@
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
         <dc:title></dc:title>
+        <cc:license
+           rdf:resource="https://www.gnu.org/licenses/old-licenses/gpl-2.0.html" />
       </cc:Work>
     </rdf:RDF>
   </metadata>
