@@ -24,7 +24,6 @@ import time
 import numpy as np
 import shutil
 import glob
-import pwd
 import array
 import struct
 from PIL import Image  # pillow
@@ -182,7 +181,7 @@ class SenseHat(object):
 
         ini_file = '%s.ini' % imu_settings_file
 
-        home_dir = pwd.getpwuid(os.getuid())[5]
+        home_dir = os.path.expanduser('~')
         home_path = os.path.join(home_dir, self.SETTINGS_HOME_PATH)
         if not os.path.exists(home_path):
             os.makedirs(home_path)

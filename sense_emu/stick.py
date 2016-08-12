@@ -100,8 +100,10 @@ def init_stick_client():
     """
     family, sock_type, addr = stick_address()
     client = socket.socket(family, sock_type)
-    fname = 'rpi-sense-emu-client-%d' % os.getpid()
-    if family == socket.AF_UNIX:
+    if family == socket.AF_INET:
+        client.bind(('127.0.0.1', 0))
+    elif family == socket.AF_UNIX:
+        fname = 'rpi-sense-emu-client-%d' % os.getpid()
         addr_path = os.path.dirname(addr)
         try:
             os.unlink(os.path.join(addr_path, fname))
@@ -109,11 +111,8 @@ def init_stick_client():
             if e.errno != errno.ENOENT:
                 raise
         client.bind(os.path.join(addr_path, fname))
-        if not client.getsockname():
-            raise RuntimeError('Failed to create client socket for stick emulation')
-    else:
-        # XXX What about Windows?
-        pass
+    if not client.getsockname():
+        raise RuntimeError('Failed to create client socket for stick emulation')
     # Start up a background thread which persistently attempts to connect to
     # the server and pings it with "hello" to notify it that we want stick
     # events. This must be persistent in case the emulating client is stopped
