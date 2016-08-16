@@ -356,7 +356,6 @@ class EmuWindow(Gtk.ApplicationWindow):
                     # the image to be redrawn when the app is idle. It would
                     # be better to use custom signals for this ... but then
                     # pixman region copy bugs start appearing
-                    self._screen_pixbuf = img
                     GLib.idle_add(self._update_screen, img)
             # The following wait ensures a maximum update rate of 25fps (the
             # actual HAT is faster, but on small Pi's increasing the rate
@@ -365,7 +364,7 @@ class EmuWindow(Gtk.ApplicationWindow):
                 break
 
     def _update_screen(self, pixbuf):
-        self.ui.screen_image.set_from_pixbuf(self._screen_pixbuf)
+        self.ui.screen_image.set_from_pixbuf(pixbuf)
         self._screen_pending = False
         return False
 
