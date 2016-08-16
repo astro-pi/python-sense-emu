@@ -218,6 +218,13 @@ class EmuWindow(Gtk.ApplicationWindow):
         self.ui.up_button.direction = SenseStick.KEY_UP
         self.ui.down_button.direction = SenseStick.KEY_DOWN
         self.ui.enter_button.direction = SenseStick.KEY_ENTER
+        self._stick_map = {
+            Gdk.KEY_Return: self.ui.enter_button,
+            Gdk.KEY_Left:   self.ui.left_button,
+            Gdk.KEY_Right:  self.ui.right_button,
+            Gdk.KEY_Up:     self.ui.up_button,
+            Gdk.KEY_Down:   self.ui.down_button,
+            }
 
         # Set up a thread to constantly refresh the pixels from the screen
         # client object
@@ -270,6 +277,24 @@ class EmuWindow(Gtk.ApplicationWindow):
                 self.ui.yaw.props.value,
                 ))
 
+    def stick_key_pressed(self, button, event):
+        try:
+            button = self._stick_map[event.keyval]
+        except KeyError:
+            return False
+        else:
+            self.stick_pressed(button, event)
+            return True
+
+    def stick_key_released(self, button, event):
+        try:
+            button = self._stick_map[event.keyval]
+        except KeyError:
+            return False
+        else:
+            self.stick_released(button, event)
+            return True
+
     def stick_pressed(self, button, event):
         # When a button is double-clicked, GTK fires two pressed events for the
         # second click with no intervening released event (so there's one
@@ -279,32 +304,14 @@ class EmuWindow(Gtk.ApplicationWindow):
         # more like a deliberate behaviour. Anyway, we work around the
         # redundant press by detecting it with the non-zero stick_held_id and
         # ignoring the redundant event
+        button.grab_focus()
         with self._stick_held_lock:
             if self._stick_held_id:
                 return True
             self._stick_held_id = GLib.timeout_add(250, self.stick_held_first, button)
         self._stick_send(button.direction, SenseStick.STATE_PRESS)
-        return False
-
-    def stick_activated(self, button):
-        # According to the GTK docs "applications should never connect to this
-        # signal ... use clicked instead".  Unfortunately, pressed and released
-        # are emitted by mouse clicks on the button (useful for emulating the
-        # pressed, released, and held events of the joystick) ... but not when
-        # the keyboard is used to control the button.
-        #
-        # Activated *is* emitted when the keyboard is used (but not the mouse),
-        # while clicked is emitted both when the keyboard is used *and* the
-        # mouse (after the released event) which makes it rather useless for
-        # just responding to keyboard presses (unless we also track state with
-        # pressed and released which would just be redundant).
-        #
-        # This does mean we can't emulate "held" events with the keyboard
-        # (because we can't detect key down and key up), but key-repeat will
-        # handle repeatedly firing pressed and released, which is probably
-        # good enough for the vast majority of scripts.
-        self.stick_pressed(button, None)
-        self.stick_released(button, None)
+        button.set_active(True)
+        return True
 
     def stick_released(self, button, event):
         with self._stick_held_lock:
@@ -312,7 +319,8 @@ class EmuWindow(Gtk.ApplicationWindow):
                 GLib.source_remove(self._stick_held_id)
                 self._stick_held_id = 0
         self._stick_send(button.direction, SenseStick.STATE_RELEASE)
-        return False
+        button.set_active(False)
+        return True
 
     def stick_held_first(self, button):
         with self._stick_held_lock:
