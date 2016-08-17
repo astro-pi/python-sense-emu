@@ -7,6 +7,10 @@
         <attribute name="label" translatable="yes">Re_play recording...</attribute>
         <attribute name="accel">&lt;Primary&gt;p</attribute>
       </item>
+      <item>
+        <attribute name="action">app.prefs</attribute>
+        <attribute name="label" translatable="yes">Pre_ferences...</attribute>
+      </item>
     </section>
     <section>
       <item>

@@ -158,7 +158,7 @@
                   <object class="GtkLabel" id="pressure_label">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Pressure (hPa)</property>
+                    <property name="label" translatable="yes">Pressure (mbar)</property>
                   </object>
                   <packing>
                     <property name="expand">False</property>

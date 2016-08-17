@@ -69,7 +69,7 @@ def load_image(filename, format='png'):
 class EmuApplication(Gtk.Application):
     def __init__(self, *args, **kwargs):
         super(EmuApplication, self).__init__(
-                *args, application_id='org.raspberrypi.sense_hat_emu',
+                *args, application_id='org.raspberrypi.sense_emu_gui',
                 flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE,
                 **kwargs)
         GLib.set_application_name(_('Sense HAT Emulator'))
@@ -79,12 +79,16 @@ class EmuApplication(Gtk.Application):
         # super-call needs to be in this form?!
         Gtk.Application.do_startup(self)
 
-        action = Gio.SimpleAction.new('about', None)
-        action.connect('activate', self.on_about)
-        self.add_action(action)
-
         action = Gio.SimpleAction.new('play', None)
         action.connect('activate', self.on_play)
+        self.add_action(action)
+
+        action = Gio.SimpleAction.new('prefs', None)
+        action.connect('activate', self.on_prefs)
+        self.add_action(action)
+
+        action = Gio.SimpleAction.new('about', None)
+        action.connect('activate', self.on_about)
         self.add_action(action)
 
         action = Gio.SimpleAction.new('quit', None)
@@ -93,7 +97,7 @@ class EmuApplication(Gtk.Application):
 
         builder = Gtk.Builder(translation_domain=__project__)
         builder.add_from_string(
-            pkg_resources.resource_string(__name__, 'sense_emu_menu.ui').decode('utf-8'))
+            pkg_resources.resource_string(__name__, 'menu.ui').decode('utf-8'))
         self.set_app_menu(builder.get_object('app-menu'))
 
         # Construct the emulator servers
@@ -116,7 +120,7 @@ class EmuApplication(Gtk.Application):
 
     def do_activate(self):
         if not self.window:
-            self.window = EmuWindow(application=self)
+            self.window = MainWindow(application=self)
         self.window.present()
 
     def do_command_line(self, command_line):
@@ -149,6 +153,24 @@ class EmuApplication(Gtk.Application):
         finally:
             open_dialog.destroy()
 
+    def on_prefs(self, action, param):
+        prefs_dialog = PrefsDialog(
+            title=_('Preferences'), transient_for=self.window)
+        try:
+            prefs_dialog.ui.env_check.props.active = (
+                self.pressure.simulate_noise or self.humidity.simulate_noise)
+            prefs_dialog.ui.imu_check.props.active = self.imu.simulate_world
+            prefs_dialog.ui.screen_fps.props.value = 1 / self.window.screen_update_delay
+            response = prefs_dialog.run()
+            prefs_dialog.hide()
+            if response == Gtk.ResponseType.ACCEPT:
+                self.pressure.simulate_noise = prefs_dialog.ui.env_check.props.active
+                self.humidity.simulate_noise = prefs_dialog.ui.env_check.props.active
+                self.imu.simulate_world = prefs_dialog.ui.imu_check.props.active
+                self.window.screen_update_delay = 1 / prefs_dialog.ui.screen_fps.props.value
+        finally:
+            prefs_dialog.destroy()
+
     def on_quit(self, action, param):
         self.quit()
 
@@ -171,9 +193,9 @@ class BuilderUi(object):
         return result
 
 
-class EmuWindow(Gtk.ApplicationWindow):
+class MainWindow(Gtk.ApplicationWindow):
     def __init__(self, *args, **kwargs):
-        super(EmuWindow, self).__init__(*args, **kwargs)
+        super(MainWindow, self).__init__(*args, **kwargs)
 
         # Build the UI; this is a bit round-about because of Gtk's weird UI
         # handling. One can't just use a UI file to setup an existing Window
@@ -181,7 +203,7 @@ class EmuWindow(Gtk.ApplicationWindow):
         # (in which case overriding do_destroy is impossible) or construct a
         # whole new Window, remove its components, add them to ourselves and
         # then ditch the Window.
-        self._ui = BuilderUi(self, 'sense_emu_gui.ui')
+        self._ui = BuilderUi(self, 'main_window.ui')
         self.ui.window.remove(self.ui.root_grid)
         self.add(self.ui.root_grid)
         self.ui.window.destroy()
@@ -191,6 +213,7 @@ class EmuWindow(Gtk.ApplicationWindow):
         self._play_update_id = 0
         self._play_event = Event()
         self._play_thread = None
+        self._play_restore = (True, True, True)
 
         # Set initial positions on sliders (and add some marks)
         self.ui.pitch_scale.add_mark(0, Gtk.PositionType.BOTTOM, None)
@@ -228,6 +251,7 @@ class EmuWindow(Gtk.ApplicationWindow):
 
         # Set up a thread to constantly refresh the pixels from the screen
         # client object
+        self.screen_update_delay = 0.04
         self._screen_pending = False
         self._screen_timestamp = 0.0
         self._screen_event = Event()
@@ -365,10 +389,9 @@ class EmuWindow(Gtk.ApplicationWindow):
                     # be better to use custom signals for this ... but then
                     # pixman region copy bugs start appearing
                     GLib.idle_add(self._update_screen, img)
-            # The following wait ensures a maximum update rate of 25fps (the
-            # actual HAT is faster, but on small Pi's increasing the rate
-            # reduces performance)
-            if self._screen_event.wait(0.04):
+            # The following wait enforces the maximum update rate (set from
+            # the preferences dialog)
+            if self._screen_event.wait(self.screen_update_delay):
                 break
 
     def _update_screen(self, pixbuf):
@@ -379,6 +402,8 @@ class EmuWindow(Gtk.ApplicationWindow):
     def _play_run(self, f):
         err = None
         try:
+            # Calculate how many records are in the file; we'll use this later
+            # when updating the progress bar
             rec_total = (f.seek(0, io.SEEK_END) - HEADER_REC.size) // DATA_REC.size
             f.seek(0)
             skipped = 0
@@ -465,6 +490,11 @@ class EmuWindow(Gtk.ApplicationWindow):
         self.ui.gyro_grid.props.sensitive = False
         # Disable simulation threads as we're going to manipulate the
         # values precisely
+        self._play_restore = (
+            self.props.application.pressure.simulate_noise,
+            self.props.application.humidity.simulate_noise,
+            self.props.application.imu.simulate_noise,
+            )
         self.props.application.pressure.simulate_noise = False
         self.props.application.humidity.simulate_noise = False
         self.props.application.imu.simulate_world = False
@@ -476,12 +506,13 @@ class EmuWindow(Gtk.ApplicationWindow):
     def _play_controls_finish(self, exc):
         # Reverse _play_controls_setup
         self.ui.play_box.props.visible = False
-        self.props.application.imu.simulate_world = True
-        self.props.application.humidity.simulate_noise = True
-        self.props.application.pressure.simulate_noise = True
+        ( self.props.application.pressure.simulate_noise,
+            self.props.application.humidity.simulate_noise,
+            self.props.application.imu.simulate_world,
+            ) = self._play_restore
         self.ui.environ_box.props.sensitive = True
         self.ui.gyro_grid.props.sensitive = True
-        self._play_stop()
+        self._play_thread = None
         # If an exception occurred in the background thread, display the
         # error in an appropriate dialog
         if exc:
@@ -500,4 +531,28 @@ class EmuWindow(Gtk.ApplicationWindow):
         self._play_event.clear()
         self._play_thread.start()
 
+
+class PrefsDialog(Gtk.Dialog):
+    def __init__(self, *args, **kwargs):
+        super(PrefsDialog, self).__init__(*args, **kwargs)
+
+        # See comments in MainWindow...
+        self._ui = BuilderUi(self, 'prefs_dialog.ui')
+        self.ui.window.remove(self.ui.dialog_vbox)
+        self.remove(self.get_content_area())
+        self.add(self.ui.dialog_vbox)
+        self.ui.window.destroy()
+
+        self.props.resizable = False
+        self.ui.ok_button.grab_default()
+
+    @property
+    def ui(self):
+        return self._ui
+
+    def ok_clicked(self, button):
+        self.response(Gtk.ResponseType.ACCEPT)
+
+    def cancel_clicked(self, button):
+        self.response(Gtk.ResponseType.CANCEL)
 
