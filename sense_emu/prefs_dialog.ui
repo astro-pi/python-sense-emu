@@ -103,6 +103,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">False</property>
+                <property name="tooltip_text" translatable="yes">When checked, the emulator will continually simulate "noise" on the environment sensors (the temperature, pressure, and humidity sliders)</property>
                 <property name="xalign">0</property>
                 <property name="draw_indicator">True</property>
               </object>
@@ -117,6 +118,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">False</property>
+                <property name="tooltip_text" translatable="yes">When checked, the emulator will constantly simulate accelerometer (gravity induced), gyroscope (rate of change), and magnetometer (relative North) values based on the yaw, pitch, and roll sliders</property>
                 <property name="xalign">0</property>
                 <property name="draw_indicator">True</property>
               </object>
@@ -126,13 +128,38 @@
               </packing>
             </child>
             <child>
-              <object class="GtkSpinButton" id="screen_spin">
+              <object class="GtkBox" id="screen_box">
                 <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="activates_default">True</property>
-                <property name="input_purpose">digits</property>
-                <property name="adjustment">screen_fps</property>
-                <property name="numeric">True</property>
+                <property name="can_focus">False</property>
+                <property name="tooltip_text" translatable="yes">Sets the maximum rate at which the emulated pixel display can update. The real HAT updates at 60fps but emulation at this speed can cause issues on slower Pi's</property>
+                <property name="spacing">6</property>
+                <child>
+                  <object class="GtkSpinButton" id="screen_spin">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="activates_default">True</property>
+                    <property name="input_purpose">digits</property>
+                    <property name="adjustment">screen_fps</property>
+                    <property name="numeric">True</property>
+                  </object>
+                  <packing>
+                    <property name="expand">True</property>
+                    <property name="fill">True</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="screen_fps_label">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">fps</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
               </object>
               <packing>
                 <property name="left_attach">1</property>

@@ -335,7 +335,7 @@
                 </child>
                 <child>
                   <object class="GtkToggleButton" id="left_button">
-                    <property name="label" translatable="yes">←</property>
+                    <property name="label">←</property>
                     <property name="width_request">64</property>
                     <property name="height_request">64</property>
                     <property name="visible">True</property>

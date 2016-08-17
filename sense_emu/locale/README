@@ -1,14 +1,23 @@
+To update the .pot template use the main Makefile in the project root:
+
+  $ make sense_emu/locales/sense-emu.pot
+
 To construct new translations, just use the standard gettext tools to create
 new .po files in this directory. For example, to create a translation for
 French:
 
-$ msginit -lfr_FR
+  $ msginit -lfr_FR
 
 Fill out the .po file accordingly, then the Makefile will take care of
-construction of the .mo files during the package build. To force construction
-of .mo files for testing, use "i18n" target:
+construction of the .mo files during the package build. To update an existing
+translation with updates from the .pot file:
 
-$ make i18n
+  $ msgmerge -U fr_FR.po sense-emu.pot
+
+To force construction of .mo files for testing, use "i18n" target of the main
+Makefile:
+
+  $ make i18n
 
 Note that .mo files shouldn't be stored in the repo (the .gitignore already
 excludes them), and likewise the .pot and .po files won't be included in
