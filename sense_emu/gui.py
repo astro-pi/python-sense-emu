@@ -370,12 +370,9 @@ class MainWindow(Gtk.ApplicationWindow):
             # a prior update
             if not self._screen_pending:
                 # Only update if the screen's modification timestamp indicates
-                # that the data has changed since last time, or if the last
-                # update was more than a second ago. The latter criteria is to
-                # deal with the case of undetected updates due to lack of
-                # resolution on file modification timestamps
+                # that the data has changed since last time
                 ts = self.props.application.screen.timestamp
-                if (ts > self._screen_timestamp) or (time() - self._screen_timestamp > 1):
+                if ts > self._screen_timestamp:
                     img = self.sense_image.copy()
                     pixels = GdkPixbuf.Pixbuf.new_from_bytes(
                         GLib.Bytes.new(self.props.application.screen.rgb_array.tostring()),

@@ -31,6 +31,7 @@ import io
 import errno
 import mmap
 import struct
+from threading import Thread, Event
 
 import numpy as np
 
@@ -87,13 +88,36 @@ class ScreenClient(object):
         self._map = mmap.mmap(self._fd.fileno(), 0, access=mmap.ACCESS_READ)
         self._screen = np.frombuffer(self._map, dtype=np.uint16, count=64).reshape((8, 8))
         self._gamma = np.frombuffer(self._map, dtype=np.uint8, count=32, offset=128)
+        self._touch_stop = Event()
+        self._touch_thread = Thread(target=self._touch_run)
+        self._touch_thread.daemon = True
+        self._touch_thread.start()
 
     def close(self):
         if self._fd:
+            self._touch_stop.set()
+            self._touch_thread.join()
+            self._touch_thread = None
             self._map.close()
             self._map = None
             self._fd.close()
             self._fd = None
+
+    def _touch_run(self):
+        while not self._touch_stop.wait(1):
+            # "touch" the screen's frame-buffer once a second. This ensures
+            # that the screen always updates at least once a second and works
+            # around the issue that screen updates can be lost due to lack of
+            # resolution the file modification timestamps. Unfortunately,
+            # futimes(3) is not universally supported, and only available in
+            # Python 3.3+ so this gets a bit convoluted...
+            try:
+                if os.utime in os.supports_fd:
+                    os.utime(self._fd.fileno())
+                else:
+                    raise NotImplementedError
+            except (NameError, NotImplementedError) as e:
+                os.utime(self._fd.name)
 
     @property
     def array(self):
