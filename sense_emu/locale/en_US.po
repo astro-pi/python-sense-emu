@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-08-19 12:27+0100\n"
+"POT-Creation-Date: 2016-08-19 13:48+0100\n"
 "PO-Revision-Date: 2016-08-17 10:49+0100\n"
 "Last-Translator: Dave Jones <dave@waveform.org.uk>\n"
 "Language-Team: English\n"
@@ -75,32 +75,32 @@ msgstr "Select the recording to play"
 msgid "Preferences"
 msgstr "Preferences"
 
-#: sense_emu/gui.py:191
+#: sense_emu/gui.py:198
 #, python-format
 msgid "No such attribute %r"
 msgstr "No such attribute %r"
 
-#: sense_emu/gui.py:495
+#: sense_emu/gui.py:519
 #, python-format
 msgid "%s is not a Sense HAT recording"
 msgstr "%s is not a Sense HAT recording"
 
-#: sense_emu/gui.py:497
+#: sense_emu/gui.py:521
 #, python-format
 msgid "%s has unrecognized file version number"
 msgstr "%s has unrecognized file version number"
 
-#: sense_emu/gui.py:504
+#: sense_emu/gui.py:528
 #, python-format
 msgid "Incomplete data record at end of %s"
 msgstr "Incomplete data record at end of %s"
 
-#: sense_emu/gui.py:524
+#: sense_emu/gui.py:548
 #, python-format
 msgid "Playing %s"
 msgstr "Playing %s"
 
-#: sense_emu/gui.py:544
+#: sense_emu/gui.py:568
 msgid "Error while replaying recording"
 msgstr "Error while replaying recording"
 
@@ -271,36 +271,41 @@ msgstr ""
 "joystick buttons will produce directions appropriate to the HAT's orientation"
 
 #: sense_emu/main_window.ui:172
-msgid "Temperature (°C)"
-msgstr "Temperature (°C)"
+#, fuzzy
+msgid "Temperature"
+msgstr "Temperature"
 
-#: sense_emu/main_window.ui:213
-msgid "Pressure (mbar)"
-msgstr "Pressure (mbar)"
+#: sense_emu/main_window.ui:214
+#, fuzzy
+msgid "Pressure"
+msgstr "Pressure"
 
-#: sense_emu/main_window.ui:254
-msgid "Humidity (%)"
-msgstr "Humidity (%)"
+#: sense_emu/main_window.ui:257
+#, fuzzy
+msgid "Humidity"
+msgstr "Humidity"
 
 #. Title above emulated Sense HAT joystick buttons
-#: sense_emu/main_window.ui:302
+#: sense_emu/main_window.ui:306
 msgid "Joystick"
 msgstr "Joystick"
 
-#: sense_emu/main_window.ui:444
-msgid "Pitch (°)"
-msgstr "Pitch (°)"
+#: sense_emu/main_window.ui:448
+#, fuzzy
+msgid "Pitch"
+msgstr "Pitch"
 
-#: sense_emu/main_window.ui:456
-msgid "Roll (°)"
-msgstr "Roll (°)"
+#: sense_emu/main_window.ui:460
+#, fuzzy
+msgid "Roll"
+msgstr "Roll"
 
-#: sense_emu/main_window.ui:468
-msgid "Yaw (°)"
-msgstr "Yaw (°)"
+#: sense_emu/main_window.ui:472
+msgid "Yaw"
+msgstr "Yaw"
 
 #. Cancels playback of a recording
-#: sense_emu/main_window.ui:586
+#: sense_emu/main_window.ui:593
 msgid "Stop"
 msgstr "Stop"
 
@@ -367,3 +372,32 @@ msgstr ""
 #: sense_emu/prefs_dialog.ui:155
 msgid "fps"
 msgstr "fps"
+
+#: sense_emu/prefs_dialog.ui:174
+msgid "Orientation scale"
+msgstr "Orientation scale"
+
+#: sense_emu/prefs_dialog.ui:189
+msgid ""
+"When selected, the orientation sliders will have a minimum of -180°, a mid-"
+"point at 0°, and a maximum of 180°"
+msgstr ""
+"When selected, the orientation sliders will have a minimum of -180°, a mid-"
+"point at 0°, and a maximum of 180°"
+
+#: sense_emu/prefs_dialog.ui:205
+msgid ""
+"When selected, the orientation sliders will have a minimum of 0°, a mid-"
+"point at 1800°, and a maximum of 360°"
+msgstr ""
+"When selected, the orientation sliders will have a minimum of 0°, a mid-"
+"point at 1800°, and a maximum of 360°"
+
+#: sense_emu/prefs_dialog.ui:222
+msgid ""
+"When selected, the orientation sliders will have a minimum of 180°, a mid-"
+"point at 0° (immediately after 359°), and a maximum of 180°"
+msgstr ""
+"When selected, the orientation sliders will have a minimum of 180°, a mid-"
+"point at 0° (immediately after 359°), and a maximum of 180°"
+

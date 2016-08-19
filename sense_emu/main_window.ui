@@ -169,7 +169,7 @@
                   <object class="GtkLabel" id="temperature_label">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Temperature (°C)</property>
+                    <property name="label" translatable="yes">Temperature</property>
                   </object>
                   <packing>
                     <property name="expand">False</property>
@@ -186,6 +186,7 @@
                     <property name="inverted">True</property>
                     <property name="round_digits">1</property>
                     <property name="value_pos">bottom</property>
+                    <signal name="format-value" handler="format_temperature" swapped="no"/>
                   </object>
                   <packing>
                     <property name="expand">True</property>
@@ -210,7 +211,7 @@
                   <object class="GtkLabel" id="pressure_label">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Pressure (mbar)</property>
+                    <property name="label" translatable="yes">Pressure</property>
                   </object>
                   <packing>
                     <property name="expand">False</property>
@@ -220,6 +221,7 @@
                 </child>
                 <child>
                   <object class="GtkScale" id="pressure_scale">
+                    <property name="width_request">100</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="orientation">vertical</property>
@@ -227,6 +229,7 @@
                     <property name="inverted">True</property>
                     <property name="round_digits">1</property>
                     <property name="value_pos">bottom</property>
+                    <signal name="format-value" handler="format_pressure" swapped="no"/>
                   </object>
                   <packing>
                     <property name="expand">True</property>
@@ -251,7 +254,7 @@
                   <object class="GtkLabel" id="humidity_label">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Humidity (%)</property>
+                    <property name="label" translatable="yes">Humidity</property>
                   </object>
                   <packing>
                     <property name="expand">False</property>
@@ -268,6 +271,7 @@
                     <property name="inverted">True</property>
                     <property name="round_digits">1</property>
                     <property name="value_pos">bottom</property>
+                    <signal name="format-value" handler="format_humidity" swapped="no"/>
                   </object>
                   <packing>
                     <property name="expand">True</property>
@@ -441,7 +445,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="vexpand">True</property>
-                <property name="label" translatable="yes">Pitch (°)</property>
+                <property name="label" translatable="yes">Pitch</property>
               </object>
               <packing>
                 <property name="left_attach">0</property>
@@ -453,7 +457,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="vexpand">True</property>
-                <property name="label" translatable="yes">Roll (°)</property>
+                <property name="label" translatable="yes">Roll</property>
               </object>
               <packing>
                 <property name="left_attach">0</property>
@@ -465,7 +469,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="vexpand">True</property>
-                <property name="label" translatable="yes">Yaw (°)</property>
+                <property name="label" translatable="yes">Yaw</property>
               </object>
               <packing>
                 <property name="left_attach">0</property>
@@ -480,6 +484,7 @@
                 <property name="adjustment">pitch</property>
                 <property name="round_digits">1</property>
                 <property name="value_pos">right</property>
+                <signal name="format-value" handler="format_orientation" swapped="no"/>
               </object>
               <packing>
                 <property name="left_attach">1</property>
@@ -494,6 +499,7 @@
                 <property name="adjustment">roll</property>
                 <property name="round_digits">1</property>
                 <property name="value_pos">right</property>
+                <signal name="format-value" handler="format_orientation" swapped="no"/>
               </object>
               <packing>
                 <property name="left_attach">1</property>
@@ -508,6 +514,7 @@
                 <property name="adjustment">yaw</property>
                 <property name="round_digits">1</property>
                 <property name="value_pos">right</property>
+                <signal name="format-value" handler="format_orientation" swapped="no"/>
               </object>
               <packing>
                 <property name="left_attach">1</property>

@@ -161,6 +161,9 @@ class EmuApplication(Gtk.Application):
                 self.pressure.simulate_noise or self.humidity.simulate_noise)
             prefs_dialog.ui.imu_check.props.active = self.imu.simulate_world
             prefs_dialog.ui.screen_fps.props.value = 1 / self.window.screen_update_delay
+            prefs_dialog.ui.orientation_balance.props.active = self.window.orientation_mode == 'balance'
+            prefs_dialog.ui.orientation_circle.props.active = self.window.orientation_mode == 'circle'
+            prefs_dialog.ui.orientation_modulo.props.active = self.window.orientation_mode == 'modulo'
             response = prefs_dialog.run()
             prefs_dialog.hide()
             if response == Gtk.ResponseType.ACCEPT:
@@ -168,6 +171,10 @@ class EmuApplication(Gtk.Application):
                 self.humidity.simulate_noise = prefs_dialog.ui.env_check.props.active
                 self.imu.simulate_world = prefs_dialog.ui.imu_check.props.active
                 self.window.screen_update_delay = 1 / prefs_dialog.ui.screen_fps.props.value
+                self.window.orientation_mode = (
+                    'balance' if prefs_dialog.ui.orientation_balance.props.active else
+                    'circle' if prefs_dialog.ui.orientation_circle.props.active else
+                    'modulo')
         finally:
             prefs_dialog.destroy()
 
@@ -216,6 +223,7 @@ class MainWindow(Gtk.ApplicationWindow):
         self._play_restore = (True, True, True)
 
         # Set initial positions on sliders (and add some marks)
+        self.orientation_mode = 'balance'
         self.ui.pitch_scale.add_mark(0, Gtk.PositionType.BOTTOM, None)
         self.ui.roll_scale.add_mark(0, Gtk.PositionType.BOTTOM, None)
         self.ui.yaw_scale.add_mark(0, Gtk.PositionType.BOTTOM, None)
@@ -286,12 +294,18 @@ class MainWindow(Gtk.ApplicationWindow):
             pass
         Gtk.ApplicationWindow.do_destroy(self)
 
+    def format_pressure(self, scale, value):
+        return '%.1fmbar' % value
+
     def pressure_changed(self, adjustment):
         if not self._play_thread:
             self.props.application.pressure.set_values(
                 self.ui.pressure.props.value,
                 self.ui.temperature.props.value,
                 )
+
+    def format_humidity(self, scale, value):
+        return '%.1f%%' % value
 
     def humidity_changed(self, adjustment):
         if not self._play_thread:
@@ -300,10 +314,20 @@ class MainWindow(Gtk.ApplicationWindow):
                 self.ui.temperature.props.value,
                 )
 
+    def format_temperature(self, scale, value):
+        return '%.1f°C' % value
+
     def temperature_changed(self, adjustment):
         if not self._play_thread:
             self.pressure_changed(adjustment)
             self.humidity_changed(adjustment)
+
+    def format_orientation(self, scale, value):
+        return {
+            'balance': lambda v: '%.1f°' % v,
+            'circle':  lambda v: '%.1f°' % (v + 180),
+            'modulo':  lambda v: '%.1f°' % (v % 360),
+            }[self.orientation_mode](value)
 
     def orientation_changed(self, adjustment):
         if not self._play_thread:
