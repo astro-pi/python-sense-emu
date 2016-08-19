@@ -1,4 +1,5 @@
 from colorsys import hsv_to_rgb
+from time import sleep
 from sense_emu import SenseHat
 
 # Hues represent the spectrum of colors as values between 0 and 1. The range
@@ -30,3 +31,4 @@ while True:
     pixels = [(scale(r), scale(g), scale(b)) for r, g, b in pixels]
     # Update the display
     hat.set_pixels(pixels)
+    sleep(0.04)

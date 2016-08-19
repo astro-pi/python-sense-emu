@@ -323,11 +323,12 @@ class MainWindow(Gtk.ApplicationWindow):
             self.humidity_changed(adjustment)
 
     def format_orientation(self, scale, value):
-        return {
-            'balance': lambda v: '%.1f°' % v,
-            'circle':  lambda v: '%.1f°' % (v + 180),
-            'modulo':  lambda v: '%.1f°' % (v % 360),
-            }[self.orientation_mode](value)
+        return '%.1f°' % (
+            value       if self.orientation_mode == 'balance' else
+            value + 180 if self.orientation_mode == 'circle' else
+            value % 360 if self.orientation_mode == 'modulo' else
+            999 # should never happen
+            )
 
     def orientation_changed(self, adjustment):
         if not self._play_thread:
