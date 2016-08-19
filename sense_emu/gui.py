@@ -249,9 +249,21 @@ class MainWindow(Gtk.ApplicationWindow):
             Gdk.KEY_Down:   self.ui.down_button,
             }
 
+        # Set up attributes for the screen rotation controls
+        self.ui.screen_rotate_clockwise.angle = -90
+        self.ui.screen_rotate_anticlockwise.angle = 90
+        self._stick_rotations = {
+            SenseStick.KEY_LEFT:  SenseStick.KEY_UP,
+            SenseStick.KEY_UP:    SenseStick.KEY_RIGHT,
+            SenseStick.KEY_RIGHT: SenseStick.KEY_DOWN,
+            SenseStick.KEY_DOWN:  SenseStick.KEY_LEFT,
+            SenseStick.KEY_ENTER: SenseStick.KEY_ENTER,
+            }
+
         # Set up a thread to constantly refresh the pixels from the screen
         # client object
         self.screen_update_delay = 0.04
+        self._screen_rotation = 0
         self._screen_pending = False
         self._screen_timestamp = 0.0
         self._screen_event = Event()
@@ -359,9 +371,18 @@ class MainWindow(Gtk.ApplicationWindow):
     def _stick_send(self, direction, action):
         tv_usec, tv_sec = math.modf(time())
         tv_usec *= 1000000
+        r = self._screen_rotation // 90
+        while r:
+            direction = self._stick_rotations[direction]
+            r -= 1
         event_rec = struct.pack(SenseStick.EVENT_FORMAT,
             int(tv_sec), int(tv_usec), SenseStick.EV_KEY, direction, action)
         self.props.application.stick.send(event_rec)
+
+    def rotate_screen(self, button):
+        self._screen_rotation = (self._screen_rotation + button.angle) % 360
+        self.ui.screen_rotate_label.props.label = '%d°' % self._screen_rotation
+        self._screen_timestamp = 0 # force a screen update
 
     def _screen_run(self):
         # This method runs in the background _screen_thread
@@ -382,6 +403,7 @@ class MainWindow(Gtk.ApplicationWindow):
                         GdkPixbuf.InterpType.NEAREST, 255)
                     self.pixel_grid.composite(img, 31, 38, 128, 128, 31, 38, 1, 1,
                         GdkPixbuf.InterpType.NEAREST, 255)
+                    img = img.rotate_simple(self._screen_rotation)
                     self._screen_pending = True
                     self._screen_timestamp = ts
                     # GTK updates must be done by the main thread; schedule
