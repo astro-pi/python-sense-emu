@@ -116,8 +116,8 @@ class ScreenClient(object):
                     os.utime(self._fd.fileno())
                 else:
                     raise NotImplementedError
-            except (NameError, NotImplementedError) as e:
-                os.utime(self._fd.name)
+            except (AttributeError, NotImplementedError) as e:
+                os.utime(self._fd.name, None)
 
     @property
     def array(self):
