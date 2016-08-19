@@ -46,7 +46,7 @@ __version__      = '0.4'
 __author__       = 'Raspberry Pi Foundation'
 __author_email__ = 'info@raspberrypi.org'
 __url__          = 'http://sense-emu.readthedocs.io/'
-__platforms__    = 'ALL'
+__platforms__    = ['ALL']
 
 __classifiers__ = [
     'Development Status :: 5 - Production/Stable',
