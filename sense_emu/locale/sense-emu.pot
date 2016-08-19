@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-08-17 11:37+0100\n"
+"POT-Creation-Date: 2016-08-19 12:27+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -77,27 +77,27 @@ msgstr ""
 msgid "No such attribute %r"
 msgstr ""
 
-#: sense_emu/gui.py:473
+#: sense_emu/gui.py:495
 #, python-format
 msgid "%s is not a Sense HAT recording"
 msgstr ""
 
-#: sense_emu/gui.py:475
+#: sense_emu/gui.py:497
 #, python-format
 msgid "%s has unrecognized file version number"
 msgstr ""
 
-#: sense_emu/gui.py:482
+#: sense_emu/gui.py:504
 #, python-format
 msgid "Incomplete data record at end of %s"
 msgstr ""
 
-#: sense_emu/gui.py:502
+#: sense_emu/gui.py:524
 #, python-format
 msgid "Playing %s"
 msgstr ""
 
-#: sense_emu/gui.py:522
+#: sense_emu/gui.py:544
 msgid "Error while replaying recording"
 msgstr ""
 
@@ -242,37 +242,49 @@ msgstr ""
 msgid "Screen"
 msgstr ""
 
-#: sense_emu/main_window.ui:120
+#: sense_emu/main_window.ui:106
+msgid ""
+"Rotate the Sense HAT 90 degrees clockwise; after rotation the joystick "
+"buttons will produce directions appropriate to the HAT's orientation"
+msgstr ""
+
+#: sense_emu/main_window.ui:133
+msgid ""
+"Rotate the Sense HAT 90 degrees counter-clockwise; after rotation the "
+"joystick buttons will produce directions appropriate to the HAT's orientation"
+msgstr ""
+
+#: sense_emu/main_window.ui:172
 msgid "Temperature (°C)"
 msgstr ""
 
-#: sense_emu/main_window.ui:161
+#: sense_emu/main_window.ui:213
 msgid "Pressure (mbar)"
 msgstr ""
 
-#: sense_emu/main_window.ui:202
+#: sense_emu/main_window.ui:254
 msgid "Humidity (%)"
 msgstr ""
 
 #. Title above emulated Sense HAT joystick buttons
-#: sense_emu/main_window.ui:250
+#: sense_emu/main_window.ui:302
 msgid "Joystick"
 msgstr ""
 
-#: sense_emu/main_window.ui:392
+#: sense_emu/main_window.ui:444
 msgid "Pitch (°)"
 msgstr ""
 
-#: sense_emu/main_window.ui:404
+#: sense_emu/main_window.ui:456
 msgid "Roll (°)"
 msgstr ""
 
-#: sense_emu/main_window.ui:416
+#: sense_emu/main_window.ui:468
 msgid "Yaw (°)"
 msgstr ""
 
 #. Cancels playback of a recording
-#: sense_emu/main_window.ui:534
+#: sense_emu/main_window.ui:586
 msgid "Stop"
 msgstr ""
 

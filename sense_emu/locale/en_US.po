@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-08-17 10:48+0100\n"
+"POT-Creation-Date: 2016-08-19 12:27+0100\n"
 "PO-Revision-Date: 2016-08-17 10:49+0100\n"
 "Last-Translator: Dave Jones <dave@waveform.org.uk>\n"
 "Language-Team: English\n"
@@ -80,27 +80,27 @@ msgstr "Preferences"
 msgid "No such attribute %r"
 msgstr "No such attribute %r"
 
-#: sense_emu/gui.py:473
+#: sense_emu/gui.py:495
 #, python-format
 msgid "%s is not a Sense HAT recording"
 msgstr "%s is not a Sense HAT recording"
 
-#: sense_emu/gui.py:475
+#: sense_emu/gui.py:497
 #, python-format
 msgid "%s has unrecognized file version number"
 msgstr "%s has unrecognized file version number"
 
-#: sense_emu/gui.py:482
+#: sense_emu/gui.py:504
 #, python-format
 msgid "Incomplete data record at end of %s"
 msgstr "Incomplete data record at end of %s"
 
-#: sense_emu/gui.py:502
+#: sense_emu/gui.py:524
 #, python-format
 msgid "Playing %s"
 msgstr "Playing %s"
 
-#: sense_emu/gui.py:522
+#: sense_emu/gui.py:544
 msgid "Error while replaying recording"
 msgstr "Error while replaying recording"
 
@@ -254,37 +254,53 @@ msgstr "Try the --help option for more information."
 msgid "Screen"
 msgstr "Screen"
 
-#: sense_emu/main_window.ui:120
+#: sense_emu/main_window.ui:106
+msgid ""
+"Rotate the Sense HAT 90 degrees clockwise; after rotation the joystick "
+"buttons will produce directions appropriate to the HAT's orientation"
+msgstr ""
+"Rotate the Sense HAT 90 degrees clockwise; after rotation the joystick "
+"buttons will produce directions appropriate to the HAT's orientation"
+
+#: sense_emu/main_window.ui:133
+msgid ""
+"Rotate the Sense HAT 90 degrees counter-clockwise; after rotation the "
+"joystick buttons will produce directions appropriate to the HAT's orientation"
+msgstr ""
+"Rotate the Sense HAT 90 degrees counter-clockwise; after rotation the "
+"joystick buttons will produce directions appropriate to the HAT's orientation"
+
+#: sense_emu/main_window.ui:172
 msgid "Temperature (°C)"
 msgstr "Temperature (°C)"
 
-#: sense_emu/main_window.ui:161
+#: sense_emu/main_window.ui:213
 msgid "Pressure (mbar)"
 msgstr "Pressure (mbar)"
 
-#: sense_emu/main_window.ui:202
+#: sense_emu/main_window.ui:254
 msgid "Humidity (%)"
 msgstr "Humidity (%)"
 
 #. Title above emulated Sense HAT joystick buttons
-#: sense_emu/main_window.ui:250
+#: sense_emu/main_window.ui:302
 msgid "Joystick"
 msgstr "Joystick"
 
-#: sense_emu/main_window.ui:392
+#: sense_emu/main_window.ui:444
 msgid "Pitch (°)"
 msgstr "Pitch (°)"
 
-#: sense_emu/main_window.ui:404
+#: sense_emu/main_window.ui:456
 msgid "Roll (°)"
 msgstr "Roll (°)"
 
-#: sense_emu/main_window.ui:416
+#: sense_emu/main_window.ui:468
 msgid "Yaw (°)"
 msgstr "Yaw (°)"
 
 #. Cancels playback of a recording
-#: sense_emu/main_window.ui:534
+#: sense_emu/main_window.ui:586
 msgid "Stop"
 msgstr "Stop"
 
