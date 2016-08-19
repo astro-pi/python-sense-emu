@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 from sense_emu import SenseHat
-from signal import pause
 
 x = y = 4
 hat = SenseHat()
@@ -25,9 +24,7 @@ def move_dot(event):
             }.get(event.direction, 0))
 
 update_screen()
-hat.stick.direction_up = move_dot
-hat.stick.direction_down = move_dot
-hat.stick.direction_left = move_dot
-hat.stick.direction_right = move_dot
-hat.stick.direction_any = update_screen
-pause()
+while True:
+    for event in hat.stick.get_events():
+        move_dot(event)
+        update_screen()

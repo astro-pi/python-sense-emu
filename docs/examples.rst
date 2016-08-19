@@ -30,7 +30,7 @@ Temperature
 
 Displays the current temperature reading on the Sense HAT's screen:
 
-.. literalinclude:: temperature.py
+.. literalinclude:: ../sense_emu/examples/temperature.py
 
 
 Humidity
@@ -38,7 +38,7 @@ Humidity
 
 Displays the current humidity reading on the Sense HAT's screen:
 
-.. literalinclude:: humidity.py
+.. literalinclude:: ../sense_emu/examples/humidity.py
 
 
 Joystick
@@ -46,7 +46,12 @@ Joystick
 
 Scrolls a blip around the Sense HAT's screen in response to joystick motions:
 
-.. literalinclude:: bug_simple.py
+.. literalinclude:: ../sense_emu/examples/joystick_loop.py
+
+An alternative way to write this example using the joystick's event handler
+attributes is given below:
+
+.. literalinclude:: ../sense_emu/examples/joystick_events.py
 
 
 Rainbow
@@ -54,5 +59,5 @@ Rainbow
 
 Scrolls a rainbow of colours across the Sense HAT's pixels:
 
-.. literalinclude:: rainbow.py
+.. literalinclude:: ../sense_emu/examples/rainbow.py
 
