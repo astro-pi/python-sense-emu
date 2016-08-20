@@ -79,26 +79,20 @@ class EmuApplication(Gtk.Application):
         # super-call needs to be in this form?!
         Gtk.Application.do_startup(self)
 
-        action = Gio.SimpleAction.new('play', None)
-        action.connect('activate', self.on_play)
-        self.add_action(action)
-
-        action = Gio.SimpleAction.new('prefs', None)
-        action.connect('activate', self.on_prefs)
-        self.add_action(action)
-
-        action = Gio.SimpleAction.new('about', None)
-        action.connect('activate', self.on_about)
-        self.add_action(action)
-
-        action = Gio.SimpleAction.new('quit', None)
-        action.connect('activate', self.on_quit)
-        self.add_action(action)
+        def make_action(action_id, handler):
+            action = Gio.SimpleAction.new(action_id, None)
+            action.connect('activate', handler)
+            self.add_action(action)
+        make_action('example', self.on_example)
+        make_action('play',    self.on_play)
+        make_action('prefs',   self.on_prefs)
+        make_action('about',   self.on_about)
+        make_action('quit',    self.on_quit)
 
         builder = Gtk.Builder(translation_domain=__project__)
         builder.add_from_string(
             pkg_resources.resource_string(__name__, 'menu.ui').decode('utf-8'))
-        self.set_app_menu(builder.get_object('app-menu'))
+        self.set_menubar(builder.get_object('app-menu'))
 
         # Construct the emulator servers
         self.imu = IMUServer()
@@ -138,6 +132,9 @@ class EmuApplication(Gtk.Application):
             version=__version__, website=__url__)
         about_dialog.run()
         about_dialog.destroy()
+
+    def on_example(self, action, param):
+        pass
 
     def on_play(self, action, param):
         open_dialog = Gtk.FileChooserDialog(

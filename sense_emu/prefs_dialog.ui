@@ -1,7 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.18.3 -->
-<interface>
-  <requires lib="gtk+" version="3.12"/>
+<!-- Generated with glade 3.18.3 
+
+sense_emu_gui - An emulator for the Raspberry Pi Sense HAT
+Copyright (C) 2016 Raspberry Pi Foundation
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+Author: Dave Jones
+
+-->
+<interface domain="sense-emu">
+  <requires lib="gtk+" version="3.4"/>
+  <!-- interface-license-type gplv2 -->
+  <!-- interface-name sense_emu_gui -->
+  <!-- interface-description An emulator for the Raspberry Pi Sense HAT -->
+  <!-- interface-copyright 2016 Raspberry Pi Foundation -->
+  <!-- interface-authors Dave Jones -->
   <object class="GtkAdjustment" id="screen_fps">
     <property name="lower">1</property>
     <property name="upper">60</property>
@@ -138,7 +164,6 @@
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="activates_default">True</property>
-                    <property name="input_purpose">digits</property>
                     <property name="adjustment">screen_fps</property>
                     <property name="numeric">True</property>
                   </object>
