@@ -22,6 +22,7 @@ from __future__ import (
     print_function,
     division,
     )
+nstr = str
 str = type('')
 
 
@@ -33,6 +34,7 @@ import struct
 import math
 from time import time, sleep
 from threading import Thread, Lock, Event
+from subprocess import Popen
 
 import gi
 gi.require_version('Gtk', '3.0')
@@ -79,11 +81,11 @@ class EmuApplication(Gtk.Application):
         # super-call needs to be in this form?!
         Gtk.Application.do_startup(self)
 
-        def make_action(action_id, handler):
-            action = Gio.SimpleAction.new(action_id, None)
+        def make_action(action_id, handler, param_type=None):
+            action = Gio.SimpleAction.new(action_id, param_type)
             action.connect('activate', handler)
             self.add_action(action)
-        make_action('example', self.on_example)
+        make_action('example', self.on_example, GLib.VariantType.new('s'))
         make_action('play',    self.on_play)
         make_action('prefs',   self.on_prefs)
         make_action('about',   self.on_about)
@@ -92,7 +94,15 @@ class EmuApplication(Gtk.Application):
         builder = Gtk.Builder(translation_domain=__project__)
         builder.add_from_string(
             pkg_resources.resource_string(__name__, 'menu.ui').decode('utf-8'))
-        self.set_menubar(builder.get_object('app-menu'))
+        self.props.menubar = builder.get_object('app-menu')
+
+        # Construct the open examples sub-menu
+        examples = Gio.Menu.new()
+        for example in sorted(pkg_resources.resource_listdir(__name__, 'examples')):
+            examples.append(
+                example.replace('_', '__'), Gio.Action.print_detailed_name(
+                    'app.example', GLib.Variant.new_string(example)))
+        builder.get_object('example-submenu').append_section(None, examples)
 
         # Construct the emulator servers
         self.imu = IMUServer()
@@ -134,7 +144,14 @@ class EmuApplication(Gtk.Application):
         about_dialog.destroy()
 
     def on_example(self, action, param):
-        pass
+        # XXX Add copy to home-dir
+        # NOTE: The use of a bare "/" below is correct: resource paths are
+        # *not* file-system paths and always use "/" path separators
+        Popen([
+            'idle3',
+            '-e', pkg_resources.resource_filename(
+                __name__, '/'.join(('examples', param.unpack())))
+            ])
 
     def on_play(self, action, param):
         open_dialog = Gtk.FileChooserDialog(

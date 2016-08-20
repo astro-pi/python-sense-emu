@@ -4,10 +4,9 @@
     <submenu id="file-menu">
       <attribute name="label" translatable="yes">_File</attribute>
       <section>
-        <item>
-          <attribute name="action">app.example</attribute>
+        <submenu id="example-submenu">
           <attribute name="label" translatable="yes">_Open example</attribute>
-        </item>
+        </submenu>
         <item>
           <attribute name="action">app.play</attribute>
           <attribute name="label" translatable="yes">_Replay recording...</attribute>
