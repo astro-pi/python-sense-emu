@@ -12,10 +12,6 @@
           <attribute name="label" translatable="yes">_Replay recording...</attribute>
           <attribute name="accel">&lt;Primary&gt;p</attribute>
         </item>
-        <item>
-          <attribute name="action">app.prefs</attribute>
-          <attribute name="label" translatable="yes">_Preferences...</attribute>
-        </item>
       </section>
       <section>
         <item>
@@ -26,7 +22,22 @@
       </section>
     </submenu>
     <submenu>
+      <attribute name="label" translatable="yes">_Edit</attribute>
+      <section>
+        <item>
+          <attribute name="action">app.prefs</attribute>
+          <attribute name="label" translatable="yes">_Preferences...</attribute>
+        </item>
+      </section>
+    </submenu>
+    <submenu>
       <attribute name="label" translatable="yes">_Help</attribute>
+      <section>
+        <item>
+          <attribute name="action">app.help</attribute>
+          <attribute name="label" translatable="yes">Contents</attribute>
+        </item>
+      </section>
       <section>
         <item>
           <attribute name="action">app.about</attribute>

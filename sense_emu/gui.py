@@ -32,9 +32,10 @@ import sys
 import atexit
 import struct
 import math
+import subprocess
+import webbrowser
 from time import time, sleep
 from threading import Thread, Lock, Event
-from subprocess import Popen
 
 import gi
 gi.require_version('Gtk', '3.0')
@@ -88,6 +89,7 @@ class EmuApplication(Gtk.Application):
         make_action('example', self.on_example, GLib.VariantType.new('s'))
         make_action('play',    self.on_play)
         make_action('prefs',   self.on_prefs)
+        make_action('help',    self.on_help)
         make_action('about',   self.on_about)
         make_action('quit',    self.on_quit)
 
@@ -133,6 +135,14 @@ class EmuApplication(Gtk.Application):
         self.activate()
         return 0
 
+    def on_help(self, action, param):
+        local_help = '/usr/share/doc/python-sense-emu-doc/html/index.html'
+        remote_help = 'https://sense-emu.readthedocs.io/'
+        if os.path.exists(local_help):
+            webbrowser.open('file://' + local_help)
+        else:
+            webbrowser.open(remote_help)
+
     def on_about(self, action, param):
         logo = load_image('sense_emu_gui.svg', format='svg')
         about_dialog = Gtk.AboutDialog(
@@ -144,12 +154,10 @@ class EmuApplication(Gtk.Application):
         about_dialog.destroy()
 
     def on_example(self, action, param):
-        # XXX Add copy to home-dir
         # NOTE: The use of a bare "/" below is correct: resource paths are
         # *not* file-system paths and always use "/" path separators
-        Popen([
-            'idle3',
-            '-e', pkg_resources.resource_filename(
+        subprocess.Popen([
+            'idle3', pkg_resources.resource_filename(
                 __name__, '/'.join(('examples', param.unpack())))
             ])
 
@@ -578,8 +586,10 @@ class MainWindow(Gtk.ApplicationWindow):
         # error in an appropriate dialog
         if exc:
             dialog = Gtk.MessageDialog(
-                self, 0, message_type=Gtk.MessageType.ERROR,
-                buttons=Gtk.ButtonsType.CLOSE, title='Error',
+                transient_for=self,
+                message_type=Gtk.MessageType.ERROR,
+                buttons=Gtk.ButtonsType.CLOSE,
+                title=_('Error'),
                 text=_('Error while replaying recording'))
             dialog.format_secondary_text(str(exc))
             dialog.run()
