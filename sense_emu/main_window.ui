@@ -176,14 +176,13 @@ Author: Dave Jones
           <packing>
             <property name="left_attach">0</property>
             <property name="top_attach">0</property>
+            <property name="height">2</property>
           </packing>
         </child>
         <child>
           <object class="GtkBox" id="environ_box">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="hexpand">True</property>
-            <property name="vexpand">True</property>
             <property name="spacing">8</property>
             <child>
               <object class="GtkBox" id="temperature_box">
@@ -247,7 +246,7 @@ Author: Dave Jones
                 </child>
                 <child>
                   <object class="GtkScale" id="pressure_scale">
-                    <property name="width_request">100</property>
+                    <property name="width_request">90</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="orientation">vertical</property>
@@ -316,6 +315,7 @@ Author: Dave Jones
           <packing>
             <property name="left_attach">1</property>
             <property name="top_attach">0</property>
+            <property name="height">2</property>
           </packing>
         </child>
         <child>
@@ -325,18 +325,6 @@ Author: Dave Jones
             <property name="vexpand">True</property>
             <property name="orientation">vertical</property>
             <property name="spacing">6</property>
-            <child>
-              <object class="GtkLabel" id="joystick_label">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="label" translatable="yes" comments="Title above emulated Sense HAT joystick buttons">Joystick</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
             <child>
               <object class="GtkGrid" id="joystick_grid">
                 <property name="visible">True</property>
@@ -352,7 +340,7 @@ Author: Dave Jones
                     <property name="height_request">48</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
-                    <property name="receives_default">True</property>
+                    <property name="receives_default">False</property>
                     <signal name="button-press-event" handler="stick_pressed" swapped="no"/>
                     <signal name="button-release-event" handler="stick_released" swapped="no"/>
                     <signal name="key-press-event" handler="stick_key_pressed" swapped="no"/>
@@ -368,7 +356,7 @@ Author: Dave Jones
                     <property name="label">↵</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
-                    <property name="receives_default">True</property>
+                    <property name="receives_default">False</property>
                     <signal name="button-press-event" handler="stick_pressed" swapped="no"/>
                     <signal name="button-release-event" handler="stick_released" swapped="no"/>
                     <signal name="key-press-event" handler="stick_key_pressed" swapped="no"/>
@@ -386,7 +374,7 @@ Author: Dave Jones
                     <property name="height_request">48</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
-                    <property name="receives_default">True</property>
+                    <property name="receives_default">False</property>
                     <signal name="button-press-event" handler="stick_pressed" swapped="no"/>
                     <signal name="button-release-event" handler="stick_released" swapped="no"/>
                     <signal name="key-press-event" handler="stick_key_pressed" swapped="no"/>
@@ -404,7 +392,7 @@ Author: Dave Jones
                     <property name="height_request">48</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
-                    <property name="receives_default">True</property>
+                    <property name="receives_default">False</property>
                     <signal name="button-press-event" handler="stick_pressed" swapped="no"/>
                     <signal name="button-release-event" handler="stick_released" swapped="no"/>
                     <signal name="key-press-event" handler="stick_key_pressed" swapped="no"/>
@@ -422,7 +410,7 @@ Author: Dave Jones
                     <property name="height_request">48</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
-                    <property name="receives_default">True</property>
+                    <property name="receives_default">False</property>
                     <signal name="button-press-event" handler="stick_pressed" swapped="no"/>
                     <signal name="button-release-event" handler="stick_released" swapped="no"/>
                     <signal name="key-press-event" handler="stick_key_pressed" swapped="no"/>
@@ -449,12 +437,24 @@ Author: Dave Jones
               <packing>
                 <property name="expand">True</property>
                 <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="joystick_label">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes" comments="Title above emulated Sense HAT joystick buttons">Joystick</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
                 <property name="position">1</property>
               </packing>
             </child>
           </object>
           <packing>
-            <property name="left_attach">1</property>
+            <property name="left_attach">2</property>
             <property name="top_attach">1</property>
           </packing>
         </child>
@@ -463,7 +463,6 @@ Author: Dave Jones
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="hexpand">True</property>
-            <property name="vexpand">True</property>
             <property name="row_spacing">6</property>
             <property name="column_spacing">6</property>
             <child>
@@ -475,7 +474,7 @@ Author: Dave Jones
               </object>
               <packing>
                 <property name="left_attach">0</property>
-                <property name="top_attach">1</property>
+                <property name="top_attach">2</property>
               </packing>
             </child>
             <child>
@@ -487,7 +486,7 @@ Author: Dave Jones
               </object>
               <packing>
                 <property name="left_attach">0</property>
-                <property name="top_attach">2</property>
+                <property name="top_attach">3</property>
               </packing>
             </child>
             <child>
@@ -499,11 +498,12 @@ Author: Dave Jones
               </object>
               <packing>
                 <property name="left_attach">0</property>
-                <property name="top_attach">0</property>
+                <property name="top_attach">1</property>
               </packing>
             </child>
             <child>
               <object class="GtkScale" id="pitch_scale">
+                <property name="width_request">130</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="hexpand">True</property>
@@ -514,11 +514,12 @@ Author: Dave Jones
               </object>
               <packing>
                 <property name="left_attach">1</property>
-                <property name="top_attach">1</property>
+                <property name="top_attach">2</property>
               </packing>
             </child>
             <child>
               <object class="GtkScale" id="roll_scale">
+                <property name="width_request">130</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="hexpand">True</property>
@@ -529,11 +530,12 @@ Author: Dave Jones
               </object>
               <packing>
                 <property name="left_attach">1</property>
-                <property name="top_attach">2</property>
+                <property name="top_attach">3</property>
               </packing>
             </child>
             <child>
               <object class="GtkScale" id="yaw_scale">
+                <property name="width_request">130</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="hexpand">True</property>
@@ -544,7 +546,7 @@ Author: Dave Jones
               </object>
               <packing>
                 <property name="left_attach">1</property>
-                <property name="top_attach">0</property>
+                <property name="top_attach">1</property>
               </packing>
             </child>
             <child>
@@ -555,7 +557,7 @@ Author: Dave Jones
               </object>
               <packing>
                 <property name="left_attach">2</property>
-                <property name="top_attach">0</property>
+                <property name="top_attach">1</property>
               </packing>
             </child>
             <child>
@@ -566,7 +568,7 @@ Author: Dave Jones
               </object>
               <packing>
                 <property name="left_attach">2</property>
-                <property name="top_attach">1</property>
+                <property name="top_attach">2</property>
               </packing>
             </child>
             <child>
@@ -577,13 +579,25 @@ Author: Dave Jones
               </object>
               <packing>
                 <property name="left_attach">2</property>
-                <property name="top_attach">2</property>
+                <property name="top_attach">3</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="orientation_label">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Orientation</property>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">0</property>
+                <property name="width">3</property>
               </packing>
             </child>
           </object>
           <packing>
-            <property name="left_attach">0</property>
-            <property name="top_attach">1</property>
+            <property name="left_attach">2</property>
+            <property name="top_attach">0</property>
           </packing>
         </child>
         <child>
@@ -632,7 +646,7 @@ Author: Dave Jones
           <packing>
             <property name="left_attach">0</property>
             <property name="top_attach">2</property>
-            <property name="width">2</property>
+            <property name="width">3</property>
           </packing>
         </child>
       </object>
