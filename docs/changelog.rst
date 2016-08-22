@@ -5,7 +5,7 @@ Change log
 ==========
 
 
-Release 0.4 (???)
+Release 0.5 (???)
 =================
 
 * Initial release
