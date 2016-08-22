@@ -102,9 +102,10 @@ class EmuApplication(Gtk.Application):
         # Construct the open examples sub-menu
         examples = Gio.Menu.new()
         for example in sorted(pkg_resources.resource_listdir(__name__, 'examples')):
-            examples.append(
-                example.replace('_', '__'), Gio.Action.print_detailed_name(
-                    'app.example', GLib.Variant.new_string(example)))
+            if example.endswith('.py'):
+                examples.append(
+                    example.replace('_', '__'), Gio.Action.print_detailed_name(
+                        'app.example', GLib.Variant.new_string(example)))
         builder.get_object('example-submenu').append_section(None, examples)
 
         # Construct the emulator servers
@@ -240,6 +241,11 @@ class EmuApplication(Gtk.Application):
                     'balance' if prefs_dialog.ui.orientation_balance.props.active else
                     'circle' if prefs_dialog.ui.orientation_circle.props.active else
                     'modulo')
+                # Force the orientation sliders to redraw (merely changing
+                # format isn't enough to force a redraw)
+                self.window.ui.yaw.props.value = self.window.ui.yaw.props.value
+                self.window.ui.pitch.props.value = self.window.ui.pitch.props.value
+                self.window.ui.roll.props.value = self.window.ui.roll.props.value
         finally:
             prefs_dialog.destroy()
 
