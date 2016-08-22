@@ -32,6 +32,7 @@ import sys
 import atexit
 import struct
 import math
+import errno
 import subprocess
 import webbrowser
 from time import time, sleep
@@ -146,7 +147,7 @@ class EmuApplication(Gtk.Application):
     def on_about(self, action, param):
         logo = load_image('sense_emu_gui.svg', format='svg')
         about_dialog = Gtk.AboutDialog(
-            transient_for=self.window, modal=True,
+            transient_for=self.window,
             authors=['%s <%s>' % (__author__, __author_email__)],
             license_type=Gtk.License.GPL_2_0, logo=logo,
             version=__version__, website=__url__)
@@ -154,16 +155,57 @@ class EmuApplication(Gtk.Application):
         about_dialog.destroy()
 
     def on_example(self, action, param):
-        # NOTE: The use of a bare "/" below is correct: resource paths are
-        # *not* file-system paths and always use "/" path separators
-        subprocess.Popen([
-            'idle3', pkg_resources.resource_filename(
-                __name__, '/'.join(('examples', param.unpack())))
-            ])
+        def already_exists(target_filename):
+            # This sub-function is purely here to eliminate the redundancy in
+            # the main try..except block below (and the redundancy only exists
+            # to maintain compatibility with 2.x)
+            dialog = Gtk.MessageDialog(
+                transient_for=self.window,
+                message_type=Gtk.MessageType.QUESTION,
+                title=_('Overwrite example?'),
+                text=_(
+                    'File %s already exists. Select "Yes" to replace '
+                    'the file with the original, or "No" to open the '
+                    'existing file in the editor') % target_filename,
+                buttons=Gtk.ButtonsType.YES_NO)
+            try:
+                response = dialog.run()
+                if response == Gtk.ResponseType.YES:
+                    return io.open(target_filename, 'wb')
+                else:
+                    return None
+            finally:
+                dialog.destroy()
+
+        filename = param.unpack()
+        target_filename = os.path.join(os.path.expanduser('~'), filename)
+        try:
+            target = io.open(target_filename, 'xb')
+        except ValueError as e:
+            # We're on py2.x or 3.2 which doesn't support mode 'x'
+            try:
+                target = os.fdopen(os.open(
+                    target_filename, os.O_CREAT | os.O_EXCL | os.O_WRONLY), 'wb')
+            except OSError as e:
+                if e.errno == errno.EEXIST:
+                    target = already_exists(target_filename)
+        except IOError as e:
+            if e.errno == errno.EEXIST:
+                target = already_exists(target_filename)
+        if target:
+            # NOTE: The use of a bare "/" below is correct: resource paths are
+            # *not* file-system paths and always use "/" path separators
+            source = pkg_resources.resource_stream(
+                __name__, '/'.join(('examples', filename)))
+            target.write(source.read())
+            source.close()
+            target.close()
+        subprocess.Popen(['idle3', target_filename])
 
     def on_play(self, action, param):
         open_dialog = Gtk.FileChooserDialog(
-            title=_('Select the recording to play'), transient_for=self.window,
+            transient_for=self.window,
+            title=_('Select the recording to play'),
             action=Gtk.FileChooserAction.OPEN)
         open_dialog.add_button(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL)
         open_dialog.add_button(Gtk.STOCK_OPEN, Gtk.ResponseType.ACCEPT)
@@ -177,7 +219,8 @@ class EmuApplication(Gtk.Application):
 
     def on_prefs(self, action, param):
         prefs_dialog = PrefsDialog(
-            title=_('Preferences'), transient_for=self.window)
+            transient_for=self.window,
+            title=_('Preferences'))
         try:
             prefs_dialog.ui.env_check.props.active = (
                 self.pressure.simulate_noise or self.humidity.simulate_noise)
@@ -562,7 +605,7 @@ class MainWindow(Gtk.ApplicationWindow):
         self._play_restore = (
             self.props.application.pressure.simulate_noise,
             self.props.application.humidity.simulate_noise,
-            self.props.application.imu.simulate_noise,
+            self.props.application.imu.simulate_world,
             )
         self.props.application.pressure.simulate_noise = False
         self.props.application.humidity.simulate_noise = False
@@ -588,9 +631,9 @@ class MainWindow(Gtk.ApplicationWindow):
             dialog = Gtk.MessageDialog(
                 transient_for=self,
                 message_type=Gtk.MessageType.ERROR,
-                buttons=Gtk.ButtonsType.CLOSE,
                 title=_('Error'),
-                text=_('Error while replaying recording'))
+                text=_('Error while replaying recording'),
+                buttons=Gtk.ButtonsType.CLOSE)
             dialog.format_secondary_text(str(exc))
             dialog.run()
             dialog.destroy()
