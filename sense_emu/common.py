@@ -25,7 +25,8 @@ from __future__ import (
 nstr = str
 str = type('')
 
-
+import io
+import errno
 from struct import Struct
 from collections import namedtuple
 
@@ -66,4 +67,24 @@ def clamp(value, min_value, max_value):
     Return *value* clipped to the range *min_value* to *max_value* inclusive.
     """
     return min(max_value, max(min_value, value))
+
+
+def slow_pi():
+    """
+    Returns ``True`` if the local hardware is a Raspberry Pi with a slow
+    processor, specifically a BCM2835. This is used to determine defaults for
+    the simulation's processing.
+    """
+    try:
+        cpu = ''
+        with io.open('/proc/cpuinfo', 'r') as f:
+            for line in f:
+                if line.startswith('Hardware'):
+                    cpu = line.split(':', 1)[1].strip()
+                    break
+        return cpu in ('BCM2835', 'BCM2708')
+    except IOError as e:
+        if e.errno == errno.ENOENT:
+            return False
+        raise
 

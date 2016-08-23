@@ -51,7 +51,7 @@ from .imu import IMUServer
 from .pressure import PressureServer
 from .humidity import HumidityServer
 from .stick import StickServer, SenseStick
-from .common import HEADER_REC, DATA_REC, DataRecord
+from .common import HEADER_REC, DATA_REC, DataRecord, slow_pi
 
 
 def main():
@@ -108,12 +108,46 @@ class EmuApplication(Gtk.Application):
                         'app.example', GLib.Variant.new_string(example)))
         builder.get_object('example-submenu').append_section(None, examples)
 
+        # Construct the settings database and tweak initial value of
+        # simulate-imu and simulate-env if we're running on a slow Pi, and the
+        # user hasn't explicitly set a value yet
+        source = Gio.SettingsSchemaSource.new_from_directory(
+            os.path.dirname(pkg_resources.resource_filename(__name__, 'gschemas.compiled')),
+            Gio.SettingsSchemaSource.get_default(), True)
+        schema = Gio.SettingsSchemaSource.lookup(
+            source, self.props.application_id, False)
+        assert schema is not None
+        self.settings = Gio.Settings.new_full(schema, None, None)
+        if self.settings.get_user_value('simulate-imu') is None:
+            enable_simulators = not slow_pi()
+            self.settings.set_boolean('simulate-imu', enable_simulators)
+            self.settings.set_boolean('simulate-env', enable_simulators)
+
         # Construct the emulator servers
-        self.imu = IMUServer()
-        self.pressure = PressureServer()
-        self.humidity = HumidityServer()
+        self.imu = IMUServer(simulate_world=self.settings.get_boolean('simulate-imu'))
+        self.pressure = PressureServer(simulate_noise=self.settings.get_boolean('simulate-env'))
+        self.humidity = HumidityServer(simulate_noise=self.settings.get_boolean('simulate-env'))
         self.screen = ScreenClient()
         self.stick = StickServer()
+
+        # Connect the settings to the components
+        self.settings.connect('changed', self.settings_changed)
+
+    def settings_changed(self, settings, key):
+        if key == 'simulate-env':
+            self.pressure.simulate_noise = settings.get_boolean(key)
+            self.humidity.simulate_noise = settings.get_boolean(key)
+        elif key == 'simulate-imu':
+            self.imu.simulate_world = settings.get_boolean(key)
+        elif key == 'orientation-scale':
+            # Force the orientation sliders to redraw
+            self.window.ui.yaw_scale.queue_draw()
+            self.window.ui.pitch_scale.queue_draw()
+            self.window.ui.roll_scale.queue_draw()
+        elif key == 'screen-fps':
+            self.window.screen_update_delay = 1 / settings.get_int(key)
+        else:
+            assert False
 
     def do_shutdown(self):
         if self.window:
@@ -129,6 +163,9 @@ class EmuApplication(Gtk.Application):
     def do_activate(self):
         if not self.window:
             self.window = MainWindow(application=self)
+            # Force a read of settings specific to the main window
+            self.settings_changed(self.settings, 'screen-fps')
+            self.settings_changed(self.settings, 'orientation-scale')
         self.window.present()
 
     def do_command_line(self, command_line):
@@ -190,9 +227,13 @@ class EmuApplication(Gtk.Application):
             except OSError as e:
                 if e.errno == errno.EEXIST:
                     target = already_exists(target_filename)
+                else:
+                    raise
         except IOError as e:
             if e.errno == errno.EEXIST:
                 target = already_exists(target_filename)
+            else:
+                raise
         if target:
             # NOTE: The use of a bare "/" below is correct: resource paths are
             # *not* file-system paths and always use "/" path separators
@@ -221,30 +262,10 @@ class EmuApplication(Gtk.Application):
     def on_prefs(self, action, param):
         prefs_dialog = PrefsDialog(
             transient_for=self.window,
-            title=_('Preferences'))
+            title=_('Preferences'),
+            settings=self.settings)
         try:
-            prefs_dialog.ui.env_check.props.active = (
-                self.pressure.simulate_noise or self.humidity.simulate_noise)
-            prefs_dialog.ui.imu_check.props.active = self.imu.simulate_world
-            prefs_dialog.ui.screen_fps.props.value = 1 / self.window.screen_update_delay
-            prefs_dialog.ui.orientation_balance.props.active = self.window.orientation_mode == 'balance'
-            prefs_dialog.ui.orientation_circle.props.active = self.window.orientation_mode == 'circle'
-            prefs_dialog.ui.orientation_modulo.props.active = self.window.orientation_mode == 'modulo'
-            response = prefs_dialog.run()
-            prefs_dialog.hide()
-            if response == Gtk.ResponseType.ACCEPT:
-                self.pressure.simulate_noise = prefs_dialog.ui.env_check.props.active
-                self.humidity.simulate_noise = prefs_dialog.ui.env_check.props.active
-                self.imu.simulate_world = prefs_dialog.ui.imu_check.props.active
-                self.window.screen_update_delay = 1 / prefs_dialog.ui.screen_fps.props.value
-                self.window.orientation_mode = (
-                    'balance' if prefs_dialog.ui.orientation_balance.props.active else
-                    'circle' if prefs_dialog.ui.orientation_circle.props.active else
-                    'modulo')
-                # Force the orientation sliders to redraw
-                self.window.ui.yaw_scale.queue_draw()
-                self.window.ui.pitch_scale.queue_draw()
-                self.window.ui.roll_scale.queue_draw()
+            prefs_dialog.run()
         finally:
             prefs_dialog.destroy()
 
@@ -297,7 +318,6 @@ class MainWindow(Gtk.ApplicationWindow):
         self._play_restore = (True, True, True)
 
         # Set initial positions on sliders (and add some marks)
-        self.orientation_mode = 'balance'
         self.ui.pitch_scale.add_mark(0, Gtk.PositionType.BOTTOM, None)
         self.ui.roll_scale.add_mark(0, Gtk.PositionType.BOTTOM, None)
         self.ui.yaw_scale.add_mark(0, Gtk.PositionType.BOTTOM, None)
@@ -396,10 +416,11 @@ class MainWindow(Gtk.ApplicationWindow):
             self.humidity_changed(adjustment)
 
     def format_orientation(self, scale, value):
+        mode = self.props.application.settings.get_string('orientation-scale')
         return '%.1f°' % (
-            value       if self.orientation_mode == 'balance' else
-            value + 180 if self.orientation_mode == 'circle' else
-            value % 360 if self.orientation_mode == 'modulo' else
+            value       if mode == 'balance' else
+            value + 180 if mode == 'circle' else
+            value % 360 if mode == 'modulo' else
             999 # should never happen
             )
 
@@ -663,6 +684,7 @@ class MainWindow(Gtk.ApplicationWindow):
 
 class PrefsDialog(Gtk.Dialog):
     def __init__(self, *args, **kwargs):
+        self.settings = kwargs.pop('settings')
         super(PrefsDialog, self).__init__(*args, **kwargs)
 
         # See comments in MainWindow...
@@ -673,15 +695,28 @@ class PrefsDialog(Gtk.Dialog):
         self.ui.window.destroy()
 
         self.props.resizable = False
-        self.ui.ok_button.grab_default()
+        self.ui.close_button.grab_default()
+        self.settings.bind(
+            'simulate-env', self.ui.env_check, 'active', Gio.SettingsBindFlags.DEFAULT)
+        self.settings.bind(
+            'simulate-imu', self.ui.imu_check, 'active', Gio.SettingsBindFlags.DEFAULT)
+        self.settings.bind(
+            'screen-fps', self.ui.screen_fps, 'value', Gio.SettingsBindFlags.DEFAULT)
+        self.ui.orientation_balance.value = 'balance'
+        self.ui.orientation_circle.value = 'circle'
+        self.ui.orientation_modulo.value = 'modulo'
+        s = self.settings.get_string('orientation-scale')
+        for c in self.ui.orientation_balance.get_group():
+            c.props.active = (c.value == s)
 
     @property
     def ui(self):
         return self._ui
 
-    def ok_clicked(self, button):
+    def close_clicked(self, button):
         self.response(Gtk.ResponseType.ACCEPT)
 
-    def cancel_clicked(self, button):
-        self.response(Gtk.ResponseType.CANCEL)
+    def orientation_changed(self, button):
+        if button.props.active:
+            self.settings.set_string('orientation-scale', button.value)
 

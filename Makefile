@@ -10,6 +10,7 @@ MSGINIT=msginit
 MSGMERGE=msgmerge
 MSGFMT=msgfmt
 XGETTEXT=xgettext
+GCS=glib-compile-schemas
 DEST_DIR=/
 
 # Horrid hack to ensure setuptools is installed in our python environment. This
@@ -72,6 +73,8 @@ MAN_PAGES=man/sense_rec.1 man/sense_play.1 man/sense_csv.1 man/sense_emu_gui.1
 POT_FILE=$(PKG_DIR)/locale/$(NAME).pot
 PO_FILES:=$(wildcard $(PKG_DIR)/locale/*.po)
 MO_FILES:=$(patsubst $(PKG_DIR)/locale/%.po,$(PKG_DIR)/locale/%/LC_MESSAGES/$(NAME).mo,$(PO_FILES))
+GSCHEMA_FILES:=$(wildcard $(PKG_DIR)/*.gschema.xml)
+GSCHEMA_COMPILED=$(PKG_DIR)/gschemas.compiled
 
 
 # Default target
@@ -91,7 +94,7 @@ all:
 	@echo "make release - Create and tag a new release"
 	@echo "make upload - Upload the new release to repositories"
 
-install: $(SUBDIRS)
+install: $(SUBDIRS) $(MO_FILES) $(GSCHEMA_COMPILED)
 	$(PYTHON) $(PYFLAGS) setup.py install --root $(DEST_DIR)
 
 doc: $(DOC_SOURCES)
@@ -126,7 +129,7 @@ test:
 clean:
 	$(PYTHON) $(PYFLAGS) setup.py clean
 	$(MAKE) -f $(CURDIR)/debian/rules clean
-	rm -fr build/ dist/ $(NAME).egg-info/ tags $(MO_FILES)
+	rm -fr build/ dist/ $(NAME).egg-info/ tags $(MO_FILES) $(GSCHEMA_COMPILED)
 	for dir in $(SUBDIRS); do \
 		$(MAKE) -C $$dir clean; \
 	done
@@ -153,16 +156,19 @@ $(MO_FILES): $(PO_FILES)
 	mkdir -p $(dir $@)
 	$(MSGFMT) $(patsubst $(PKG_DIR)/locale/%/LC_MESSAGES/$(NAME).mo,$(PKG_DIR)/locale/%.po,$@) -o $@
 
-$(DIST_TAR): $(PY_SOURCES) $(MO_FILES) $(SUBDIRS)
+$(GSCHEMA_COMPILED): $(GSCHEMA_FILES)
+	$(GCS) $(PKG_DIR)
+
+$(DIST_TAR): $(PY_SOURCES) $(MO_FILES) $(GSCHEMA_COMPILED) $(SUBDIRS)
 	$(PYTHON) $(PYFLAGS) setup.py sdist --formats gztar
 
-$(DIST_ZIP): $(PY_SOURCES) $(MO_FILES) $(SUBDIRS)
+$(DIST_ZIP): $(PY_SOURCES) $(MO_FILES) $(GSCHEMA_COMPILED) $(SUBDIRS)
 	$(PYTHON) $(PYFLAGS) setup.py sdist --formats zip
 
-$(DIST_EGG): $(PY_SOURCES) $(MO_FILES) $(SUBDIRS)
+$(DIST_EGG): $(PY_SOURCES) $(MO_FILES) $(GSCHEMA_COMPILED) $(SUBDIRS)
 	$(PYTHON) $(PYFLAGS) setup.py bdist_egg
 
-$(DIST_DEB): $(PY_SOURCES) $(MO_FILES) $(SUBDIRS) $(DEB_SOURCES) $(MAN_PAGES)
+$(DIST_DEB): $(PY_SOURCES) $(MO_FILES) $(GSCHEMA_COMPILED) $(SUBDIRS) $(DEB_SOURCES) $(MAN_PAGES)
 	# build the binary package in the parent directory then rename it to
 	# project_version.orig.tar.gz
 	$(PYTHON) $(PYFLAGS) setup.py sdist --dist-dir=../
@@ -171,7 +177,7 @@ $(DIST_DEB): $(PY_SOURCES) $(MO_FILES) $(SUBDIRS) $(DEB_SOURCES) $(MAN_PAGES)
 	mkdir -p dist/
 	for f in $(DIST_DEB); do cp ../$${f##*/} dist/; done
 
-$(DIST_DSC): $(PY_SOURCES) $(MO_FILES) $(SUBDIRS) $(DEB_SOURCES) $(MAN_PAGES)
+$(DIST_DSC): $(PY_SOURCES) $(PO_FILES) $(GSCHEMA_COMPILED) $(SUBDIRS) $(DEB_SOURCES) $(MAN_PAGES)
 	# build the source package in the parent directory then rename it to
 	# project_version.orig.tar.gz
 	$(PYTHON) $(PYFLAGS) setup.py sdist --dist-dir=../
@@ -180,7 +186,7 @@ $(DIST_DSC): $(PY_SOURCES) $(MO_FILES) $(SUBDIRS) $(DEB_SOURCES) $(MAN_PAGES)
 	mkdir -p dist/
 	for f in $(DIST_DSC); do cp ../$${f##*/} dist/; done
 
-release: $(PY_SOURCES) $(MO_FILES) $(DOC_SOURCES) $(DEB_SOURCES)
+release: $(PY_SOURCES) $(MO_FILES) $(GSCHEMA_COMPILED) $(DOC_SOURCES) $(DEB_SOURCES)
 	$(MAKE) clean
 	# ensure there are no current uncommitted changes
 	test -z "$(shell git status --porcelain)"
@@ -192,7 +198,7 @@ release: $(PY_SOURCES) $(MO_FILES) $(DOC_SOURCES) $(DEB_SOURCES)
 	# update the package's registration on PyPI (in case any metadata's changed)
 	$(PYTHON) $(PYFLAGS) setup.py register
 
-upload: $(PY_SOURCES) $(MO_FILES) $(DOC_SOURCES) $(DIST_DEB) $(DIST_DSC)
+upload: $(PY_SOURCES) $(MO_FILES) $(GSCHEMA_COMPILED) $(DOC_SOURCES) $(DIST_DEB) $(DIST_DSC)
 	# build a source archive and upload to PyPI
 	$(PYTHON) $(PYFLAGS) setup.py sdist upload
 	# build the deb source archive and upload to Raspbian

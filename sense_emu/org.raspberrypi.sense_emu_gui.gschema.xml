@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.raspberrypi.sense_emu_gui" path="/org/raspberrypi/sense_emu_gui/" gettext-domain="sense-emu">
+    <key name="orientation-scale" type="s">
+      <default>'balance'</default>
+      <summary>The scale used to display orientation angles</summary>
+      <description>The scale used to display the yaw, pitch, and roll angles
+        used to specify the Sense HAT's orientation. Internally these are
+        always -180 to 180 degrees, but the interface can display alternate
+        ranges such as 0 to 360 degrees.</description>
+      <choices>
+        <choice value="balance" />
+        <choice value="circle" />
+        <choice value="modulo" />
+      </choices>
+    </key>
+    <key name="simulate-env" type="b">
+      <default>true</default>
+      <summary>Controls the environment simulation thread</summary>
+      <description>When enabled, the temperature, pressure, and humidity
+        settings will be constantly perturbed with a gaussian error. This
+        costs a certain amount of processor time, and is disabled by default
+        on lower end Pi models.</description>
+    </key>
+    <key name="simulate-imu" type="b">
+      <default>true</default>
+      <summary>Controls the IMU simulation thread</summary>
+      <description>When enabled, the orientation settings (yaw, pitch, and
+        roll), along with the derived IMU settings (gyroscope, accelerometer,
+        and compass) will be constantly perturbed with a gaussian error. This
+        costs a certain amount of processor time, and is disabled by default
+        on lower end Pi models.</description>
+    </key>
+    <key name="screen-fps" type="i">
+      <default>25</default>
+      <summary>Limits the screen update rate</summary>
+      <description>This is the maximum rate at which the screen will update.
+        The actual HAT updates at 60fps, but this speed causes issues in the
+        emulation on lower end Pi models, hence the default is 25fps (which is
+        sufficient for most emulation purposes).</description>
+      <range min="1" max="60" />
+    </key>
+  </schema>
+</schemalist>
