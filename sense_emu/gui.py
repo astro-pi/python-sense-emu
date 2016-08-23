@@ -241,11 +241,10 @@ class EmuApplication(Gtk.Application):
                     'balance' if prefs_dialog.ui.orientation_balance.props.active else
                     'circle' if prefs_dialog.ui.orientation_circle.props.active else
                     'modulo')
-                # Force the orientation sliders to redraw (merely changing
-                # format isn't enough to force a redraw)
-                self.window.ui.yaw.props.value = self.window.ui.yaw.props.value
-                self.window.ui.pitch.props.value = self.window.ui.pitch.props.value
-                self.window.ui.roll.props.value = self.window.ui.roll.props.value
+                # Force the orientation sliders to redraw
+                self.window.ui.yaw_scale.queue_draw()
+                self.window.ui.pitch_scale.queue_draw()
+                self.window.ui.roll_scale.queue_draw()
         finally:
             prefs_dialog.destroy()
 
@@ -308,9 +307,6 @@ class MainWindow(Gtk.ApplicationWindow):
         # Load graphics assets
         self.sense_image = load_image('sense_emu.png')
         self.pixel_grid = load_image('pixel_grid.png')
-        self.ui.yaw_image.set_from_pixbuf(load_image('yaw.png'))
-        self.ui.pitch_image.set_from_pixbuf(load_image('pitch.png'))
-        self.ui.roll_image.set_from_pixbuf(load_image('roll.png'))
 
         # Set up attributes for the joystick buttons
         self._stick_held_lock = Lock()
