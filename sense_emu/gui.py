@@ -286,7 +286,8 @@ class MainWindow(Gtk.ApplicationWindow):
         self.ui.window.destroy()
 
         # Set the window icon
-        self.props.icon = load_image('sense_emu_gui.png')
+        icon = load_image('sense_emu_gui.png')
+        self.props.icon = icon
 
         # Set up the objects for the playback thread
         self._play_update_lock = Lock()
