@@ -306,6 +306,7 @@ class MainWindow(Gtk.ApplicationWindow):
 
         # Load graphics assets
         self.sense_image = load_image('sense_emu.png')
+        self.orient_image = load_image('orientation.png')
         self.pixel_grid = load_image('pixel_grid.png')
 
         # Set up attributes for the joystick buttons
@@ -339,6 +340,7 @@ class MainWindow(Gtk.ApplicationWindow):
         # client object
         self.screen_update_delay = 0.04
         self._screen_rotation = 0
+        self._screen_orientation = False
         self._screen_pending = False
         self._screen_timestamp = 0.0
         self._screen_event = Event()
@@ -476,6 +478,10 @@ class MainWindow(Gtk.ApplicationWindow):
         self.ui.screen_rotate_label.props.label = '%d°' % self._screen_rotation
         self._screen_timestamp = 0 # force a screen update
 
+    def toggle_orientation(self, button):
+        self._screen_orientation = not self._screen_orientation
+        self._screen_timestamp = 0 # force a screen update
+
     def _screen_run(self):
         # This method runs in the background _screen_thread
         while True:
@@ -495,6 +501,9 @@ class MainWindow(Gtk.ApplicationWindow):
                         GdkPixbuf.InterpType.NEAREST, 255)
                     self.pixel_grid.composite(img, 31, 38, 128, 128, 31, 38, 1, 1,
                         GdkPixbuf.InterpType.NEAREST, 255)
+                    if self._screen_orientation:
+                        self.orient_image.composite(img, 0, 0, 265, 204, 0, 0, 1, 1,
+                            GdkPixbuf.InterpType.NEAREST, 215)
                     img = img.rotate_simple(self._screen_rotation)
                     self._screen_pending = True
                     self._screen_timestamp = ts

@@ -120,7 +120,7 @@ Author: Dave Jones
               </packing>
             </child>
             <child>
-              <object class="GtkBox" id="box1">
+              <object class="GtkBox" id="rotation_box">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <child>
@@ -139,18 +139,6 @@ Author: Dave Jones
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkLabel" id="screen_rotate_label">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="label">0°</property>
-                  </object>
-                  <packing>
-                    <property name="expand">True</property>
-                    <property name="fill">True</property>
-                    <property name="position">1</property>
-                  </packing>
-                </child>
-                <child>
                   <object class="GtkButton" id="screen_rotate_anticlockwise">
                     <property name="label">↺</property>
                     <property name="visible">True</property>
@@ -162,7 +150,34 @@ Author: Dave Jones
                   <packing>
                     <property name="expand">False</property>
                     <property name="fill">True</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="screen_rotate_label">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label">0°</property>
+                  </object>
+                  <packing>
+                    <property name="expand">True</property>
+                    <property name="fill">True</property>
                     <property name="position">2</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkToggleButton" id="orientation_overlay">
+                    <property name="label">⟀</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <property name="tooltip_text" translatable="yes">Click to toggle an overlay showing the positive direction of the yaw, pitch, and roll rotations</property>
+                    <signal name="toggled" handler="toggle_orientation" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">3</property>
                   </packing>
                 </child>
               </object>

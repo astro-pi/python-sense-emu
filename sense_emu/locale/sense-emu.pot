@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-08-22 20:46+0100\n"
+"POT-Creation-Date: 2016-08-23 10:20+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -64,55 +64,55 @@ msgstr ""
 msgid "Sense HAT Emulator"
 msgstr ""
 
-#: sense_emu/gui.py:165
+#: sense_emu/gui.py:166
 msgid "Overwrite example?"
 msgstr ""
 
-#: sense_emu/gui.py:167
+#: sense_emu/gui.py:168
 #, python-format
 msgid ""
 "File %s already exists. Select \"Yes\" to replace the file with the "
 "original, or \"No\" to open the existing file in the editor"
 msgstr ""
 
-#: sense_emu/gui.py:208
+#: sense_emu/gui.py:209
 msgid "Select the recording to play"
 msgstr ""
 
-#: sense_emu/gui.py:223
+#: sense_emu/gui.py:224
 msgid "Preferences"
 msgstr ""
 
-#: sense_emu/gui.py:263
+#: sense_emu/gui.py:268
 #, python-format
 msgid "No such attribute %r"
 msgstr ""
 
-#: sense_emu/gui.py:585
+#: sense_emu/gui.py:596
 #, python-format
 msgid "%s is not a Sense HAT recording"
 msgstr ""
 
-#: sense_emu/gui.py:587
+#: sense_emu/gui.py:598
 #, python-format
 msgid "%s has unrecognized file version number"
 msgstr ""
 
-#: sense_emu/gui.py:594
+#: sense_emu/gui.py:605
 #, python-format
 msgid "Incomplete data record at end of %s"
 msgstr ""
 
-#: sense_emu/gui.py:614
+#: sense_emu/gui.py:625
 #, python-format
 msgid "Playing %s"
 msgstr ""
 
-#: sense_emu/gui.py:634
+#: sense_emu/gui.py:645
 msgid "Error"
 msgstr ""
 
-#: sense_emu/gui.py:635
+#: sense_emu/gui.py:646
 msgid "Error while replaying recording"
 msgstr ""
 
@@ -263,43 +263,53 @@ msgid ""
 "buttons will produce directions appropriate to the HAT's orientation"
 msgstr ""
 
-#: sense_emu/main_window.ui:159
+#: sense_emu/main_window.ui:147
 msgid ""
 "Rotate the Sense HAT 90 degrees counter-clockwise; after rotation the "
 "joystick buttons will produce directions appropriate to the HAT's orientation"
 msgstr ""
 
-#: sense_emu/main_window.ui:198
+#: sense_emu/main_window.ui:174
+msgid ""
+"Click to toggle an overlay showing the positive direction of the yaw, pitch, "
+"and roll rotations"
+msgstr ""
+
+#: sense_emu/main_window.ui:212
 msgid "Temperature"
 msgstr ""
 
-#: sense_emu/main_window.ui:240
+#: sense_emu/main_window.ui:254
 msgid "Pressure"
 msgstr ""
 
-#: sense_emu/main_window.ui:283
+#: sense_emu/main_window.ui:297
 msgid "Humidity"
 msgstr ""
 
 #. Title above emulated Sense HAT joystick buttons
-#: sense_emu/main_window.ui:332
+#: sense_emu/main_window.ui:462
 msgid "Joystick"
 msgstr ""
 
-#: sense_emu/main_window.ui:474
+#: sense_emu/main_window.ui:488
 msgid "Pitch"
 msgstr ""
 
-#: sense_emu/main_window.ui:486
+#: sense_emu/main_window.ui:500
 msgid "Roll"
 msgstr ""
 
-#: sense_emu/main_window.ui:498
+#: sense_emu/main_window.ui:512
 msgid "Yaw"
 msgstr ""
 
+#: sense_emu/main_window.ui:571
+msgid "Orientation"
+msgstr ""
+
 #. Cancels playback of a recording
-#: sense_emu/main_window.ui:619
+#: sense_emu/main_window.ui:615
 msgid "Stop"
 msgstr ""
 
