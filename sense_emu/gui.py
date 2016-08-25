@@ -196,7 +196,7 @@ class EmuApplication(Gtk.Application):
         def already_exists(target_filename):
             # This sub-function is purely here to eliminate the redundancy in
             # the main try..except block below (and the redundancy only exists
-            # to maintain compatibility with 2.x)
+            # to maintain compatibility with <3.3)
             dialog = Gtk.MessageDialog(
                 transient_for=self.window,
                 message_type=Gtk.MessageType.QUESTION,

@@ -82,6 +82,7 @@ all:
 	@echo "make install - Install on local system"
 	@echo "make develop - Install symlinks for development"
 	@echo "make i18n - Update translation files"
+	@echo "make gschema - Update gschema settings"
 	@echo "make test - Run tests"
 	@echo "make doc - Generate HTML and PDF documentation"
 	@echo "make source - Create source package"
@@ -115,6 +116,8 @@ deb: $(DIST_DEB) $(DIST_DSC)
 dist: $(DIST_EGG) $(DIST_DEB) $(DIST_DSC) $(DIST_TAR) $(DIST_ZIP)
 
 i18n: $(MO_FILES) $(PO_FILES) $(POT_FILE)
+
+gschema: $(GSCHEMA_COMPILED)
 
 develop: tags
 	@# These have to be done separately to avoid a cockup...
