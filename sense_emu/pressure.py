@@ -63,7 +63,7 @@ PressureData = namedtuple('PressureData',
 
 def pressure_filename():
     """
-    Return the filename used represent the state of the emulated sense HAT's
+    Return the filename used to represent the state of the emulated sense HAT's
     pressure sensor. On UNIX we try ``/dev/shm`` then fall back to ``/tmp``; on
     Windows we use whatever ``%TEMP%`` contains
     """

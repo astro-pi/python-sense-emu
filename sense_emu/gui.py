@@ -51,6 +51,7 @@ from .imu import IMUServer
 from .pressure import PressureServer
 from .humidity import HumidityServer
 from .stick import StickServer, SenseStick
+from .lock import EmulatorLock
 from .common import HEADER_REC, DATA_REC, DataRecord, slow_pi
 
 
@@ -82,6 +83,25 @@ class EmuApplication(Gtk.Application):
     def do_startup(self):
         # super-call needs to be in this form?!
         Gtk.Application.do_startup(self)
+
+        # Get the emulator lock and terminate if something already has it
+        self.lock = EmulatorLock('sense_emu_gui')
+        try:
+            self.lock.acquire()
+        except:
+            dialog = Gtk.MessageDialog(
+                message_type=Gtk.MessageType.ERROR,
+                title=_('Error'),
+                text=_(
+                    'Another process is currently acting as the Sense HAT '
+                    'emulator'),
+                buttons=Gtk.ButtonsType.CLOSE)
+            try:
+                dialog.run()
+            finally:
+                dialog.destroy()
+                self.quit()
+                return
 
         def make_action(action_id, handler, param_type=None):
             action = Gio.SimpleAction.new(action_id, param_type)
@@ -150,23 +170,26 @@ class EmuApplication(Gtk.Application):
             assert False
 
     def do_shutdown(self):
-        if self.window:
-            self.window.destroy()
-            self.window = None
-        self.stick.close()
-        self.screen.close()
-        self.humidity.close()
-        self.pressure.close()
-        self.imu.close()
+        if self.lock.mine:
+            self.lock.release()
+            if self.window:
+                self.window.destroy()
+                self.window = None
+            self.stick.close()
+            self.screen.close()
+            self.humidity.close()
+            self.pressure.close()
+            self.imu.close()
         Gtk.Application.do_shutdown(self)
 
     def do_activate(self):
-        if not self.window:
+        if not self.window and self.lock.mine:
             self.window = MainWindow(application=self)
             # Force a read of settings specific to the main window
             self.settings_changed(self.settings, 'screen-fps')
             self.settings_changed(self.settings, 'orientation-scale')
-        self.window.present()
+        if self.window:
+            self.window.present()
 
     def do_command_line(self, command_line):
         options = command_line.get_options_dict()

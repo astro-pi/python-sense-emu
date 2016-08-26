@@ -37,11 +37,14 @@ import shutil
 import glob
 import array
 import struct
+import subprocess
+import warnings
 from PIL import Image  # pillow
 from copy import deepcopy
 
 
 from . import RTIMU
+from .lock import EmulatorLock
 from .stick import SenseStick
 from .screen import init_screen, GAMMA_DEFAULT, GAMMA_LOW
 
@@ -81,6 +84,11 @@ class SenseHat(object):
             imu_settings_file='RTIMULib',
             text_assets='sense_hat_text'
         ):
+
+        lock = EmulatorLock('sense_emu')
+        if not lock.wait(1):
+            warnings.warn(Warning('No emulator detected; spawning sense_emu_gui'))
+            subprocess.Popen(['sense_emu_gui'])
 
         self._fb_device = self._get_fb_device()
         if self._fb_device is None:

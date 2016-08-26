@@ -38,6 +38,7 @@ from .common import HEADER_REC, DATA_REC, DataRecord
 from .imu import IMUServer
 from .pressure import PressureServer
 from .humidity import HumidityServer
+from .lock import EmulatorLock
 
 
 class PlayApplication(TerminalApplication):
@@ -70,30 +71,41 @@ class PlayApplication(TerminalApplication):
                 yield data._replace(timestamp=data.timestamp + offset)
 
     def main(self, args):
-        imu = IMUServer(simulate_world=False)
-        psensor = PressureServer(simulate_noise=False)
-        hsensor = HumidityServer(simulate_noise=False)
-        skipped = 0
-        for rec, data in enumerate(self.source(args.input)):
-            now = time()
-            if data.timestamp < now:
-                if not skipped:
-                    logging.warning(_('Skipping records to catch up'))
-                skipped += 1
-                continue
-            else:
-                sleep(data.timestamp - now)
-            psensor.set_values(data.pressure, data.ptemp)
-            hsensor.set_values(data.humidity, data.htemp)
-            imu.set_imu_values(
-                (data.ax, data.ay, data.az),
-                (data.gx, data.gy, data.gz),
-                (data.cx, data.cy, data.cz),
-                (data.ox, data.oy, data.oz),
-                )
-        if skipped:
-            logging.warning(_('Skipped %d records during playback'), skipped)
-        logging.info(_('Finished playback of %d records'), rec)
+        lock = EmulatorLock('sense_play')
+        try:
+            lock.acquire()
+        except:
+            logging.error(
+                'Another process is currently acting as the Sense HAT '
+                'emulator')
+            return
+        try:
+            imu = IMUServer(simulate_world=False)
+            psensor = PressureServer(simulate_noise=False)
+            hsensor = HumidityServer(simulate_noise=False)
+            skipped = 0
+            for rec, data in enumerate(self.source(args.input)):
+                now = time()
+                if data.timestamp < now:
+                    if not skipped:
+                        logging.warning(_('Skipping records to catch up'))
+                    skipped += 1
+                    continue
+                else:
+                    sleep(data.timestamp - now)
+                psensor.set_values(data.pressure, data.ptemp)
+                hsensor.set_values(data.humidity, data.htemp)
+                imu.set_imu_values(
+                    (data.ax, data.ay, data.az),
+                    (data.gx, data.gy, data.gz),
+                    (data.cx, data.cy, data.cz),
+                    (data.ox, data.oy, data.oz),
+                    )
+            if skipped:
+                logging.warning(_('Skipped %d records during playback'), skipped)
+            logging.info(_('Finished playback of %d records'), rec)
+        finally:
+            lock.release()
 
 
 app = PlayApplication()
