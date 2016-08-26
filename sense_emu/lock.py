@@ -184,12 +184,12 @@ class EmulatorLock(object):
 
     def _write_pid(self):
         try:
-            lockfile = io.open(self._filename, 'xb')
+            lockfile = io.open(self._filename, 'x')
         except ValueError as e:
             # We're on py2.x or 3.2
             mode = 0o666
             lockfile = os.fdopen(os.open(
-                self._filename, os.O_CREAT | os.O_EXCL | os.O_WRONLY, mode), 'wb')
-        lockfile.write(b'%d\n' % os.getpid())
+                self._filename, os.O_CREAT | os.O_EXCL | os.O_WRONLY, mode), 'w')
+        lockfile.write('%d\n' % os.getpid())
         lockfile.close()
 
