@@ -193,56 +193,28 @@ class EmuApplication(Gtk.Application):
         about_dialog.destroy()
 
     def on_example(self, action, param):
-        def already_exists(target_filename):
-            # This sub-function is purely here to eliminate the redundancy in
-            # the main try..except block below (and the redundancy only exists
-            # to maintain compatibility with <3.3)
+        # NOTE: The use of a bare "/" below is correct: resource paths are
+        # *not* file-system paths and always use "/" path separators
+        source = pkg_resources.resource_filename(
+            __name__, '/'.join(('examples', param.unpack())))
+        # If the current user can write to the source file we're probably
+        # running as root. Show a warning to encourage the user to File/Save As
+        # before modifying
+        if os.access(source, os.W_OK):
             dialog = Gtk.MessageDialog(
                 transient_for=self.window,
-                message_type=Gtk.MessageType.QUESTION,
-                title=_('Overwrite example?'),
+                message_type=Gtk.MessageType.WARNING,
+                title=_('Warning'),
                 text=_(
-                    'File %s already exists. Select "Yes" to replace '
-                    'the file with the original, or "No" to open the '
-                    'existing file in the editor') % target_filename,
-                buttons=Gtk.ButtonsType.YES_NO)
+                    'Your user write access to %s; please use File / Save As '
+                    'to copy the example to a safe location to avoid '
+                    'modifying installation files' % source),
+                buttons=Gtk.ButtonsType.CLOSE)
             try:
-                response = dialog.run()
-                if response == Gtk.ResponseType.YES:
-                    return io.open(target_filename, 'wb')
-                else:
-                    return None
+                dialog.run()
             finally:
                 dialog.destroy()
-
-        filename = param.unpack()
-        target_filename = os.path.join(os.path.expanduser('~'), filename)
-        try:
-            target = io.open(target_filename, 'xb')
-        except ValueError as e:
-            # We're on py2.x or 3.2 which doesn't support mode 'x'
-            try:
-                target = os.fdopen(os.open(
-                    target_filename, os.O_CREAT | os.O_EXCL | os.O_WRONLY), 'wb')
-            except OSError as e:
-                if e.errno == errno.EEXIST:
-                    target = already_exists(target_filename)
-                else:
-                    raise
-        except IOError as e:
-            if e.errno == errno.EEXIST:
-                target = already_exists(target_filename)
-            else:
-                raise
-        if target:
-            # NOTE: The use of a bare "/" below is correct: resource paths are
-            # *not* file-system paths and always use "/" path separators
-            source = pkg_resources.resource_stream(
-                __name__, '/'.join(('examples', filename)))
-            target.write(source.read())
-            source.close()
-            target.close()
-        subprocess.Popen(['idle3', target_filename])
+        subprocess.Popen(['idle3', source])
 
     def on_play(self, action, param):
         open_dialog = Gtk.FileChooserDialog(
