@@ -120,13 +120,21 @@ class EmuApplication(Gtk.Application):
         self.props.menubar = builder.get_object('app-menu')
 
         # Construct the open examples sub-menu
-        examples = Gio.Menu.new()
-        for example in sorted(pkg_resources.resource_listdir(__name__, 'examples')):
-            if example.endswith('.py'):
-                examples.append(
-                    example.replace('_', '__'), Gio.Action.print_detailed_name(
-                        'app.example', GLib.Variant.new_string(example)))
-        builder.get_object('example-submenu').append_section(None, examples)
+        for directory, label in [
+                ('basic',        _('Simple')),
+                ('intermediate', _('Intermediate')),
+                ('advanced',     _('Advanced')),
+                ]:
+            examples = Gio.Menu.new()
+            # NOTE: The use of a literal "/" below is correct; resource paths
+            # are not file-system paths and always use "/"
+            for example in sorted(
+                    pkg_resources.resource_listdir(__name__, 'examples/%s' % directory)):
+                if example.endswith('.py'):
+                    examples.append(
+                        example.replace('_', '__'), Gio.Action.print_detailed_name(
+                            'app.example', GLib.Variant.new_string(example)))
+            builder.get_object('example-submenu').append_section(label, examples)
 
         # Construct the settings database and tweak initial value of
         # simulate-imu and simulate-env if we're running on a slow Pi, and the
