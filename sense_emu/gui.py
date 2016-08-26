@@ -131,9 +131,12 @@ class EmuApplication(Gtk.Application):
         # Construct the settings database and tweak initial value of
         # simulate-imu and simulate-env if we're running on a slow Pi, and the
         # user hasn't explicitly set a value yet
-        source = Gio.SettingsSchemaSource.new_from_directory(
-            os.path.dirname(pkg_resources.resource_filename(__name__, 'gschemas.compiled')),
-            Gio.SettingsSchemaSource.get_default(), True)
+        if pkg_resources.resource_exists(__name__, 'gschemas.compiled'):
+            source = Gio.SettingsSchemaSource.new_from_directory(
+                os.path.dirname(pkg_resources.resource_filename(__name__, 'gschemas.compiled')),
+                Gio.SettingsSchemaSource.get_default(), True)
+        else:
+            source = Gio.SettingsSchemaSource.get_default()
         schema = Gio.SettingsSchemaSource.lookup(
             source, self.props.application_id, False)
         assert schema is not None

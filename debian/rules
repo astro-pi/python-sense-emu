@@ -18,6 +18,10 @@ override_dh_auto_install:
 	# Strip out binaries from the library packages
 	rm -fr debian/python-sense-emu/usr/bin
 	rm -fr debian/python3-sense-emu/usr/bin
+	# Strip out compiled gschemas from everything (it's handled by the
+	# .install file and is only included in the source distro for
+	# development purposes and odd platforms like Windows)
+	find debian/ -name "gschemas.compiled" -delete
 
 #override_dh_auto_test:
 #	# Don't run the tests!

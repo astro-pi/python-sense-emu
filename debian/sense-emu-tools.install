@@ -1,3 +1,4 @@
+sense_emu/gschemas.compiled /usr/share/glib-2.0/schemas/
 debian/sense_emu_gui.desktop /usr/share/applications/
 icons/xpm/sense_emu_gui.xpm /usr/share/pixmaps/
 icons/scalable/sense_emu_gui.svg /usr/share/icons/hicolor/scalable/apps/
