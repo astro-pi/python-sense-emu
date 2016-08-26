@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-08-23 10:20+0100\n"
+"POT-Creation-Date: 2016-08-26 15:03+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -33,15 +33,15 @@ msgstr ""
 msgid "if specified, output column headers"
 msgstr ""
 
-#: sense_emu/dump.py:64 sense_emu/play.py:52
+#: sense_emu/dump.py:64 sense_emu/play.py:53
 msgid "Reading header"
 msgstr ""
 
-#: sense_emu/dump.py:67 sense_emu/play.py:55
+#: sense_emu/dump.py:67 sense_emu/play.py:56
 msgid "Invalid magic number at start of input"
 msgstr ""
 
-#: sense_emu/dump.py:69 sense_emu/play.py:57
+#: sense_emu/dump.py:69 sense_emu/play.py:58
 #, python-format
 msgid "Unrecognized file version number (%d)"
 msgstr ""
@@ -51,7 +51,7 @@ msgstr ""
 msgid "Dumping recording taken at %s"
 msgstr ""
 
-#: sense_emu/dump.py:79 sense_emu/play.py:67
+#: sense_emu/dump.py:79 sense_emu/play.py:68
 msgid "Incomplete data record at end of file"
 msgstr ""
 
@@ -60,83 +60,87 @@ msgstr ""
 msgid "Converted %d records"
 msgstr ""
 
-#: sense_emu/gui.py:79 sense_emu/main_window.ui:77
+#: sense_emu/gui.py:80 sense_emu/main_window.ui:77
 msgid "Sense HAT Emulator"
 msgstr ""
 
-#: sense_emu/gui.py:166
-msgid "Overwrite example?"
+#: sense_emu/gui.py:94 sense_emu/gui.py:668
+msgid "Error"
 msgstr ""
 
-#: sense_emu/gui.py:168
+#: sense_emu/gui.py:96
+msgid "Another process is currently acting as the Sense HAT emulator"
+msgstr ""
+
+#: sense_emu/gui.py:233
+msgid "Warning"
+msgstr ""
+
+#: sense_emu/gui.py:235
 #, python-format
 msgid ""
-"File %s already exists. Select \"Yes\" to replace the file with the "
-"original, or \"No\" to open the existing file in the editor"
+"Your user write access to %s; please use File / Save As to copy the example "
+"to a safe location to avoid modifying installation files"
 msgstr ""
 
-#: sense_emu/gui.py:209
+#: sense_emu/gui.py:248
 msgid "Select the recording to play"
 msgstr ""
 
-#: sense_emu/gui.py:224
+#: sense_emu/gui.py:263
 msgid "Preferences"
 msgstr ""
 
-#: sense_emu/gui.py:268
+#: sense_emu/gui.py:287
 #, python-format
 msgid "No such attribute %r"
 msgstr ""
 
-#: sense_emu/gui.py:596
+#: sense_emu/gui.py:619
 #, python-format
 msgid "%s is not a Sense HAT recording"
 msgstr ""
 
-#: sense_emu/gui.py:598
+#: sense_emu/gui.py:621
 #, python-format
 msgid "%s has unrecognized file version number"
 msgstr ""
 
-#: sense_emu/gui.py:605
+#: sense_emu/gui.py:628
 #, python-format
 msgid "Incomplete data record at end of %s"
 msgstr ""
 
-#: sense_emu/gui.py:625
+#: sense_emu/gui.py:648
 #, python-format
 msgid "Playing %s"
 msgstr ""
 
-#: sense_emu/gui.py:645
-msgid "Error"
-msgstr ""
-
-#: sense_emu/gui.py:646
+#: sense_emu/gui.py:669
 msgid "Error while replaying recording"
 msgstr ""
 
-#: sense_emu/play.py:47
+#: sense_emu/play.py:48
 msgid ""
 "Replays readings recorded from a Raspberry Pi Sense HAT, via the Sense HAT "
 "emulation library."
 msgstr ""
 
-#: sense_emu/play.py:59
+#: sense_emu/play.py:60
 #, python-format
 msgid "Playing back recording taken at %s"
 msgstr ""
 
-#: sense_emu/play.py:81
+#: sense_emu/play.py:91
 msgid "Skipping records to catch up"
 msgstr ""
 
-#: sense_emu/play.py:95
+#: sense_emu/play.py:105
 #, python-format
 msgid "Skipped %d records during playback"
 msgstr ""
 
-#: sense_emu/play.py:96
+#: sense_emu/play.py:106
 #, python-format
 msgid "Finished playback of %d records"
 msgstr ""
@@ -349,63 +353,63 @@ msgstr ""
 msgid "_About..."
 msgstr ""
 
-#: sense_emu/prefs_dialog.ui:105
+#: sense_emu/prefs_dialog.ui:90
 msgid "Simulate"
 msgstr ""
 
-#: sense_emu/prefs_dialog.ui:118
+#: sense_emu/prefs_dialog.ui:103
 msgid "Screen updates"
 msgstr ""
 
-#: sense_emu/prefs_dialog.ui:128
+#: sense_emu/prefs_dialog.ui:113
 msgid "Environment sensors"
 msgstr ""
 
-#: sense_emu/prefs_dialog.ui:132
+#: sense_emu/prefs_dialog.ui:117
 msgid ""
 "When checked, the emulator will continually simulate \"noise\" on the "
 "environment sensors (the temperature, pressure, and humidity sliders)"
 msgstr ""
 
-#: sense_emu/prefs_dialog.ui:143
+#: sense_emu/prefs_dialog.ui:128
 msgid "Inertial measurement unit"
 msgstr ""
 
-#: sense_emu/prefs_dialog.ui:147
+#: sense_emu/prefs_dialog.ui:132
 msgid ""
 "When checked, the emulator will constantly simulate accelerometer (gravity "
 "induced), gyroscope (rate of change), and magnetometer (relative North) "
 "values based on the yaw, pitch, and roll sliders"
 msgstr ""
 
-#: sense_emu/prefs_dialog.ui:160
+#: sense_emu/prefs_dialog.ui:145
 msgid ""
 "Sets the maximum rate at which the emulated pixel display can update. The "
 "real HAT updates at 60fps but emulation at this speed can cause issues on "
 "slower Pi's"
 msgstr ""
 
-#: sense_emu/prefs_dialog.ui:180
+#: sense_emu/prefs_dialog.ui:165
 msgid "fps"
 msgstr ""
 
-#: sense_emu/prefs_dialog.ui:199
+#: sense_emu/prefs_dialog.ui:184
 msgid "Orientation scale"
 msgstr ""
 
-#: sense_emu/prefs_dialog.ui:214
+#: sense_emu/prefs_dialog.ui:199
 msgid ""
 "When selected, the orientation sliders will have a minimum of -180°, a mid-"
 "point at 0°, and a maximum of 180°"
 msgstr ""
 
-#: sense_emu/prefs_dialog.ui:230
+#: sense_emu/prefs_dialog.ui:216
 msgid ""
 "When selected, the orientation sliders will have a minimum of 0°, a mid-"
 "point at 180°, and a maximum of 360°"
 msgstr ""
 
-#: sense_emu/prefs_dialog.ui:247
+#: sense_emu/prefs_dialog.ui:234
 msgid ""
 "When selected, the orientation sliders will have a minimum of 180°, a mid-"
 "point at 0° (immediately after 359°), and a maximum of 180°"
