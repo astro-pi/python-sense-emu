@@ -24,6 +24,18 @@ do is change this line to::
 To run your scripts under the emulator, first start the emulator application,
 then start your script.
 
+Several example scripts, with varying degrees of difficulty, are available from
+the :menuselection:`File --> Open example` menu within the emulator. Selecting
+an example from this menu will open it in Python's IDLE environment.
+
+.. note::
+
+    The example will be opened directly from the installation. To edit the
+    example for your own purposes, use :menuselection:`File --> Save As` in
+    IDLE to save the file under your home directory (e.g. :file:`/home/pi`).
+
+A selection of example scripts is given in the following sections.
+
 
 Temperature
 ===========
