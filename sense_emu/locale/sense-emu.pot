@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-08-26 15:03+0100\n"
+"POT-Creation-Date: 2016-08-26 15:31+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -64,7 +64,7 @@ msgstr ""
 msgid "Sense HAT Emulator"
 msgstr ""
 
-#: sense_emu/gui.py:94 sense_emu/gui.py:668
+#: sense_emu/gui.py:94 sense_emu/gui.py:679
 msgid "Error"
 msgstr ""
 
@@ -72,51 +72,66 @@ msgstr ""
 msgid "Another process is currently acting as the Sense HAT emulator"
 msgstr ""
 
-#: sense_emu/gui.py:233
+#. I18N: Easy examples
+#: sense_emu/gui.py:125
+msgid "Simple"
+msgstr ""
+
+#. I18N: Intermediate skill examples
+#: sense_emu/gui.py:127
+msgid "Intermediate"
+msgstr ""
+
+#. I18N: Difficult examples
+#: sense_emu/gui.py:129
+msgid "Advanced"
+msgstr ""
+
+#: sense_emu/gui.py:244
 msgid "Warning"
 msgstr ""
 
-#: sense_emu/gui.py:235
+#: sense_emu/gui.py:246
 #, python-format
 msgid ""
-"Your user write access to %s; please use File / Save As to copy the example "
-"to a safe location to avoid modifying installation files"
+"Your user has write access to %s; please use File / Save As to copy the "
+"example to a safe location to avoid modifying installation files"
 msgstr ""
 
-#: sense_emu/gui.py:248
+#: sense_emu/gui.py:259
 msgid "Select the recording to play"
 msgstr ""
 
-#: sense_emu/gui.py:263
+#: sense_emu/gui.py:274
 msgid "Preferences"
 msgstr ""
 
-#: sense_emu/gui.py:287
+#: sense_emu/gui.py:298
 #, python-format
 msgid "No such attribute %r"
 msgstr ""
 
-#: sense_emu/gui.py:619
+#: sense_emu/gui.py:630
 #, python-format
 msgid "%s is not a Sense HAT recording"
 msgstr ""
 
-#: sense_emu/gui.py:621
+#: sense_emu/gui.py:632
 #, python-format
 msgid "%s has unrecognized file version number"
 msgstr ""
 
-#: sense_emu/gui.py:628
+#: sense_emu/gui.py:639
 #, python-format
 msgid "Incomplete data record at end of %s"
 msgstr ""
 
-#: sense_emu/gui.py:648
+#: sense_emu/gui.py:659
 #, python-format
 msgid "Playing %s"
 msgstr ""
 
-#: sense_emu/gui.py:669
+#: sense_emu/gui.py:680
 msgid "Error while replaying recording"
 msgstr ""
 

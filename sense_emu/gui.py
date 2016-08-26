@@ -121,20 +121,27 @@ class EmuApplication(Gtk.Application):
 
         # Construct the open examples sub-menu
         for directory, label in [
+                # I18N: Easy examples
                 ('basic',        _('Simple')),
+                # I18N: Intermediate skill examples
                 ('intermediate', _('Intermediate')),
+                # I18N: Difficult examples
                 ('advanced',     _('Advanced')),
                 ]:
             examples = Gio.Menu.new()
-            # NOTE: The use of a literal "/" below is correct; resource paths
+            # NOTE: The use of literal "/" below is correct; resource paths
             # are not file-system paths and always use "/"
             for example in sorted(
                     pkg_resources.resource_listdir(__name__, 'examples/%s' % directory)):
                 if example.endswith('.py'):
                     examples.append(
-                        example.replace('_', '__'), Gio.Action.print_detailed_name(
-                            'app.example', GLib.Variant.new_string(example)))
-            builder.get_object('example-submenu').append_section(label, examples)
+                        example.replace('_', '__'),
+                        Gio.Action.print_detailed_name(
+                            'app.example',
+                            GLib.Variant.new_string('%s/%s' % (directory, example))
+                            )
+                        )
+            builder.get_object('example-submenu').append_submenu(label, examples)
 
         # Construct the settings database and tweak initial value of
         # simulate-imu and simulate-env if we're running on a slow Pi, and the
@@ -240,8 +247,8 @@ class EmuApplication(Gtk.Application):
                 message_type=Gtk.MessageType.WARNING,
                 title=_('Warning'),
                 text=_(
-                    'Your user write access to %s; please use File / Save As '
-                    'to copy the example to a safe location to avoid '
+                    'Your user has write access to %s; please use File / Save '
+                    'As to copy the example to a safe location to avoid '
                     'modifying installation files' % source),
                 buttons=Gtk.ButtonsType.CLOSE)
             try:
