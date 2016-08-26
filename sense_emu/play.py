@@ -78,7 +78,7 @@ class PlayApplication(TerminalApplication):
             logging.error(
                 'Another process is currently acting as the Sense HAT '
                 'emulator')
-            return
+            return 1
         try:
             imu = IMUServer(simulate_world=False)
             psensor = PressureServer(simulate_noise=False)
