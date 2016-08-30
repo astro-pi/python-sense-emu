@@ -1,5 +1,5 @@
-sense-emu (0.6) UNRELEASED; urgency=medium
+sense-emu (1.0) stable; urgency=medium
 
   * Initial release.
 
- -- Dave Jones <dave@waveform.org.uk>  Wed, 17 Aug 2016 11:35:49 +0100
+ -- Dave Jones <dave@waveform.org.uk>  Wed, 31 Aug 2016 00:30:00 +0100
