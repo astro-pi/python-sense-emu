@@ -341,8 +341,8 @@ class MainWindow(Gtk.ApplicationWindow):
         self.ui.pitch_scale.add_mark(0, Gtk.PositionType.BOTTOM, None)
         self.ui.roll_scale.add_mark(0, Gtk.PositionType.BOTTOM, None)
         self.ui.yaw_scale.add_mark(0, Gtk.PositionType.BOTTOM, None)
-        self.ui.pitch.props.value = self.props.application.imu.orientation[0]
-        self.ui.roll.props.value = self.props.application.imu.orientation[1]
+        self.ui.roll.props.value = self.props.application.imu.orientation[0]
+        self.ui.pitch.props.value = self.props.application.imu.orientation[1]
         self.ui.yaw.props.value = self.props.application.imu.orientation[2]
         self.ui.humidity.props.value = self.props.application.humidity.humidity
         self.ui.pressure.props.value = self.props.application.pressure.pressure
@@ -447,8 +447,8 @@ class MainWindow(Gtk.ApplicationWindow):
     def orientation_changed(self, adjustment):
         if not self._play_thread:
             self.props.application.imu.set_orientation((
-                self.ui.pitch.props.value,
                 self.ui.roll.props.value,
+                self.ui.pitch.props.value,
                 self.ui.yaw.props.value,
                 ))
 
