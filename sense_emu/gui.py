@@ -35,6 +35,7 @@ import math
 import errno
 import subprocess
 import webbrowser
+import datetime as dt
 from time import time, sleep
 from threading import Thread, Lock, Event
 
@@ -236,25 +237,23 @@ class EmuApplication(Gtk.Application):
     def on_example(self, action, param):
         # NOTE: The use of a bare "/" below is correct: resource paths are
         # *not* file-system paths and always use "/" path separators
-        source = pkg_resources.resource_filename(
-            __name__, '/'.join(('examples', param.unpack())))
-        # If the current user can write to the source file we're probably
-        # running as root. Show a warning to encourage the user to File/Save As
-        # before modifying
-        if os.access(source, os.W_OK):
-            dialog = Gtk.MessageDialog(
-                transient_for=self.window,
-                message_type=Gtk.MessageType.WARNING,
-                title=_('Warning'),
-                text=_(
-                    'Your user has write access to %s; please use File / Save '
-                    'As to copy the example to a safe location to avoid '
-                    'modifying installation files' % source),
-                buttons=Gtk.ButtonsType.CLOSE)
-            try:
-                dialog.run()
-            finally:
-                dialog.destroy()
+        filename = param.unpack()
+        source = pkg_resources.resource_stream(
+            __name__, '/'.join(('examples', filename)))
+        # Write to a filename in the user's home-dir with the timestamp
+        # appended to ensure uniqueness (ish)
+        filename = os.path.splitext(os.path.basename(filename))[0]
+        filename = '{filename}-{timestamp:%Y-%m-%d-%H-%M-%S}.py'.format(
+            filename=filename, timestamp=dt.datetime.now())
+        filename = os.path.join(os.path.expanduser('~'), filename)
+        target = io.open(filename, 'w', encoding='utf-8')
+        # Write a note at the top of the file to explain things
+        target.write("""\
+# This file has been written to your home directory for convenience. It is
+# saved as "{filename}"
+
+""".format(filename=filename))
+        target.write(source.read().decode('utf-8'))
         # Spawn IDLE; if this seems like a crazy way to spawn IDLE, you're
         # right but it's also cross-platform and cross-version compatible
         # (works on Py 2.x on Windows and UNIX, and Py 3.x on Windows and UNIX;
@@ -262,7 +261,7 @@ class EmuApplication(Gtk.Application):
         subprocess.Popen([
             sys.executable,
             '-c', 'from idlelib.PyShell import main; main()',
-            source])
+            filename])
 
     def on_play(self, action, param):
         open_dialog = Gtk.FileChooserDialog(
