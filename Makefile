@@ -132,7 +132,7 @@ test:
 clean:
 	$(PYTHON) $(PYFLAGS) setup.py clean
 	$(MAKE) -f $(CURDIR)/debian/rules clean
-	rm -fr build/ dist/ $(NAME).egg-info/ tags $(MO_FILES) $(GSCHEMA_COMPILED)
+	rm -fr build/ dist/ $(NAME).egg-info/ tags $(MO_FILES)
 	for dir in $(SUBDIRS); do \
 		$(MAKE) -C $$dir clean; \
 	done
