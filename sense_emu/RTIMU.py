@@ -33,7 +33,7 @@ import numpy as np
 
 from .pressure import init_pressure, PRESSURE_DATA, PressureData, PRESSURE_FACTOR, TEMP_FACTOR, TEMP_OFFSET
 from .humidity import init_humidity, HUMIDITY_DATA, HumidityData
-from .imu import init_imu, IMU_DATA, IMUData, ACCEL_FACTOR, GYRO_FACTOR, COMPASS_FACTOR
+from .imu import init_imu, IMU_DATA, IMUData, ACCEL_FACTOR, GYRO_FACTOR, COMPASS_FACTOR, ORIENT_FACTOR
 
 
 class Settings(object):
@@ -73,12 +73,14 @@ class RTIMU(object):
             ax, ay, az,
             gx, gy, gz,
             cx, cy, cz,
+            ox, oy, oz,
             ) = IMU_DATA.unpack_from(self._map)
         return IMUData(
             type, name, timestamp,
             np.array((ax, ay, az)),
             np.array((gx, gy, gz)),
             np.array((cx, cy, cz)),
+            np.array((ox, oy, oz)),
             )
 
     def IMUInit(self):
@@ -100,10 +102,10 @@ class RTIMU(object):
             self._imu_data = {
                 'accel':            tuple(data.accel / ACCEL_FACTOR),
                 'accelValid':       True,
-                'compass':          tuple(data.compass / COMPASS_FACTOR),
+                'compass':          tuple((data.compass / COMPASS_FACTOR) * 100), # convert Gauss to uT
                 'compassValid':     True,
-                'fusionPose':       (0.0, 0.0, 0.0),
-                'fusionPoseValid':  False,
+                'fusionPose':       tuple(data.orient / ORIENT_FACTOR),
+                'fusionPoseValid':  True,
                 'fusionQPose':      (0.0, 0.0, 0.0, 0.0),
                 'fusionQPoseValid': False,
                 'gyro':             tuple(data.gyro / GYRO_FACTOR),

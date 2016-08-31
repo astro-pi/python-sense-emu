@@ -46,6 +46,7 @@ from .common import clamp
 ACCEL_FACTOR = 4081.6327
 GYRO_FACTOR = 57.142857
 COMPASS_FACTOR = 7142.8571
+ORIENT_FACTOR = 5214.1892
 IMU_DATA = Struct(nstr(
     '@'   # native mode
     'B'   # IMU sensor type
@@ -54,9 +55,10 @@ IMU_DATA = Struct(nstr(
     'hhh' # OUT_X_G, OUT_Y_G, OUT_Z_G
     'hhh' # OUT_X_XL, OUT_Y_XL, OUT_Z_XL
     'hhh' # OUT_X_M, OUT_Y_M, OUT_Z_M
+    'hhh' # Orientation X, Y, Z
     ))
 
-IMUData = namedtuple('IMUData', ('type', 'name', 'timestamp', 'accel', 'gyro', 'compass'))
+IMUData = namedtuple('IMUData', ('type', 'name', 'timestamp', 'accel', 'gyro', 'compass', 'orient'))
 
 
 def imu_filename():
@@ -132,9 +134,9 @@ class IMUServer(object):
         self._map = mmap.mmap(self._fd.fileno(), 0, access=mmap.ACCESS_WRITE)
         data = self._read()
         self._gravity = Z
-        self._north = X
+        self._north = 0.33 * X
         if data.type != 6:
-            self._write(IMUData(6, b'LSM9DS1', timestamp(), O, O, O))
+            self._write(IMUData(6, b'LSM9DS1', timestamp(), O, O, O, O))
             self._accel = O
             self._gyro = O
             self._compass = O
@@ -154,6 +156,7 @@ class IMUServer(object):
         # to the hardware
         self._gyros = np.full((10, 3), self._gyro, dtype=np.float)
         self._accels = np.full((10, 3), self._accel, dtype=np.float)
+        self._comps = np.full((10, 3), self._compass, dtype=np.float)
         self.simulate_world = simulate_world
 
     def close(self):
@@ -169,13 +172,15 @@ class IMUServer(object):
             type, name, timestamp,
             ax, ay, az,
             gx, gy, gz,
-            cx, cy, cz
+            cx, cy, cz,
+            ox, oy, oz,
             ) = IMU_DATA.unpack_from(self._map)
         return IMUData(
             type, name, timestamp,
             V(ax, ay, az),
             V(gx, gy, gz),
             V(cx, cy, cz),
+            V(ox, oy, oz),
             )
 
     def _write(self, value):
@@ -184,6 +189,7 @@ class IMUServer(object):
             value.accel[0], value.accel[1], value.accel[2],
             value.gyro[0], value.gyro[1], value.gyro[2],
             value.compass[0], value.compass[1], value.compass[2],
+            value.orient[0], value.orient[1], value.orient[2],
             )
         IMU_DATA.pack_into(self._map, 0, *value)
 
@@ -278,6 +284,7 @@ class IMUServer(object):
                 [-s2,     c2 * s3,                c2 * c3],
                 ])
             self._accel = R.T.dot(self._gravity) # transpose for passive rotation
+            self._compass = R.T.dot(self._north)
             # XXX Simulate acceleration from position
             self._world_write(new_timestamp)
             old_timestamp = new_timestamp
@@ -292,9 +299,14 @@ class IMUServer(object):
             self._accels[1:, :] = self._accels[:-1, :]
             self._accels[0, :] = self._perturb(self._accel, 0.1)
             accel = self._accels.mean(axis=0)
+            self._comps[1:, :] = self._comps[:-1, :]
+            self._comps[0, :] = self._perturb(self._compass, 2.0)
+            compass = self._comps.mean(axis=0)
         else:
             gyro = self._gyro
             accel = self._accel
+            compass = self._compass
+        orient = np.deg2rad(self._orientation)
         self._write(self._read()._replace(
             timestamp=timestamp,
             accel=V(
@@ -308,9 +320,14 @@ class IMUServer(object):
                 int(clamp(gyro[2], -500, 500) * GYRO_FACTOR),
                 ),
             compass=V(
-                int(clamp(self.compass[0], -4, 4) * COMPASS_FACTOR),
-                int(clamp(self.compass[1], -4, 4) * COMPASS_FACTOR),
-                int(clamp(self.compass[2], -4, 4) * COMPASS_FACTOR),
+                int(clamp(compass[0], -4, 4) * COMPASS_FACTOR),
+                int(clamp(compass[1], -4, 4) * COMPASS_FACTOR),
+                int(clamp(compass[2], -4, 4) * COMPASS_FACTOR),
+                ),
+            orient=V(
+                int(clamp(orient[0], -180, 180) * ORIENT_FACTOR),
+                int(clamp(orient[1], -180, 180) * ORIENT_FACTOR),
+                int(clamp(orient[2], -180, 180) * ORIENT_FACTOR),
                 )
             ))
 
