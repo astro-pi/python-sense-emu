@@ -13,9 +13,8 @@ Links
 =====
 
 * The library code is licensed under the `LGPL version 2.1`_ or above, while
-  the applications :program:`sense_emu_gui`, :program:`sense_rec`,
-  :program:`sense_play`, and :program:`sense_csv` are licensed under the `GPL
-  version 2.0`_ or above.
+  the applications ``sense_emu_gui``, ``sense_rec``, ``sense_play``, and
+  ``sense_csv`` are licensed under the `GPL version 2.0`_ or above.
 * The `source code`_ can be obtained from GitHub, which also hosts the `bug
   tracker`_
 * The `documentation`_ (which includes installation, API reference and example
