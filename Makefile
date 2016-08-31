@@ -194,9 +194,9 @@ release: $(PY_SOURCES) $(MO_FILES) $(GSCHEMA_COMPILED) $(DOC_SOURCES) $(DEB_SOUR
 	# ensure there are no current uncommitted changes
 	test -z "$(shell git status --porcelain)"
 	# update the debian changelog with new release information
-	dch --newversion $(VER)$(DEB_SUFFIX) --controlmaint
+	#dch --newversion $(VER)$(DEB_SUFFIX) --controlmaint
 	# commit the changes and add a new tag
-	git commit debian/changelog -m "Updated changelog for release $(VER)"
+	#git commit debian/changelog -m "Updated changelog for release $(VER)"
 	git tag -s v$(VER) -m "Release v$(VER)"
 	# update the package's registration on PyPI (in case any metadata's changed)
 	$(PYTHON) $(PYFLAGS) setup.py register -r https://pypi.python.org/pypi
