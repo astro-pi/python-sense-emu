@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 from sense_emu import SenseHat
 
 x = y = 4
