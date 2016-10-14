@@ -26,12 +26,12 @@ endif
 NAME:=$(shell $(PYTHON) $(PYFLAGS) setup.py --name)
 PKG_DIR:=$(subst -,_,$(NAME))
 VER:=$(shell $(PYTHON) $(PYFLAGS) setup.py --version)
+DEB_ARCH:=$(shell dpkg --print-architecture)
 ifeq ($(shell lsb_release -si),Ubuntu)
 DEB_SUFFIX:=-1ubuntu1
 else
 DEB_SUFFIX:=
 endif
-DEB_ARCH:=$(shell dpkg --print-architecture)
 PYVER:=$(shell $(PYTHON) $(PYFLAGS) -c "import sys; print('py%d.%d' % sys.version_info[:2])")
 PY_SOURCES:=$(shell \
 	$(PYTHON) $(PYFLAGS) setup.py egg_info >/dev/null 2>&1 && \
@@ -66,9 +66,15 @@ DIST_DEB=dist/python-$(NAME)_$(VER)$(DEB_SUFFIX)_all.deb \
 	dist/python-$(NAME)-doc_$(VER)$(DEB_SUFFIX)_all.deb \
 	dist/$(NAME)-tools_$(VER)$(DEB_SUFFIX)_all.deb \
 	dist/$(NAME)_$(VER)$(DEB_SUFFIX)_$(DEB_ARCH).changes
+ifeq ($(shell lsb_release -si),Ubuntu)
+DIST_DSC=dist/$(NAME)_$(VER)$(DEB_SUFFIX).tar.xz \
+	dist/$(NAME)_$(VER)$(DEB_SUFFIX).dsc \
+	dist/$(NAME)_$(VER)$(DEB_SUFFIX)_source.changes
+else
 DIST_DSC=dist/$(NAME)_$(VER)$(DEB_SUFFIX).tar.gz \
 	dist/$(NAME)_$(VER)$(DEB_SUFFIX).dsc \
 	dist/$(NAME)_$(VER)$(DEB_SUFFIX)_source.changes
+endif
 MAN_PAGES=man/sense_rec.1 man/sense_play.1 man/sense_csv.1 man/sense_emu_gui.1
 POT_FILE=$(PKG_DIR)/locale/$(NAME).pot
 PO_FILES:=$(wildcard $(PKG_DIR)/locale/*.po)
@@ -221,5 +227,5 @@ upload-ubuntu: $(PY_SOURCES) $(MO_FILES) $(GSCHEMA_COMPILED) $(DOC_SOURCES) $(DI
 	# build the deb source archive and upload to the PPA
 	dput waveform-ppa dist/$(NAME)_$(VER)$(DEB_SUFFIX)_source.changes
 
-.PHONY: all install develop test doc source egg zip tar deb dist clean tags release-pi release-ubuntu upload-pi upload-ubuntu $(SUBDIRS)
+.PHONY: all install develop test doc source egg zip tar deb dist clean tags release-pi release-ubuntu $(SUBDIRS)
 
