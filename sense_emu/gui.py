@@ -541,14 +541,13 @@ class MainWindow(Gtk.ApplicationWindow):
                         GLib.Bytes.new(self.props.application.screen.rgb_array.tostring()),
                         colorspace=GdkPixbuf.Colorspace.RGB, has_alpha=False,
                         bits_per_sample=8, width=8, height=8, rowstride=8 * 3)
-                    pixels.composite(img, 31, 38, 128, 128, 31, 38, 16, 16,
+                    pixels.composite(img, 126, 155, 512, 512, 126, 155, 64, 64,
                         GdkPixbuf.InterpType.NEAREST, 255)
-                    self.pixel_grid.composite(img, 31, 38, 128, 128, 31, 38, 1, 1,
+                    self.pixel_grid.composite(img, 126, 155, 512, 512, 126, 155, 1, 1,
                         GdkPixbuf.InterpType.NEAREST, 255)
                     if self._screen_orientation:
-                        self.orient_image.composite(img, 0, 0, 265, 204, 0, 0, 1, 1,
+                        self.orient_image.composite(img, 0, 0, 1063, 821, 0, 0, 1, 1,
                             GdkPixbuf.InterpType.NEAREST, 215)
-                    img = img.rotate_simple(self._screen_rotation)
                     self._screen_pending = True
                     self._screen_timestamp = ts
                     # GTK updates must be done by the main thread; schedule
@@ -561,8 +560,12 @@ class MainWindow(Gtk.ApplicationWindow):
             if self._screen_event.wait(self.screen_update_delay):
                 break
 
-    def _update_screen(self, pixbuf):
-        self.ui.screen_image.set_from_pixbuf(pixbuf)
+    def _update_screen(self, img):
+        rect = self.ui.screen_image.get_allocation()
+        ratio = min(rect.width / img.props.width, rect.height / img.props.height)
+        img = img.scale_simple(img.props.width * ratio, img.props.height * ratio, GdkPixbuf.InterpType.BILINEAR)
+        img = img.rotate_simple(self._screen_rotation)
+        self.ui.screen_image.set_from_pixbuf(img)
         self._screen_pending = False
         return False
 
