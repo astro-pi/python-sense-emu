@@ -27,7 +27,7 @@ NAME:=$(shell $(PYTHON) $(PYFLAGS) setup.py --name)
 PKG_DIR:=$(subst -,_,$(NAME))
 VER:=$(shell $(PYTHON) $(PYFLAGS) setup.py --version)
 ifeq ($(shell lsb_release -si),Ubuntu)
-DEB_SUFFIX:=ubuntu1
+DEB_SUFFIX:=-1ubuntu1
 else
 DEB_SUFFIX:=
 endif
@@ -205,7 +205,7 @@ release-ubuntu: $(PY_SOURCES) $(MO_FILES) $(GSCHEMA_COMPILED) $(DOC_SOURCES) $(D
 	# ensure there are no current uncommitted changes
 	test -z "$(shell git status --porcelain)"
 	# update the debian changelog with new release information
-	dch --newversion $(VER)-1$(DEB_SUFFIX) --controlmaint
+	dch --newversion $(VER)$(DEB_SUFFIX) --controlmaint
 	# commit the changes and add a new tag
 	git commit debian/changelog -m "Updated changelog for Ubuntu release"
 
@@ -219,7 +219,7 @@ upload-pi: $(PY_SOURCES) $(MO_FILES) $(GSCHEMA_COMPILED) $(DOC_SOURCES) $(DIST_D
 
 upload-ubuntu: $(PY_SOURCES) $(MO_FILES) $(GSCHEMA_COMPILED) $(DOC_SOURCES) $(DIST_DEB) $(DIST_DSC)
 	# build the deb source archive and upload to the PPA
-	dput waveform-ppa dist/$(NAME)_$(VER)-1$(DEB_SUFFIX)_source.changes
+	dput waveform-ppa dist/$(NAME)_$(VER)$(DEB_SUFFIX)_source.changes
 
 .PHONY: all install develop test doc source egg zip tar deb dist clean tags release-pi release-ubuntu upload-pi upload-ubuntu $(SUBDIRS)
 
