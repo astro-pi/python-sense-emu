@@ -40,8 +40,11 @@ from time import time, sleep
 from threading import Thread, Lock, Event
 
 import gi
+gi.require_version('cairo', '1.0')
+gi.require_version('Gdk', '3.0')
+gi.require_version('GdkPixbuf', '2.0')
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, Gdk, GdkPixbuf, Gio, GLib, GObject
+from gi.repository import Gtk, Gdk, GdkPixbuf, Gio, GLib, GObject, cairo
 import numpy as np
 import pkg_resources
 
@@ -310,6 +313,113 @@ class BuilderUi(object):
         return result
 
 
+class ScreenWidget(Gtk.DrawingArea):
+    __gtype_name__ = 'ScreenWidget'
+
+    def __init__(self, *args, **kwargs):
+        super(ScreenWidget, self).__init__(*args, **kwargs)
+        self.set_has_window(True)
+        self.set_size_request(265, 265)
+
+        # Load graphics assets
+        self.sense_image = load_image('sense_emu.png')
+        self.orient_image = load_image('orientation.png')
+        self.pixel_grid = load_image('pixel_grid.png')
+
+        # Set up a thread to constantly refresh the pixels from the screen
+        # client object
+        self.screen_update_delay = 0.04
+        self._screen_rotation = 0
+        self._screen_orientation = False
+        self._screen_pending = False
+        self._screen_image = None
+        self._screen_timestamp = 0.0
+        self._screen_event = Event()
+        self._screen_thread = Thread(target=self._screen_run)
+        self._screen_thread.daemon = True
+        self._screen_thread.start()
+
+    @GObject.Property(type=object)
+    def client(self):
+        return self._screen_client
+
+    @client.setter
+    def client(self, value):
+        self._screen_client = value
+
+    @GObject.Property(type=int, default=0)
+    def rotation(self):
+        return self._screen_rotation
+
+    @rotation.setter
+    def rotation(self, value):
+        self._screen_rotation = value
+        self.props.window.invalidate_rect(None, False)
+
+    @GObject.Property(type=bool, default=False)
+    def orientation(self):
+        return self._screen_orientation
+
+    @orientation.setter
+    def orientation(self, value):
+        self._screen_orientation = value
+        self.props.window.invalidate_rect(None, False)
+
+    def _screen_run(self):
+        # This method runs in the background _screen_thread
+        while True:
+            # Only update the screen if do_draw's finished the last update;
+            # this effectively serves to "drop frames" if the system's too busy
+            if not self._screen_pending:
+                # Only update if the screen's modification timestamp indicates
+                # that the data has changed since last time
+                ts = self._screen_client.timestamp
+                if ts > self._screen_timestamp:
+                    img = self.sense_image.copy()
+                    pixels = GdkPixbuf.Pixbuf.new_from_bytes(
+                        GLib.Bytes.new(self._screen_client.rgb_array.tostring()),
+                        colorspace=GdkPixbuf.Colorspace.RGB, has_alpha=False,
+                        bits_per_sample=8, width=8, height=8, rowstride=8 * 3)
+                    pixels.composite(img, 126, 155, 512, 512, 126, 155, 64, 64,
+                        GdkPixbuf.InterpType.NEAREST, 255)
+                    self.pixel_grid.composite(img, 126, 155, 512, 512, 126, 155, 1, 1,
+                        GdkPixbuf.InterpType.NEAREST, 255)
+                    self._screen_image = img
+                    self._screen_pending = True
+                    self._screen_timestamp = ts
+            # The following wait enforces the maximum update rate (set from
+            # the preferences dialog)
+            if self._screen_event.wait(self.screen_update_delay):
+                break
+
+    def do_draw(self, cr):
+        img = self._screen_image
+        if img is not None:
+            if self._screen_orientation:
+                img = img.copy()
+                self.orient_image.composite(img, 0, 0, 1063, 821, 0, 0, 1, 1,
+                    GdkPixbuf.InterpType.NEAREST, 215)
+            rect = self.get_allocation()
+            if self._screen_rotation in (0, 180):
+                ratio = min(rect.width / img.props.width, rect.height / img.props.height)
+            else:
+                ratio = min(rect.width / img.props.height, rect.height / img.props.width)
+            ratio = min(ratio, 1.0)
+            img = img.scale_simple(
+                img.props.width * ratio, img.props.height * ratio,
+                GdkPixbuf.InterpType.BILINEAR)
+            img = img.rotate_simple(self._screen_rotation)
+            Gdk.cairo_set_source_pixbuf(cr, img,
+                (rect.width - img.props.width) // 2,
+                (rect.height - img.props.height) // 2)
+            cr.paint()
+            self._screen_pending = False
+
+    def do_destroy(self):
+        self._screen_event.set()
+        self._screen_thread.join()
+
+
 class MainWindow(Gtk.ApplicationWindow):
     def __init__(self, *args, **kwargs):
         super(MainWindow, self).__init__(*args, **kwargs)
@@ -336,6 +446,11 @@ class MainWindow(Gtk.ApplicationWindow):
         self._play_thread = None
         self._play_restore = (True, True, True)
 
+        # Set up the custom screen widget
+        self.ui.screen_widget = ScreenWidget(visible=True, client=self.props.application.screen)
+        self.ui.screen_box.pack_start(self.ui.screen_widget, True, True, 0)
+        self.ui.screen_widget.show()
+
         # Set initial positions on sliders (and add some marks)
         self.ui.pitch_scale.add_mark(0, Gtk.PositionType.BOTTOM, None)
         self.ui.roll_scale.add_mark(0, Gtk.PositionType.BOTTOM, None)
@@ -346,11 +461,6 @@ class MainWindow(Gtk.ApplicationWindow):
         self.ui.humidity.props.value = self.props.application.humidity.humidity
         self.ui.pressure.props.value = self.props.application.pressure.pressure
         self.ui.temperature.props.value = self.props.application.humidity.temperature
-
-        # Load graphics assets
-        self.sense_image = load_image('sense_emu.png')
-        self.orient_image = load_image('orientation.png')
-        self.pixel_grid = load_image('pixel_grid.png')
 
         # Set up attributes for the joystick buttons
         self._stick_held_lock = Lock()
@@ -379,18 +489,6 @@ class MainWindow(Gtk.ApplicationWindow):
             SenseStick.KEY_ENTER: SenseStick.KEY_ENTER,
             }
 
-        # Set up a thread to constantly refresh the pixels from the screen
-        # client object
-        self.screen_update_delay = 0.04
-        self._screen_rotation = 0
-        self._screen_orientation = False
-        self._screen_pending = False
-        self._screen_timestamp = 0.0
-        self._screen_event = Event()
-        self._screen_thread = Thread(target=self._screen_run)
-        self._screen_thread.daemon = True
-        self._screen_thread.start()
-
     @property
     def ui(self):
         return self._ui
@@ -398,8 +496,6 @@ class MainWindow(Gtk.ApplicationWindow):
     def do_destroy(self):
         try:
             self._play_stop()
-            self._screen_event.set()
-            self._screen_thread.join()
         except AttributeError:
             # do_destroy gets called multiple times, and subsequent times lacks
             # the Python-added instance attributes
@@ -509,7 +605,7 @@ class MainWindow(Gtk.ApplicationWindow):
     def _stick_send(self, direction, action):
         tv_usec, tv_sec = math.modf(time())
         tv_usec *= 1000000
-        r = self._screen_rotation // 90
+        r = self.ui.screen_widget.props.rotation // 90
         while r:
             direction = self._stick_rotations[direction]
             r -= 1
@@ -518,56 +614,11 @@ class MainWindow(Gtk.ApplicationWindow):
         self.props.application.stick.send(event_rec)
 
     def rotate_screen(self, button):
-        self._screen_rotation = (self._screen_rotation + button.angle) % 360
-        self.ui.screen_rotate_label.props.label = '%d°' % self._screen_rotation
-        self._screen_timestamp = 0 # force a screen update
+        self.ui.screen_widget.props.rotation = (self.ui.screen_widget.props.rotation + button.angle) % 360
+        self.ui.screen_rotate_label.props.label = '%d°' % self.ui.screen_widget.props.rotation
 
     def toggle_orientation(self, button):
-        self._screen_orientation = not self._screen_orientation
-        self._screen_timestamp = 0 # force a screen update
-
-    def _screen_run(self):
-        # This method runs in the background _screen_thread
-        while True:
-            # Only update the screen if there's no idle callback pending from
-            # a prior update
-            if not self._screen_pending:
-                # Only update if the screen's modification timestamp indicates
-                # that the data has changed since last time
-                ts = self.props.application.screen.timestamp
-                if ts > self._screen_timestamp:
-                    img = self.sense_image.copy()
-                    pixels = GdkPixbuf.Pixbuf.new_from_bytes(
-                        GLib.Bytes.new(self.props.application.screen.rgb_array.tostring()),
-                        colorspace=GdkPixbuf.Colorspace.RGB, has_alpha=False,
-                        bits_per_sample=8, width=8, height=8, rowstride=8 * 3)
-                    pixels.composite(img, 126, 155, 512, 512, 126, 155, 64, 64,
-                        GdkPixbuf.InterpType.NEAREST, 255)
-                    self.pixel_grid.composite(img, 126, 155, 512, 512, 126, 155, 1, 1,
-                        GdkPixbuf.InterpType.NEAREST, 255)
-                    if self._screen_orientation:
-                        self.orient_image.composite(img, 0, 0, 1063, 821, 0, 0, 1, 1,
-                            GdkPixbuf.InterpType.NEAREST, 215)
-                    self._screen_pending = True
-                    self._screen_timestamp = ts
-                    # GTK updates must be done by the main thread; schedule
-                    # the image to be redrawn when the app is idle. It would
-                    # be better to use custom signals for this ... but then
-                    # pixman region copy bugs start appearing
-                    GLib.idle_add(self._update_screen, img)
-            # The following wait enforces the maximum update rate (set from
-            # the preferences dialog)
-            if self._screen_event.wait(self.screen_update_delay):
-                break
-
-    def _update_screen(self, img):
-        rect = self.ui.screen_image.get_allocation()
-        ratio = min(rect.width / img.props.width, rect.height / img.props.height)
-        img = img.scale_simple(img.props.width * ratio, img.props.height * ratio, GdkPixbuf.InterpType.BILINEAR)
-        img = img.rotate_simple(self._screen_rotation)
-        self.ui.screen_image.set_from_pixbuf(img)
-        self._screen_pending = False
-        return False
+        self.ui.screen_widget.props.orientation = not self.ui.screen_widget.props.orientation
 
     def _play_run(self, f):
         err = None
