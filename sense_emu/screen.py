@@ -86,8 +86,17 @@ class ScreenClient(object):
     def __init__(self):
         self._fd = init_screen()
         self._map = mmap.mmap(self._fd.fileno(), 0, access=mmap.ACCESS_READ)
+        # Construct arrays representing the LED states (_screen) and the user
+        # controlled gamma lookup table (_gamma)
         self._screen = np.frombuffer(self._map, dtype=np.uint16, count=64).reshape((8, 8))
         self._gamma = np.frombuffer(self._map, dtype=np.uint8, count=32, offset=128)
+        # Construct the final gamma correction lookup table. This is equivalent
+        # to gamma correction of 1/4 (*much* brighter) because the HAT's RGB
+        # LEDs are much brighter than a corresponding LCD display. It also uses
+        # a non-zero starting point so that LEDs that are off appear gray
+        self._gamma_rgbled = (
+                np.sqrt(np.sqrt(np.linspace(0.05, 1, 32))) * 255
+                ).astype(np.uint8)
         self._touch_stop = Event()
         self._touch_thread = Thread(target=self._touch_run)
         self._touch_thread.daemon = True
@@ -108,7 +117,7 @@ class ScreenClient(object):
             # "touch" the screen's frame-buffer once a second. This ensures
             # that the screen always updates at least once a second and works
             # around the issue that screen updates can be lost due to lack of
-            # resolution the file modification timestamps. Unfortunately,
+            # resolution of the file modification timestamps. Unfortunately,
             # futimes(3) is not universally supported, and only available in
             # Python 3.3+ so this gets a bit convoluted...
             try:
@@ -132,8 +141,7 @@ class ScreenClient(object):
         a[..., 2] = (self._screen & 0x001F).astype(np.uint8)
         # map all values according to the gamma table
         a = np.take(self._gamma, a)
-        # convert to RGB888
-        a = a << 3 | a >> 2
+        a = np.take(self._gamma_rgbled, a)
         return a
 
     @property
