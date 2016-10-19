@@ -188,8 +188,6 @@ class EmuApplication(Gtk.Application):
             self.window.ui.roll_scale.queue_draw()
         elif key == 'screen-fps':
             self.window.ui.screen_widget.screen_update_delay = 1 / settings.get_int(key)
-        else:
-            assert False
 
     def do_shutdown(self):
         if self.lock.mine:
@@ -210,6 +208,13 @@ class EmuApplication(Gtk.Application):
             # Force a read of settings specific to the main window
             self.settings_changed(self.settings, 'screen-fps')
             self.settings_changed(self.settings, 'orientation-scale')
+            # Position the window according to the settings
+            self.window.set_default_size(
+                self.settings.get_int('window-width'),
+                self.settings.get_int('window-height')
+                )
+            if self.settings.get_boolean('window-maximized'):
+                self.window.maximize()
         if self.window:
             self.window.present()
 
@@ -562,6 +567,24 @@ class MainWindow(Gtk.ApplicationWindow):
             SenseStick.KEY_DOWN:  SenseStick.KEY_LEFT,
             SenseStick.KEY_ENTER: SenseStick.KEY_ENTER,
             }
+
+        # Connect some handlers for window size and state
+        self._current_width = -1
+        self._current_height = -1
+        self._is_maximized = False
+        self.connect('size-allocate', self.window_resized)
+        self.connect('window-state-event', self.window_state_changed)
+
+    def window_resized(self, widget, rect):
+        if not self.is_maximized():
+            self.props.application.settings.set_int('window-width', rect.width)
+            self.props.application.settings.set_int('window-height', rect.height)
+
+    def window_state_changed(self, widget, event):
+        if event.type == Gdk.EventType.WINDOW_STATE:
+            self.props.application.settings.set_boolean(
+                'window-maximized', event.new_window_state & Gdk.WindowState.MAXIMIZED)
+        return False
 
     @property
     def ui(self):

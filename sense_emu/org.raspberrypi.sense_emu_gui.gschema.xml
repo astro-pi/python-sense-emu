@@ -40,5 +40,23 @@
         sufficient for most emulation purposes).</description>
       <range min="1" max="60" />
     </key>
+    <key name="window-width" type="i">
+      <default>-1</default>
+      <summary>The width of the main window</summary>
+      <description>Stores the width of the main window between
+        invocations.</description>
+    </key>
+    <key name="window-height" type="i">
+      <default>-1</default>
+      <summary>The height of the main window</summary>
+      <description>Stores the height of the main window between
+        invocations.</description>
+    </key>
+    <key name="window-maximized" type="b">
+      <default>false</default>
+      <summary>The maximized state of the main window</summary>
+      <description>Stores whether or not the main window is
+        maximized.</description>
+    </key>
   </schema>
 </schemalist>
