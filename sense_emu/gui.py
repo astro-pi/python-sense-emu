@@ -187,7 +187,7 @@ class EmuApplication(Gtk.Application):
             self.window.ui.pitch_scale.queue_draw()
             self.window.ui.roll_scale.queue_draw()
         elif key == 'screen-fps':
-            self.window.screen_update_delay = 1 / settings.get_int(key)
+            self.window.ui.screen_widget.screen_update_delay = 1 / settings.get_int(key)
         else:
             assert False
 
