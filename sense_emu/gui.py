@@ -322,22 +322,78 @@ class ScreenWidget(Gtk.DrawingArea):
         self.set_size_request(265, 265)
 
         # Load graphics assets
-        self.sense_image = load_image('sense_emu.png')
-        self.orient_image = load_image('orientation.png')
-        self.pixel_grid = load_image('pixel_grid.png')
+        self._board_full = load_image('sense_emu.png')
+        self._board_scaled = self._board_full
+        self._orient_full = load_image('orientation.png')
+        self._orient_image = self._orient_full
+        self._grid_full = load_image('pixel_grid.png')
+        self._grid_scaled = self._grid_full
 
         # Set up a thread to constantly refresh the pixels from the screen
         # client object
         self.screen_update_delay = 0.04
-        self._screen_rotation = 0
-        self._screen_orientation = False
-        self._screen_pending = False
-        self._screen_image = None
-        self._screen_timestamp = 0.0
-        self._screen_event = Event()
-        self._screen_thread = Thread(target=self._screen_run)
-        self._screen_thread.daemon = True
-        self._screen_thread.start()
+        self._size_lock = Lock()
+        self._ratio = 1.0
+        self._rotation = 0
+        self._show_orientation = False
+        self._draw_pending = Event()
+        self._draw_image = None
+        self._draw_timestamp = 0.0
+        self._stop = Event()
+        self._update_thread = Thread(target=self._update_run)
+        self._update_thread.daemon = True
+        self.connect('realize', self.realized)
+        self.connect('size-allocate', self.resized)
+        self.connect('draw', self.drawn)
+
+    def realized(self, widget):
+        self._update_thread.start()
+
+    def resized(self, widget, rect):
+        with self._size_lock:
+            if self._rotation in (0, 180):
+                ratio = min(
+                    rect.width / self._board_full.props.width,
+                    rect.height / self._board_full.props.height)
+            else:
+                ratio = min(
+                    rect.width / self._board_full.props.height,
+                    rect.height / self._board_full.props.width)
+            ratio = min(ratio, 1.0) # never resize larger than native
+            if ratio != self._ratio:
+                # Only resize if necessary (plenty of resizes wind up with the
+                # same ratio)
+                self._board_scaled = self._board_full.scale_simple(
+                    self._board_full.props.width * ratio,
+                    self._board_full.props.height * ratio,
+                    GdkPixbuf.InterpType.BILINEAR)
+                self._grid_scaled = self._grid_full.scale_simple(
+                    self._grid_full.props.width * ratio,
+                    self._grid_full.props.height * ratio,
+                    GdkPixbuf.InterpType.BILINEAR)
+                self._orient_scaled = self._orient_full.scale_simple(
+                    self._orient_full.props.width * ratio,
+                    self._orient_full.props.height * ratio,
+                    GdkPixbuf.InterpType.BILINEAR)
+                self._ratio = ratio
+
+    def drawn(self, widget, cr):
+        if self._draw_image is None:
+            return
+        with self._size_lock:
+            img = self._draw_image
+            if self._show_orientation:
+                img = img.copy()
+                self._orient_scaled.composite(
+                    img, 0, 0, img.props.width, img.props.height, 0, 0, 1, 1,
+                    GdkPixbuf.InterpType.NEAREST, 215)
+        img = img.rotate_simple(self._rotation)
+        rect = self.get_allocation()
+        Gdk.cairo_set_source_pixbuf(cr, img,
+            (rect.width - img.props.width) // 2,
+            (rect.height - img.props.height) // 2)
+        cr.paint()
+        self._draw_pending.clear()
 
     @GObject.Property(type=object)
     def client(self):
@@ -349,75 +405,93 @@ class ScreenWidget(Gtk.DrawingArea):
 
     @GObject.Property(type=int, default=0)
     def rotation(self):
-        return self._screen_rotation
+        return self._rotation
 
     @rotation.setter
     def rotation(self, value):
-        self._screen_rotation = value
-        self.props.window.invalidate_rect(None, False)
+        self._rotation = value
+        self.resized(self, self.get_allocation())
+        self._force_update()
 
     @GObject.Property(type=bool, default=False)
     def orientation(self):
-        return self._screen_orientation
+        return self._show_orientation
 
     @orientation.setter
     def orientation(self, value):
-        self._screen_orientation = value
+        self._show_orientation = value
+        self._force_update()
+
+    def _force_update(self):
+        self._draw_pending.clear()
+        self._draw_timestamp = 0
+        # Wait for the background thread to update the pixels image (this
+        # should never take more than a second)
+        self._draw_pending.wait(1)
         self.props.window.invalidate_rect(None, False)
 
-    def _screen_run(self):
-        # This method runs in the background _screen_thread
+    def _update_run(self):
+        # This method runs in the background _update_thread
         while True:
             # Only update the screen if do_draw's finished the last update;
-            # this effectively serves to "drop frames" if the system's too busy
-            if not self._screen_pending:
+            # this effectively serves to "drop frames" if the system's too
+            # busy
+            if self._draw_pending.wait(self.screen_update_delay):
+                # The wait period above enforces the maximum update rate; if
+                # a draw is still pending, wait on the stop event instead
+                if self._stop.wait(self.screen_update_delay):
+                    break
+            else:
                 # Only update if the screen's modification timestamp indicates
                 # that the data has changed since last time
                 ts = self._screen_client.timestamp
-                if ts > self._screen_timestamp:
-                    img = self.sense_image.copy()
-                    pixels = GdkPixbuf.Pixbuf.new_from_bytes(
-                        GLib.Bytes.new(self._screen_client.rgb_array.tostring()),
-                        colorspace=GdkPixbuf.Colorspace.RGB, has_alpha=False,
-                        bits_per_sample=8, width=8, height=8, rowstride=8 * 3)
-                    pixels.composite(img, 126, 155, 512, 512, 126, 155, 64, 64,
-                        GdkPixbuf.InterpType.NEAREST, 255)
-                    self.pixel_grid.composite(img, 126, 155, 512, 512, 126, 155, 1, 1,
-                        GdkPixbuf.InterpType.NEAREST, 255)
-                    self._screen_image = img
-                    self._screen_pending = True
-                    self._screen_timestamp = ts
-            # The following wait enforces the maximum update rate (set from
-            # the preferences dialog)
-            if self._screen_event.wait(self.screen_update_delay):
-                break
-
-    def do_draw(self, cr):
-        img = self._screen_image
-        if img is not None:
-            if self._screen_orientation:
-                img = img.copy()
-                self.orient_image.composite(img, 0, 0, 1063, 821, 0, 0, 1, 1,
-                    GdkPixbuf.InterpType.NEAREST, 215)
-            rect = self.get_allocation()
-            if self._screen_rotation in (0, 180):
-                ratio = min(rect.width / img.props.width, rect.height / img.props.height)
-            else:
-                ratio = min(rect.width / img.props.height, rect.height / img.props.width)
-            ratio = min(ratio, 1.0)
-            img = img.scale_simple(
-                img.props.width * ratio, img.props.height * ratio,
-                GdkPixbuf.InterpType.BILINEAR)
-            img = img.rotate_simple(self._screen_rotation)
-            Gdk.cairo_set_source_pixbuf(cr, img,
-                (rect.width - img.props.width) // 2,
-                (rect.height - img.props.height) // 2)
-            cr.paint()
-            self._screen_pending = False
+                if ts > self._draw_timestamp:
+                    with self._size_lock:
+                        img = self._board_scaled.copy()
+                        pixels = GdkPixbuf.Pixbuf.new_from_bytes(
+                            GLib.Bytes.new(self._screen_client.rgb_array.tostring()),
+                            colorspace=GdkPixbuf.Colorspace.RGB, has_alpha=False,
+                            bits_per_sample=8, width=8, height=8, rowstride=8 * 3)
+                        pixel_rect = Gdk.Rectangle()
+                        pixel_rect.x = int(126 * self._ratio)
+                        pixel_rect.y = int(155 * self._ratio)
+                        pixel_rect.width = int(512 * self._ratio)
+                        pixel_rect.height = pixel_rect.width
+                        pixels.composite(
+                            img,
+                            pixel_rect.x, pixel_rect.y,
+                            pixel_rect.width, pixel_rect.height,
+                            pixel_rect.x, pixel_rect.y,
+                            # Why 8.1? With 8.0 (which is what it should be),
+                            # registration errors crop up at the far right (try
+                            # it and see); no idea why 8.1 is required to
+                            # correct them, but I'm too knackered to argue with
+                            # Gdk any more...
+                            pixel_rect.width / 8.1, pixel_rect.height / 8.1,
+                            GdkPixbuf.InterpType.NEAREST, 255)
+                        self._grid_scaled.composite(
+                            img,
+                            pixel_rect.x, pixel_rect.y,
+                            pixel_rect.width, pixel_rect.height,
+                            pixel_rect.x, pixel_rect.y,
+                            1, 1,
+                            GdkPixbuf.InterpType.NEAREST, 255)
+                    self._draw_image = img
+                    self._draw_timestamp = ts
+                    self._draw_pending.set()
+                    # Schedule a redraw when the app is next idle; like Gtk
+                    # methods, Gdk methods must only be called from the main
+                    # thread (otherwise the app locks up)
+                    try:
+                        GLib.idle_add(self.props.window.invalidate_rect, None, False)
+                    except AttributeError:
+                        # Our Gdk window has been destroyed; don't whinge, just
+                        # exit the thread as we're obviously shutting down
+                        break
 
     def do_destroy(self):
-        self._screen_event.set()
-        self._screen_thread.join()
+        self._stop.set()
+        self._update_thread.join()
 
 
 class MainWindow(Gtk.ApplicationWindow):
