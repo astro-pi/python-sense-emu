@@ -16,7 +16,10 @@
    id="svg2"
    version="1.1"
    inkscape:version="0.91 r13725"
-   sodipodi:docname="sense_emu.svg">
+   sodipodi:docname="sense_emu.svg"
+   inkscape:export-filename="/home/dave/python-sense-emu/sense_emu/sense_emu.png"
+   inkscape:export-xdpi="341.29947"
+   inkscape:export-ydpi="341.29947">
   <defs
      id="defs4" />
   <sodipodi:namedview
@@ -27,7 +30,7 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="3.959798"
-     inkscape:cx="165.93938"
+     inkscape:cx="123.3867"
      inkscape:cy="105.91712"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
@@ -49,7 +52,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
         <cc:license
            rdf:resource="https://www.gnu.org/licenses/old-licenses/gpl-2.0.html" />
       </cc:Work>
