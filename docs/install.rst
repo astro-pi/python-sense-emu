@@ -65,6 +65,30 @@ To remove the installation::
 
 .. _PPA: https://launchpad.net/~waveform/+archive/ppa
 
+.. _macos_install:
+
+macOS installation
+=====================
+
+The following installation instructions assume you are using `Homebrew`_ as your macOS package manager::
+
+    $ brew install pygobject3 gtk+3
+    
+If you are using Python virtual environments for the Sense HAT Emulator, the `system-site-packages` option must be enabled within the virtualenv::
+
+For existing virtual environments::
+
+    $ rm $venv_dir/lib/pythonX.X/no-global-site-packages.txt
+
+For new virtual environments::
+
+    $ virtualenv --system-site-packages
+
+Activate your virtual environment and install the Sense HAT Emulator::
+
+    $ pip install sense-emu
+    
+.. _Homebrew: http://brew.sh/
 
 .. _other_install:
 
