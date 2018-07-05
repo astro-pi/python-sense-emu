@@ -4,14 +4,13 @@
 #export DH_VERBOSE=1
 export DH_OPTIONS
 
+export PYBUILD_NAME=senseemu
+
 %:
-	dh $@ --with python2,python3,sphinxdoc --buildsystem=python_distutils
+	dh $@ --with python2,python3,sphinxdoc --buildsystem=pybuild
 
 override_dh_auto_install:
-	# Perform a full installation of each of the packages
-	python setup.py install --root debian/python-sense-emu --install-layout=deb
-	python3 setup.py install --root debian/python3-sense-emu --install-layout=deb
-	python3 setup.py install --root debian/sense-emu-tools --install-layout=deb
+	dh_auto_install
 	# Strip out source from the tools package
 	rm -fr debian/sense-emu-tools/usr/lib
 	rm -fr debian/sense-emu-tools/usr/share/pyshared
@@ -26,7 +25,7 @@ override_dh_auto_install:
 #override_dh_auto_test:
 #	# Don't run the tests!
 
-override_dh_installdocs:
-	python setup.py build_sphinx -b html
-	dh_installdocs
-
+override_dh_auto_build:
+	dh_auto_build
+	PYTHONPATH=. sphinx-build -N -bhtml docs/ build/html
+	PYTHONPATH=. sphinx-build -N -bman docs/ build/man

@@ -3,15 +3,24 @@ Maintainer: Dave Jones <dave@waveform.org.uk>
 Homepage: http://sense-emu.readthedocs.io/
 Section: python
 Priority: extra
-Build-Depends: debhelper (>= 8), python-all (>= 2.7), python-setuptools, python3-all, python3-setuptools, python-sphinx (>= 1.0.7+dfsg-1~)
+Build-Depends:
+ debhelper (>= 8),
+ dh-python,
+ python-all (>= 2.7),
+ python-setuptools,
+ python3-all,
+ python3-setuptools,
+ python3-sphinx
 Standards-Version: 3.9.6
+Vcs-Git: https://github.com/RPi-Distro/python-sense-emu.git
+Vcs-Browser: https://github.com/RPi-Distro/python-sense-emu
 X-Python-Version: >= 2.7
 X-Python3-Version: >= 3.2
 
 Package: python-sense-emu
 Architecture: all
 Section: python
-Depends: ${misc:Depends}, ${python:Depends}, python-numpy, python-pil
+Depends: ${misc:Depends}, ${python:Depends}, python-numpy, python-pil, python-pkg-resources
 Recommends: sense-emu-tools
 Description: Client library for the Raspberry Pi Sense HAT emulator.
  sense-emu is an emulator of the Raspberry Pi Sense HAT which runs on multiple
@@ -26,7 +35,7 @@ Description: Client library for the Raspberry Pi Sense HAT emulator.
 Package: python3-sense-emu
 Architecture: all
 Section: python
-Depends: ${misc:Depends}, ${python3:Depends}, python3-numpy, python3-pil
+Depends: ${misc:Depends}, ${python3:Depends}, python3-numpy, python3-pil, python3-pkg-resources
 Recommends: sense-emu-tools
 Description: Client library for the Raspberry Pi Sense HAT emulator.
  sense-emu is an emulator of the Raspberry Pi Sense HAT which runs on multiple
