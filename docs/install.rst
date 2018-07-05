@@ -110,10 +110,11 @@ If you ever need to remove your installation::
 
 .. note::
 
-    The emulator application requires PyGObject to be installed (GTK3 bindings
-    for Python), but this cannot be obtained from PyPI; install PyGObject
-    manually from your operating system's package manager (e.g. python-gi or
-    python3-gi on Raspbian/Ubuntu).
+    The emulator application requires PyGObject and cairo to be installed (GTK3
+    bindings for Python), but this cannot be obtained from PyPI; install
+    PyGObject manually from your operating system's package manager (e.g.
+    python-gi, python3-gi, python-gi-cairo, and python3-gi-cairo on
+    Raspbian/Ubuntu).
 
     Also note that installation via ``pip`` won't create short-cuts for the
     emulator application in your desktop's start menu. Instead you will have to
