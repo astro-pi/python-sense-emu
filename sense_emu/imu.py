@@ -65,7 +65,7 @@ def imu_filename():
     """
     Return the filename used to represent the state of the emulated sense HAT's
     IMU sensors. On UNIX we try ``/dev/shm`` then fall back to ``/tmp``; on
-    Windows we use whatever ``%TEMP%`` contains
+    Windows we use whatever ``%TEMP%`` contains.
     """
     fname = 'rpi-sense-emu-imu'
     if sys.platform.startswith('win'):
@@ -150,7 +150,8 @@ class IMUServer(object):
             self._position = O # XXX calc position from compass and north
         self._world_thread = None
         self._world_event = Event()
-        self._world_write(timestamp())
+        self._world_iter = self._world_state()
+        self._world_write()
         # These queue lengths were arbitrarily selected to smooth the action of
         # the orientation sliders in the GUI; they bear no particular relation
         # to the hardware
@@ -213,7 +214,7 @@ class IMUServer(object):
         self._orientation = V(*orientation)
         self._position = V(*position)
         if not self.simulate_world:
-            self._world_write(timestamp())
+            self._world_write()
 
     def set_imu_values(self, accel, gyro, compass, orientation, position=None):
         assert not self.simulate_world
@@ -224,7 +225,7 @@ class IMUServer(object):
         if position is None:
             position = O
         self._position = V(*position)
-        self._world_write(timestamp())
+        self._world_write(direct=True)
 
     @property
     def accel(self):
@@ -261,55 +262,70 @@ class IMUServer(object):
             self._world_event.set()
             self._world_thread.join()
             self._world_thread = None
-            self._world_write(timestamp())
+            self._world_write()
 
-    def _world_loop(self):
-        old_timestamp = timestamp()
-        old_position = self._position
-        old_orientation = self._orientation
-        while not self._world_event.wait(0.016):
-            # Gyro reading is simply the rate of change of the orientation
-            new_timestamp = timestamp()
+    def _world_state(self):
+        """
+        An infinite generator which expects to be passed (position, orientation)
+        states by the caller and yields (timestamp, accel, gyro, compass) states
+        back. Used by either the simulation thread (if it's running), or by
+        set_orientation (if it's not).
+        """
+        then = timestamp()
+        position = self._position
+        orientation = self._orientation
+        accel = gyro = compass = O
+        while True:
+            now = timestamp()
             new_position = self._position
             new_orientation = self._orientation
-            time_delta = (new_timestamp - old_timestamp) / 1000000
-            self._gyro = (new_orientation - old_orientation) / time_delta
-            # Construct a rotation matrix for the orientation; see
-            # https://en.wikipedia.org/wiki/Euler_angles#Rotation_matrix
-            x, y, z = np.deg2rad(new_orientation)
-            c1, c2, c3 = np.cos((z, y, x))
-            s1, s2, s3 = np.sin((z, y, x))
-            R = np.array([
-                [c1 * c2, c1 * s2 * s3 - c3 * s1, s1 * s3 + c1 * c3 * s2],
-                [c2 * s1, c1 * c3 + s1 * s2 * s3, c3 * s1 * s2 - c1 * s3],
-                [-s2,     c2 * s3,                c2 * c3],
-                ])
-            self._accel = R.T.dot(self._gravity) # transpose for passive rotation
-            self._compass = R.T.dot(self._north)
+            time_delta = (now - then) / 1000000
+            if time_delta >= 0.016:
+                # Gyro reading is simply the rate of change of the orientation
+                gyro = (new_orientation - orientation) / time_delta
+                # Construct a rotation matrix for the orientation; see
+                # https://en.wikipedia.org/wiki/Euler_angles#Rotation_matrix
+                x, y, z = np.deg2rad(new_orientation)
+                c1, c2, c3 = np.cos((z, y, x))
+                s1, s2, s3 = np.sin((z, y, x))
+                R = np.array([
+                    [c1 * c2, c1 * s2 * s3 - c3 * s1, s1 * s3 + c1 * c3 * s2],
+                    [c2 * s1, c1 * c3 + s1 * s2 * s3, c3 * s1 * s2 - c1 * s3],
+                    [-s2,     c2 * s3,                c2 * c3],
+                    ])
+                accel = R.T.dot(self._gravity) # transpose for passive rotation
+                compass = R.T.dot(self._north)
+                then = now
+                position = new_position
+                orientation = new_orientation
             # XXX Simulate acceleration from position
-            self._world_write(new_timestamp)
-            old_timestamp = new_timestamp
-            old_position = new_position
-            old_orientation = new_orientation
+            yield now, accel, gyro, compass
 
-    def _world_write(self, timestamp):
-        if self.simulate_world:
-            self._gyros[1:, :] = self._gyros[:-1, :]
-            self._gyros[0, :] = self._perturb(self._gyro, 1.0)
-            gyro = self._gyros.mean(axis=0)
-            self._accels[1:, :] = self._accels[:-1, :]
-            self._accels[0, :] = self._perturb(self._accel, 0.1)
-            accel = self._accels.mean(axis=0)
-            self._comps[1:, :] = self._comps[:-1, :]
-            self._comps[0, :] = self._perturb(self._compass, 2.0)
-            compass = self._comps.mean(axis=0)
+    def _world_loop(self):
+        while not self._world_event.wait(0.016):
+            self._world_write()
+
+    def _world_write(self, direct=False):
+        if direct:
+            now = timestamp()
         else:
-            gyro = self._gyro
-            accel = self._accel
-            compass = self._compass
+            now, accel, gyro, compass = next(self._world_iter)
+            if self.simulate_world:
+                self._gyros[1:, :] = self._gyros[:-1, :]
+                self._gyros[0, :] = self._perturb(gyro, 1.0)
+                gyro = self._gyros.mean(axis=0)
+                self._accels[1:, :] = self._accels[:-1, :]
+                self._accels[0, :] = self._perturb(accel, 0.1)
+                accel = self._accels.mean(axis=0)
+                self._comps[1:, :] = self._comps[:-1, :]
+                self._comps[0, :] = self._perturb(compass, 2.0)
+                compass = self._comps.mean(axis=0)
+            self._gyro = gyro
+            self._accel = accel
+            self._compass = compass
         orient = np.deg2rad(self._orientation)
         self._write(self._read()._replace(
-            timestamp=timestamp,
+            timestamp=now,
             accel=V(
                 int(clamp(accel[0], -8, 8) * ACCEL_FACTOR),
                 int(clamp(accel[1], -8, 8) * ACCEL_FACTOR),
