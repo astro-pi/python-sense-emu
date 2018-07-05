@@ -5,6 +5,7 @@ PYTHON=python
 PIP=pip
 PYTEST=py.test
 COVERAGE=coverage
+TWINE=twine
 PYFLAGS=
 MSGINIT=msginit
 MSGMERGE=msgmerge
@@ -21,6 +22,21 @@ else
 SETUPTOOLS:=$(shell wget https://bitbucket.org/pypa/setuptools/raw/bootstrap/ez_setup.py -O - | $(PYTHON))
 endif
 
+# Find the location of the GObject introspection libs and cairo (required for
+# the develop target)
+PYVER:=$(shell $(PYTHON) $(PYFLAGS) -c "import sys; print(sys.version_info[0])")
+ifeq ($(PYVER),3)
+CAIRO:=$(wildcard /usr/lib/python3/dist-packages/cairo)
+GI:=$(wildcard /usr/lib/python3/dist-packages/gi)
+GOBJECT:=
+GLIB:=
+else
+CAIRO:=$(wildcard /usr/lib/python2.7/dist-packages/cairo)
+GI:=$(wildcard /usr/lib/python2.7/dist-packages/gi)
+GOBJECT:=$(wildcard /usr/lib/python2.7/dist-packages/gobject)
+GLIB:=$(wildcard /usr/lib/python2.7/dist-packages/glib)
+endif
+
 # Calculate the base names of the distribution, the location of all source,
 # documentation, packaging, icon, and executable script files
 NAME:=$(shell $(PYTHON) $(PYFLAGS) setup.py --name)
@@ -32,7 +48,6 @@ DEB_SUFFIX:=-1ubuntu1
 else
 DEB_SUFFIX:=
 endif
-PYVER:=$(shell $(PYTHON) $(PYFLAGS) -c "import sys; print('py%d.%d' % sys.version_info[:2])")
 PY_SOURCES:=$(shell \
 	$(PYTHON) $(PYFLAGS) setup.py egg_info >/dev/null 2>&1 && \
 	grep -v "\.egg-info" $(PKG_DIR).egg-info/SOURCES.txt)
@@ -58,23 +73,21 @@ DOC_SOURCES:=docs/conf.py \
 SUBDIRS:=icons
 
 # Calculate the name of all outputs
-DIST_EGG=dist/$(NAME)-$(VER)-$(PYVER).egg
+DIST_WHEEL=dist/$(NAME)-$(VER)-py2.py3-none-any.whl
 DIST_TAR=dist/$(NAME)-$(VER).tar.gz
 DIST_ZIP=dist/$(NAME)-$(VER).zip
 DIST_DEB=dist/python-$(NAME)_$(VER)$(DEB_SUFFIX)_all.deb \
 	dist/python3-$(NAME)_$(VER)$(DEB_SUFFIX)_all.deb \
 	dist/python-$(NAME)-doc_$(VER)$(DEB_SUFFIX)_all.deb \
 	dist/$(NAME)-tools_$(VER)$(DEB_SUFFIX)_all.deb \
+	dist/$(NAME)_$(VER)$(DEB_SUFFIX)_$(DEB_ARCH).build \
+	dist/$(NAME)_$(VER)$(DEB_SUFFIX)_$(DEB_ARCH).buildinfo \
 	dist/$(NAME)_$(VER)$(DEB_SUFFIX)_$(DEB_ARCH).changes
-ifeq ($(shell lsb_release -si),Ubuntu)
 DIST_DSC=dist/$(NAME)_$(VER)$(DEB_SUFFIX).tar.xz \
 	dist/$(NAME)_$(VER)$(DEB_SUFFIX).dsc \
+	dist/$(NAME)_$(VER)$(DEB_SUFFIX)_source.build \
+	dist/$(NAME)_$(VER)$(DEB_SUFFIX)_source.buildinfo \
 	dist/$(NAME)_$(VER)$(DEB_SUFFIX)_source.changes
-else
-DIST_DSC=dist/$(NAME)_$(VER)$(DEB_SUFFIX).tar.gz \
-	dist/$(NAME)_$(VER)$(DEB_SUFFIX).dsc \
-	dist/$(NAME)_$(VER)$(DEB_SUFFIX)_source.changes
-endif
 MAN_PAGES=man/sense_rec.1 man/sense_play.1 man/sense_csv.1 man/sense_emu_gui.1
 POT_FILE=$(PKG_DIR)/locale/$(NAME).pot
 PO_FILES:=$(wildcard $(PKG_DIR)/locale/*.po)
@@ -107,11 +120,12 @@ install: $(SUBDIRS) $(MO_FILES) $(GSCHEMA_COMPILED)
 doc: $(DOC_SOURCES)
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
+	$(MAKE) -C docs epub
 	$(MAKE) -C docs latexpdf
 
 source: $(DIST_TAR) $(DIST_ZIP)
 
-egg: $(DIST_EGG)
+wheel: $(DIST_WHEEL)
 
 zip: $(DIST_ZIP)
 
@@ -119,7 +133,7 @@ tar: $(DIST_TAR)
 
 deb: $(DIST_DEB) $(DIST_DSC)
 
-dist: $(DIST_EGG) $(DIST_DEB) $(DIST_DSC) $(DIST_TAR) $(DIST_ZIP)
+dist: $(DIST_WHEEL) $(DIST_DEB) $(DIST_DSC) $(DIST_TAR) $(DIST_ZIP)
 
 i18n: $(MO_FILES) $(PO_FILES) $(POT_FILE)
 
@@ -130,15 +144,35 @@ develop: tags
 	$(PIP) install -U setuptools
 	$(PIP) install -U pip
 	$(PIP) install -e .[doc,test]
+	@# If we're in a venv, link the system's GObject Introspection (gi) into it
+ifeq ($(VIRTUAL_ENV),)
+	@echo "Virtualenv not detected! You may need to link gi manually"
+else
+ifeq ($(CAIRO),)
+	@echo "ERROR: cairo not found. Install the python{,3}-cairo packages"
+else
+	ln -sf $(CAIRO) $(VIRTUAL_ENV)/lib/python*/site-packages/
+endif
+ifeq ($(GI),)
+	@echo "ERROR: gi not found. Install the python{,3}-gi packages"
+else
+	ln -sf $(GI) $(VIRTUAL_ENV)/lib/python*/site-packages/
+endif
+ifneq ($(GLIB),)
+	ln -sf $(GLIB) $(VIRTUAL_ENV)/lib/python*/site-packages/
+endif
+ifneq ($(GOBJECT),)
+	ln -sf $(GOBJECT) $(VIRTUAL_ENV)/lib/python*/site-packages/
+endif
+endif
 
 test:
-	$(COVERAGE) run -m $(PYTEST) tests -v
+	$(COVERAGE) run --rcfile coverage.cfg -m $(PYTEST) tests
 	$(COVERAGE) report --rcfile coverage.cfg
 
 clean:
-	$(PYTHON) $(PYFLAGS) setup.py clean
-	$(MAKE) -f $(CURDIR)/debian/rules clean
-	rm -fr build/ dist/ $(NAME).egg-info/ tags $(MO_FILES)
+	dh_clean
+	rm -fr dist/ $(NAME).egg-info/ tags
 	for dir in $(SUBDIRS); do \
 		$(MAKE) -C $$dir clean; \
 	done
@@ -174,15 +208,15 @@ $(DIST_TAR): $(PY_SOURCES) $(MO_FILES) $(GSCHEMA_COMPILED) $(SUBDIRS)
 $(DIST_ZIP): $(PY_SOURCES) $(MO_FILES) $(GSCHEMA_COMPILED) $(SUBDIRS)
 	$(PYTHON) $(PYFLAGS) setup.py sdist --formats zip
 
-$(DIST_EGG): $(PY_SOURCES) $(MO_FILES) $(GSCHEMA_COMPILED) $(SUBDIRS)
-	$(PYTHON) $(PYFLAGS) setup.py bdist_egg
+$(DIST_WHEEL): $(PY_SOURCES) $(MO_FILES) $(GSCHEMA_COMPILED) $(SUBDIRS)
+	$(PYTHON) $(PYFLAGS) setup.py bdist_wheel --universal
 
 $(DIST_DEB): $(PY_SOURCES) $(MO_FILES) $(GSCHEMA_COMPILED) $(SUBDIRS) $(DEB_SOURCES) $(MAN_PAGES)
 	# build the binary package in the parent directory then rename it to
 	# project_version.orig.tar.gz
 	$(PYTHON) $(PYFLAGS) setup.py sdist --dist-dir=../
 	rename -f 's/$(NAME)-(.*)\.tar\.gz/$(NAME)_$$1\.orig\.tar\.gz/' ../*
-	debuild -b -i -I -Idist -Ibuild -Idocs/_build -Icoverage -I__pycache__ -I.coverage -Itags -I*.pyc -I*.vim -I*.xcf -rfakeroot
+	debuild -b
 	mkdir -p dist/
 	for f in $(DIST_DEB); do cp ../$${f##*/} dist/; done
 
@@ -191,41 +225,31 @@ $(DIST_DSC): $(PY_SOURCES) $(PO_FILES) $(GSCHEMA_COMPILED) $(SUBDIRS) $(DEB_SOUR
 	# project_version.orig.tar.gz
 	$(PYTHON) $(PYFLAGS) setup.py sdist --dist-dir=../
 	rename -f 's/$(NAME)-(.*)\.tar\.gz/$(NAME)_$$1\.orig\.tar\.gz/' ../*
-	debuild -S -i -I -Idist -Ibuild -Idocs/_build -Icoverage -I__pycache__ -I.coverage -Itags -I*.pyc -I*.vim -I*.xcf -rfakeroot
+	debuild -S
 	mkdir -p dist/
 	for f in $(DIST_DSC); do cp ../$${f##*/} dist/; done
 
-release-pi: $(PY_SOURCES) $(MO_FILES) $(GSCHEMA_COMPILED) $(DOC_SOURCES) $(DEB_SOURCES)
+changelog: $(PY_SOURCES) $(MO_FILES) $(GSCHEMA_COMPILED) $(DOC_SOURCES) $(DEB_SOURCES)
 	$(MAKE) clean
-	# ensure there are no current uncommitted changes
-	test -z "$(shell git status --porcelain)"
-	# update the debian changelog with new release information
-	dch --newversion $(VER)-1$(DEB_SUFFIX) --controlmaint
-	# commit the changes and add a new tag
-	git commit debian/changelog -m "Updated changelog for release $(VER)"
-	git tag -s v$(VER) -m "Release $(VER)"
-	# update the package's registration on PyPI (in case any metadata's changed)
-	$(PYTHON) $(PYFLAGS) setup.py register -r https://pypi.python.org/pypi
-
-release-ubuntu: $(PY_SOURCES) $(MO_FILES) $(GSCHEMA_COMPILED) $(DOC_SOURCES) $(DEB_SOURCES)
 	# ensure there are no current uncommitted changes
 	test -z "$(shell git status --porcelain)"
 	# update the debian changelog with new release information
 	dch --newversion $(VER)$(DEB_SUFFIX) --controlmaint
 	# commit the changes and add a new tag
-	git commit debian/changelog -m "Updated changelog for Ubuntu release"
+	git commit debian/changelog -m "Updated changelog for release $(VER)"
 
-upload-pi: $(PY_SOURCES) $(MO_FILES) $(GSCHEMA_COMPILED) $(DOC_SOURCES) $(DIST_DEB) $(DIST_DSC)
-	# build a source archive and upload to PyPI
-	$(PYTHON) $(PYFLAGS) setup.py sdist upload -r https://pypi.python.org/pypi
-	# build the deb source archive and upload to Raspbian
-	dput raspberrypi dist/$(NAME)_$(VER)-1$(DEB_SUFFIX)_source.changes
-	dput raspberrypi dist/$(NAME)_$(VER)-1$(DEB_SUFFIX)_$(DEB_ARCH).changes
+release-pi: $(PY_SOURCES) $(MO_FILES) $(GSCHEMA_COMPILED) $(DOC_SOURCES) $(DEB_SOURCES)
+	git tag -s v$(VER) -m "Release $(VER)"
 	git push --tags
+	# build a source archive and upload to PyPI
+	$(TWINE) upload $(DIST_TAR) $(DIST_WHEEL)
+	# build the deb source archive and upload to Raspbian
+	dput raspberrypi dist/$(NAME)_$(VER)$(DEB_SUFFIX)_source.changes
+	dput raspberrypi dist/$(NAME)_$(VER)$(DEB_SUFFIX)_$(DEB_ARCH).changes
 
-upload-ubuntu: $(PY_SOURCES) $(MO_FILES) $(GSCHEMA_COMPILED) $(DOC_SOURCES) $(DIST_DEB) $(DIST_DSC)
+release-ubuntu: $(PY_SOURCES) $(MO_FILES) $(GSCHEMA_COMPILED) $(DOC_SOURCES) $(DIST_DEB) $(DIST_DSC)
 	# build the deb source archive and upload to the PPA
 	dput waveform-ppa dist/$(NAME)_$(VER)$(DEB_SUFFIX)_source.changes
 
-.PHONY: all install develop test doc source egg zip tar deb dist clean tags release-pi release-ubuntu $(SUBDIRS)
+.PHONY: all install develop test doc source wheel zip tar deb dist clean tags changelog release-pi release-ubuntu $(SUBDIRS)
 
