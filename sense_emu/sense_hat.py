@@ -28,6 +28,7 @@ nstr = str
 str = type('')
 
 import struct
+import io
 import os
 import sys
 import math
@@ -88,7 +89,17 @@ class SenseHat(object):
         lock = EmulatorLock('sense_emu')
         if not lock.wait(1):
             warnings.warn(Warning('No emulator detected; spawning sense_emu_gui'))
-            subprocess.Popen(['sense_emu_gui'])
+            with io.open(os.devnull, 'r+b') as devnull:
+                try:
+                    setpgrp = os.setpgrp
+                except AttributeError:
+                    setpgrp = None
+                # setpgrp is called to spawn a new process group, ensuring
+                # that signals from the interpreter (e.g. the user pressing
+                # Ctrl+C) don't get sent to the emulator too
+                subprocess.Popen(['sense_emu_gui'], preexec_fn=setpgrp,
+                                 stdin=devnull, stdout=devnull, stderr=devnull,
+                                 close_fds=True)
 
         self._fb_device = self._get_fb_device()
         if self._fb_device is None:
