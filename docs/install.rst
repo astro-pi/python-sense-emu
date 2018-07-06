@@ -13,7 +13,9 @@ Raspbian installation
 If you are using the `Raspbian`_ distro, it is best to install the Sense HAT
 Emulator using the system's package manager: apt. This will ensure that the
 emulator is easy to keep up to date, and easy to remove should you wish to do
-so. To install using apt simply::
+so. To install using apt simply:
+
+.. code-block:: console
 
     $ sudo apt-get update
     $ sudo apt-get install python-sense-emu python3-sense-emu sense-emu-tools
@@ -30,16 +32,18 @@ python3-sense-emu
   This is the Python 3 version of the Sense HAT Emulator library.
 
 To upgrade your installation when new releases are made you can simply use
-apt's normal upgrade procedure::
+apt's normal upgrade procedure:
+
+.. code-block:: console
 
     $ sudo apt-get update
     $ sudo apt-get upgrade
 
-If you ever need to remove your installation::
+If you ever need to remove your installation:
+
+.. code-block:: console
 
     $ sudo apt-get remove python-sense-emu python3-sense-emu sense-emu-tools
-
-.. _Raspbian: http://www.raspbian.org/
 
 
 .. _ubuntu_install:
@@ -47,48 +51,62 @@ If you ever need to remove your installation::
 Ubuntu installation
 ===================
 
-To install from the author's `PPA`_::
+To install from the author's `PPA`_:
+
+.. code-block:: console
 
     $ sudo add-apt-repository ppa://waveform/ppa
     $ sudo apt-get update
     $ sudo apt-get install python-sense-emu python3-sense-emu sense-emu-tools
 
 To upgrade your installation when new releases are made you can simply use
-apt's normal upgrade procedure::
+apt's normal upgrade procedure:
+
+.. code-block:: console
 
     $ sudo apt-get update
     $ sudo apt-get upgrade
 
-To remove the installation::
+To remove the installation:
+
+.. code-block:: console
 
     $ sudo apt-get remove python-sense-emu python3-sense-emu sense-emu-tools
 
-.. _PPA: https://launchpad.net/~waveform/+archive/ppa
 
 .. _macos_install:
 
 macOS installation
-=====================
+==================
 
-The following installation instructions assume you are using `Homebrew`_ as your macOS package manager::
+The following installation instructions assume you are using `Homebrew`_ as
+your macOS package manager:
+
+.. code-block:: console
 
     $ brew install pygobject3 gtk+3
-    
-If you are using Python virtual environments for the Sense HAT Emulator, the `system-site-packages` option must be enabled within the virtualenv::
 
-For existing virtual environments::
+If you are using Python virtual environments for the Sense HAT Emulator, the
+``system-site-packages`` option must be enabled within the virtualenv.
+
+For existing virtual environments:
+
+.. code-block:: console
 
     $ rm $venv_dir/lib/pythonX.X/no-global-site-packages.txt
 
-For new virtual environments::
+For new virtual environments:
+
+.. code-block:: console
 
     $ virtualenv --system-site-packages
 
-Activate your virtual environment and install the Sense HAT Emulator::
+Activate your virtual environment and install the Sense HAT Emulator:
+
+.. code-block:: console
 
     $ pip install sense-emu
-    
-.. _Homebrew: http://brew.sh/
+
 
 .. _other_install:
 
@@ -96,15 +114,21 @@ Alternate platforms
 ===================
 
 On platforms other than Raspbian or Ubuntu, it is probably simplest to install
-system wide using Python's ``pip`` tool::
+system wide using Python's ``pip`` tool:
+
+.. code-block:: console
 
     $ pip install sense-emu
 
-To upgrade your installation when new releases are made::
+To upgrade your installation when new releases are made:
+
+.. code-block:: console
 
     $ pip install -U sense-emu
 
-If you ever need to remove your installation::
+If you ever need to remove your installation:
+
+.. code-block:: console
 
     $ pip uninstall sense-emu
 
@@ -120,3 +144,7 @@ If you ever need to remove your installation::
     emulator application in your desktop's start menu. Instead you will have to
     launch it manually by running ``sense_emu_gui`` from the command line.
 
+
+.. _Homebrew: http://brew.sh/
+.. _Raspbian: http://www.raspbian.org/
+.. _PPA: https://launchpad.net/~waveform/+archive/ppa

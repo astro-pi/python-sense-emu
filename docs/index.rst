@@ -15,3 +15,11 @@ Table of Contents
     sense_csv
     changelog
     license
+
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
