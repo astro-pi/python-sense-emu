@@ -127,7 +127,7 @@ def setup(app):
 
 # -- Options for LaTeX output ---------------------------------------------
 
-latex_engine = 'xelatex'
+#latex_engine = 'xelatex'
 
 latex_elements = {
     'papersize': 'a4paper',
