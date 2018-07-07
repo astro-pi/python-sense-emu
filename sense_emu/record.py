@@ -54,6 +54,10 @@ class RecordApplication(TerminalApplication):
             help=_('the duration to record for in seconds (default: record '
             'until terminated with Ctrl+C)'))
         self.parser.add_argument(
+            '-i', '--interval', dest='interval', action='store',
+            help=_('the delay between each reading (default: the IMU polling '
+                   'interval, ???)')
+        self.parser.add_argument(
             '-f', '--flush', dest='flush', action='store_true', default=False,
             help=_('flush every record to disk immediately; reduces chances of '
             'truncated data on power loss, but greatly increases disk activity'))
@@ -81,7 +85,8 @@ class RecordApplication(TerminalApplication):
         hsensor = RTIMU.RTHumidity(settings)
         if not hsensor.humidityInit():
             raise IOError(_('Failed to initialize Sense HAT humidity sensor'))
-        interval = imu.IMUGetPollInterval() / 1000.0 # seconds
+        if args.interval is None:
+            args.interval = imu.IMUGetPollInterval() / 1000.0 # seconds
         nan = float('nan')
 
         logging.info(_('Starting recording'))
@@ -124,7 +129,7 @@ class RecordApplication(TerminalApplication):
                     rec_count += 1
                 if timestamp > terminate_at:
                     break
-                delay = max(0.0, timestamp + interval - time())
+                delay = max(0.0, timestamp + args.interval - time())
                 if delay:
                     sleep(delay)
         finally:
