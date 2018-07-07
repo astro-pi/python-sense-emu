@@ -55,8 +55,9 @@ class RecordApplication(TerminalApplication):
             'until terminated with Ctrl+C)'))
         self.parser.add_argument(
             '-i', '--interval', dest='interval', action='store',
-            help=_('the delay between each reading (default: the IMU polling '
-                   'interval, ???)')
+            type=float, metavar='SECS',
+            help=_('the delay between each reading in seconds (default: the '
+                   'IMU polling interval, typically 0.003 seconds)'))
         self.parser.add_argument(
             '-f', '--flush', dest='flush', action='store_true', default=False,
             help=_('flush every record to disk immediately; reduces chances of '

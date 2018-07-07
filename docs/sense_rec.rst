@@ -49,12 +49,18 @@ Description
 
 .. option:: -c FILE, --config FILE
 
-    the Sense HAT configuration file to use (default: /etc/RTIMULib.ini)
+    the Sense HAT configuration file to use (default:
+    :file:`/etc/RTIMULib.ini`)
 
 .. option:: -d SECS, --duration SECS
 
     the duration to record for in seconds (default: record until terminated
     with :kbd:`Control-C`)
+
+.. option:: -i SECS, --interval SECS
+
+    the delay between each reading in seconds (default: the IMU polling
+    interval, typically 0.003 seconds)
 
 .. option:: -f, --flush
 
@@ -117,7 +123,18 @@ playback or analysis:
 
     $ gunzip -c experiment.hat.gz | sense_play -
 
-Alternatively, you can use this in conjunction with :program:`sense_csv` to
+Another method of reducing the data usage is increasing the interval between
+readings (the default is the IMU polling interval which is an extremely short
+3ms). Obviously a longer interval will reduce the "fidelity" of the recording;
+you will only see the sensors update at each interval during playback, however
+it can be extremely useful for very long recordings. For example, to record
+with a 1 second interval between readings for 24 hours:
+
+.. code-block:: console
+
+    $ sense_rec -i 1 -d $((24*60*60)) one_day_experiment.hat
+
+Finally, you can use pipes in conjunction with :program:`sense_csv` to
 produce CSV output directly:
 
 .. code-block:: console
@@ -125,6 +142,6 @@ produce CSV output directly:
     $ sense_rec - | sense_csv - experiment.csv
 
 Be warned that CSV data is substantially larger than the binary format (CSV
-data uses approximately 25Kb per second).
+data uses approximately 25Kb per second at the default interval).
 
 .. _HAB: https://en.wikipedia.org/wiki/High-altitude_balloon
