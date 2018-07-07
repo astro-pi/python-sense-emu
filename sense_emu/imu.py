@@ -327,19 +327,19 @@ class IMUServer(object):
         self._write(self._read()._replace(
             timestamp=now,
             accel=V(
-                int(clamp(accel[0], -8, 8) * ACCEL_FACTOR),
-                int(clamp(accel[1], -8, 8) * ACCEL_FACTOR),
-                int(clamp(accel[2], -8, 8) * ACCEL_FACTOR),
+                int(clamp(self._accel[0], -8, 8) * ACCEL_FACTOR),
+                int(clamp(self._accel[1], -8, 8) * ACCEL_FACTOR),
+                int(clamp(self._accel[2], -8, 8) * ACCEL_FACTOR),
                 ),
             gyro=V(
-                int(clamp(gyro[0], -500, 500) * GYRO_FACTOR),
-                int(clamp(gyro[1], -500, 500) * GYRO_FACTOR),
-                int(clamp(gyro[2], -500, 500) * GYRO_FACTOR),
+                int(clamp(self._gyro[0], -500, 500) * GYRO_FACTOR),
+                int(clamp(self._gyro[1], -500, 500) * GYRO_FACTOR),
+                int(clamp(self._gyro[2], -500, 500) * GYRO_FACTOR),
                 ),
             compass=V(
-                int(clamp(compass[0], -4, 4) * COMPASS_FACTOR),
-                int(clamp(compass[1], -4, 4) * COMPASS_FACTOR),
-                int(clamp(compass[2], -4, 4) * COMPASS_FACTOR),
+                int(clamp(self._compass[0], -4, 4) * COMPASS_FACTOR),
+                int(clamp(self._compass[1], -4, 4) * COMPASS_FACTOR),
+                int(clamp(self._compass[2], -4, 4) * COMPASS_FACTOR),
                 ),
             orient=V(
                 int(clamp(orient[0], -180, 180) * ORIENT_FACTOR),
