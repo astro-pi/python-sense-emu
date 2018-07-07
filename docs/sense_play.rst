@@ -10,7 +10,7 @@ emulation library.
 Synopsis
 ========
 
-::
+.. code-block:: text
 
     sense_play [-h] [--version] [-q] [-v] [-l FILE] [-P] input
 
@@ -48,20 +48,26 @@ Examples
 ========
 
 To play back an experiment recorded from the Sense HAT, simply execute
-:program:`sense_play` with the filename you wish to play back::
+:program:`sense_play` with the filename you wish to play back:
+
+.. code-block:: console
 
     $ sense_play experiment.hat
 
 Playback will start immediately and continue in real-time (at the recording
 rate) until the file is exhausted. If you wish to start an emulated script
-at the same time as playback, you can use the shell's job control facilities::
+at the same time as playback, you can use the shell's job control facilities:
+
+.. code-block:: console
 
     $ sense_play experiment.hat & python experiment.py
 
 If :file:`-` is specified as the input file, :program:`sense_play` will read
 its from stdin. This can be used to play back compressed recordings (see
 Examples under :program:`sense_rec`) without using any disk space for
-decompression::
+decompression:
+
+.. code-block:: console
 
     $ gunzip -c experiment.hat.gz | sense_play -
 
@@ -71,4 +77,3 @@ decompression::
     tasks, or because the data cannot be read quickly enough from the SD card),
     :program:`sense_play` will skip records and print a warning to the console
     at the end of playback with the number of records skipped.
-

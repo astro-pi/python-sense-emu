@@ -54,4 +54,3 @@ Constants
 .. data:: ACTION_HELD
 
     Constants representing the actions that can be applied to the joystick.
-

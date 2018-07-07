@@ -70,6 +70,7 @@ release = _setup.__version__
 #language = None
 #today_fmt = '%B %d, %Y'
 exclude_patterns = ['_build']
+highlight_language = 'python3'
 #default_role = None
 #add_function_parentheses = True
 #add_module_names = True
@@ -121,8 +122,8 @@ htmlhelp_basename = '%sdoc' % _setup.__project__
 
 # Hack to make wide tables work properly in RTD
 # See https://github.com/snide/sphinx_rtd_theme/issues/117 for details
-#def setup(app):
-#    app.add_stylesheet('style_override.css')
+def setup(app):
+    app.add_stylesheet('style_override.css')
 
 # -- Options for LaTeX output ---------------------------------------------
 

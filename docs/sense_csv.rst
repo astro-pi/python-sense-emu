@@ -10,7 +10,7 @@ analysis.
 Synopsis
 ========
 
-::
+.. code-block:: text
 
     sense_csv [-h] [--version] [-q] [-v] [-l FILE] [-P]
               [--timestamp-format TIMESTAMP_FORMAT] [--header] input output
@@ -58,7 +58,9 @@ Examples
 ========
 
 To convert a recording to CSV, simply run :program:`sense_csv` with the
-recorded file as the first filename, and the output CSV file as the second::
+recorded file as the first filename, and the output CSV file as the second:
+
+.. code-block:: console
 
     $ sense_csv experiment.hat experiment.csv
 
@@ -106,7 +108,9 @@ By default, only the data is output, with the columns defined as follows:
 17. Orientation Z-axis.
 
 If you wish to include column headers as the first row of data, simply
-specify the :option:`--header` option::
+specify the :option:`--header` option:
+
+.. code-block:: console
 
     $ sense_csv --header experiment.hat experiment.csv
 
@@ -114,7 +118,8 @@ If :file:`-` is specified for either filename, :program:`sense_csv` will read
 from stdin, or write to stdout. This can be used in conjunction with other
 standard command line utilities for all sorts of effects. For example, to
 produce a CSV file containing only the timestamps, humidity, and accelerometer
-readings::
+readings:
+
+.. code-block:: console
 
     $ sense_csv --header experiment.hat - | cut -d, -f1,4,6-8 > experiment.csv
-

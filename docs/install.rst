@@ -93,7 +93,7 @@ For existing virtual environments:
 
 .. code-block:: console
 
-    $ rm $venv_dir/lib/pythonX.X/no-global-site-packages.txt
+    $ rm ${VIRTUAL_ENV}/lib/python*/no-global-site-packages.txt
 
 For new virtual environments:
 
