@@ -26,11 +26,13 @@ endif
 # the develop target)
 PYVER:=$(shell $(PYTHON) $(PYFLAGS) -c "import sys; print(sys.version_info[0])")
 ifeq ($(PYVER),3)
+RTIMULIB:=$(wildcard /usr/lib/python3/dist-packages/RTIMU.*)
 CAIRO:=$(wildcard /usr/lib/python3/dist-packages/cairo)
 GI:=$(wildcard /usr/lib/python3/dist-packages/gi)
 GOBJECT:=
 GLIB:=
 else
+RTIMULIB:=$(wildcard /usr/lib/python2.7/dist-packages/RTIMU.*)
 CAIRO:=$(wildcard /usr/lib/python2.7/dist-packages/cairo)
 GI:=$(wildcard /usr/lib/python2.7/dist-packages/gi)
 GOBJECT:=$(wildcard /usr/lib/python2.7/dist-packages/gobject)
@@ -50,7 +52,7 @@ DEB_SUFFIX:=
 endif
 PY_SOURCES:=$(shell \
 	$(PYTHON) $(PYFLAGS) setup.py egg_info >/dev/null 2>&1 && \
-	grep -v "\.egg-info" $(PKG_DIR).egg-info/SOURCES.txt)
+	cat $(PKG_DIR).egg-info/SOURCES.txt | grep -v "\.egg-info"  | grep -v "\.mo$$")
 DEB_SOURCES:=debian/changelog \
 	debian/control \
 	debian/copyright \
@@ -148,6 +150,11 @@ develop: tags
 ifeq ($(VIRTUAL_ENV),)
 	@echo "Virtualenv not detected! You may need to link gi manually"
 else
+ifeq ($(RTIMULIB),)
+	@echo "WARNING: RTIMULib not found. This is fine on non-Pi platforms"
+else
+	ln -sf $(RTIMULIB) $(VIRTUAL_ENV)/lib/python*/site-packages/
+endif
 ifeq ($(CAIRO),)
 	@echo "ERROR: cairo not found. Install the python{,3}-cairo packages"
 else
