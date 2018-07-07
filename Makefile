@@ -237,7 +237,6 @@ $(DIST_DSC): $(PY_SOURCES) $(PO_FILES) $(GSCHEMA_COMPILED) $(SUBDIRS) $(DEB_SOUR
 	for f in $(DIST_DSC); do cp ../$${f##*/} dist/; done
 
 changelog: $(PY_SOURCES) $(MO_FILES) $(GSCHEMA_COMPILED) $(DOC_SOURCES) $(DEB_SOURCES)
-	$(MAKE) clean
 	# ensure there are no current uncommitted changes
 	test -z "$(shell git status --porcelain)"
 	# update the debian changelog with new release information
@@ -245,7 +244,7 @@ changelog: $(PY_SOURCES) $(MO_FILES) $(GSCHEMA_COMPILED) $(DOC_SOURCES) $(DEB_SO
 	# commit the changes and add a new tag
 	git commit debian/changelog -m "Updated changelog for release $(VER)"
 
-release-pi: $(PY_SOURCES) $(MO_FILES) $(GSCHEMA_COMPILED) $(DOC_SOURCES) $(DEB_SOURCES)
+release-pi: $(DIST_TAR) $(DIST_WHEEL) $(DIST_DEB) $(DIST_DSC)
 	git tag -s v$(VER) -m "Release $(VER)"
 	git push --tags
 	# build a source archive and upload to PyPI
@@ -254,7 +253,7 @@ release-pi: $(PY_SOURCES) $(MO_FILES) $(GSCHEMA_COMPILED) $(DOC_SOURCES) $(DEB_S
 	dput raspberrypi dist/$(NAME)_$(VER)$(DEB_SUFFIX)_source.changes
 	dput raspberrypi dist/$(NAME)_$(VER)$(DEB_SUFFIX)_$(DEB_ARCH).changes
 
-release-ubuntu: $(PY_SOURCES) $(MO_FILES) $(GSCHEMA_COMPILED) $(DOC_SOURCES) $(DIST_DEB) $(DIST_DSC)
+release-ubuntu: $(DIST_DEB) $(DIST_DSC)
 	# build the deb source archive and upload to the PPA
 	dput waveform-ppa dist/$(NAME)_$(VER)$(DEB_SUFFIX)_source.changes
 
