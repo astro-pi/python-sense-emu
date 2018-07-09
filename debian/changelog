@@ -1,3 +1,9 @@
+sense-emu (1.1-1ubuntu1) xenial; urgency=medium
+
+  * Ubuntu release of 1.1
+
+ -- Dave Jones <dave@waveform.org.uk>  Mon, 09 Jul 2018 14:02:01 +0100
+
 sense-emu (1.1) stable; urgency=medium
 
   * Enforce a minimum width of window to ensure orientation sliders are never
