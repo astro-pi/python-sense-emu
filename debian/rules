@@ -11,12 +11,12 @@ export PYBUILD_NAME=sense-emu
 
 override_dh_auto_install:
 	dh_auto_install
-	# Strip out source from the tools package
-	rm -fr debian/sense-emu-tools/usr/lib
-	rm -fr debian/sense-emu-tools/usr/share/pyshared
-	# Strip out binaries from the library packages
+	# Strip out binaries from the library packages (and move the py3 ones
+	# into the sense-emu-tools package)
 	rm -fr debian/python-sense-emu/usr/bin
-	rm -fr debian/python3-sense-emu/usr/bin
+	mkdir -p debian/sense-emu-tools/usr/bin
+	mv debian/python3-sense-emu/usr/bin/* debian/sense-emu-tools/usr/bin/
+	rmdir debian/python3-sense-emu/usr/bin
 	# Strip out compiled gschemas from everything (it's handled by the
 	# .install file and is only included in the source distro for
 	# development purposes and odd platforms like Windows)
