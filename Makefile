@@ -75,7 +75,7 @@ DOC_SOURCES:=docs/conf.py \
 SUBDIRS:=icons
 
 # Calculate the name of all outputs
-DIST_WHEEL=dist/$(NAME)-$(VER)-py2.py3-none-any.whl
+DIST_WHEEL=dist/$(PKG_DIR)-$(VER)-py2.py3-none-any.whl
 DIST_TAR=dist/$(NAME)-$(VER).tar.gz
 DIST_ZIP=dist/$(NAME)-$(VER).zip
 DIST_DEB=dist/python-$(NAME)_$(VER)$(DEB_SUFFIX)_all.deb \
@@ -145,6 +145,7 @@ develop: tags
 	@# These have to be done separately to avoid a cockup...
 	$(PIP) install -U setuptools
 	$(PIP) install -U pip
+	$(PIP) install -U twine
 	$(PIP) install -e .[doc,test]
 	@# If we're in a venv, link the system's GObject Introspection (gi) into it
 ifeq ($(VIRTUAL_ENV),)
