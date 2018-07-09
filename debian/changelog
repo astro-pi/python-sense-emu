@@ -1,3 +1,9 @@
+sense-emu (1.1-1ubuntu2) xenial; urgency=medium
+
+  * Another release to work around test build-deps issue
+
+ -- Dave Jones <dave@waveform.org.uk>  Mon, 09 Jul 2018 23:45:39 +0100
+
 sense-emu (1.1-1ubuntu1) xenial; urgency=medium
 
   * Ubuntu release of 1.1
