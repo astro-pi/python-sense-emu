@@ -22,8 +22,8 @@ override_dh_auto_install:
 	# development purposes and odd platforms like Windows)
 	find debian/ -name "gschemas.compiled" -delete
 
-#override_dh_auto_test:
-#	# Don't run the tests!
+override_dh_auto_test:
+	# Don't run the tests!
 
 override_dh_auto_build:
 	dh_auto_build
