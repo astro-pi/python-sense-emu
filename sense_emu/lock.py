@@ -131,16 +131,16 @@ class EmulatorLock(object):
         elapsed, or ``False`` otherwise. If *timeout* is ``None`` (the default)
         wait indefinitely.
         """
+        # XXX Either add a "launch" param to this method, or add a launch
+        # method to the class so that consumers can use the lock to launch
+        # an appropriate emulation
         end = time()
-        if timeout is None:
-            wait = 0.1
-        else:
+        if timeout is not None:
             end += timeout
-            wait = max(0, timeout / 10)
         while not self._is_held() or self._is_stale():
             if time() > end:
                 return False
-            sleep(wait)
+            sleep(0.1)
         return True
 
     @property
@@ -192,4 +192,3 @@ class EmulatorLock(object):
                 self._filename, os.O_CREAT | os.O_EXCL | os.O_WRONLY, mode), 'w')
         lockfile.write('%d\n' % os.getpid())
         lockfile.close()
-
