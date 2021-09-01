@@ -63,7 +63,7 @@ Description: Documentation for the Raspberry Pi Sense HAT emulator.
 Package: sense-emu-tools
 Architecture: all
 Section: devel
-Depends: ${misc:Depends}, ${python3:Depends}, python3-sense-emu (>= ${binary:Version}), python3-gi, python3-gi-cairo, idle3
+Depends: ${misc:Depends}, ${python3:Depends}, python3-sense-emu (>= ${binary:Version}), python3-gi, python3-gi-cairo, python3-thonny
 Description: Emulator for the Raspberry Pi Sense HAT.
  sense-emu is an emulator of the Raspberry Pi Sense HAT which runs on multiple
  platforms, and provides an emulation of each sensor on the HAT, along with the
