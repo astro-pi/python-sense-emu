@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.18.3 
+<!-- Generated with glade 3.22.2 
 
 sense_emu_gui - An emulator for the Raspberry Pi Sense HAT
 Copyright (C) 2016 Raspberry Pi Foundation
@@ -22,7 +22,7 @@ Author: Dave Jones
 
 -->
 <interface domain="sense-emu">
-  <requires lib="gtk+" version="3.4"/>
+  <requires lib="gtk+" version="3.18"/>
   <!-- interface-license-type gplv2 -->
   <!-- interface-name sense_emu_gui -->
   <!-- interface-description An emulator for the Raspberry Pi Sense HAT -->
@@ -35,10 +35,12 @@ Author: Dave Jones
     <property name="step_increment">1</property>
     <property name="page_increment">5</property>
   </object>
-  <object class="GtkDialog" id="window">
+  <template class="PrefsDialog" parent="GtkDialog">
     <property name="can_focus">False</property>
-    <property name="resizable">False</property>
     <property name="type_hint">dialog</property>
+    <child type="titlebar">
+      <placeholder/>
+    </child>
     <child internal-child="vbox">
       <object class="GtkBox" id="dialog_vbox">
         <property name="visible">True</property>
@@ -60,6 +62,7 @@ Author: Dave Jones
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="can_default">True</property>
+                <property name="has_default">True</property>
                 <property name="receives_default">False</property>
                 <property name="use_stock">True</property>
                 <signal name="clicked" handler="close_clicked" swapped="no"/>
@@ -73,7 +76,7 @@ Author: Dave Jones
           </object>
           <packing>
             <property name="expand">False</property>
-            <property name="fill">False</property>
+            <property name="fill">True</property>
             <property name="position">0</property>
           </packing>
         </child>
@@ -115,7 +118,6 @@ Author: Dave Jones
                 <property name="can_focus">True</property>
                 <property name="receives_default">False</property>
                 <property name="tooltip_text" translatable="yes">When checked, the emulator will continually simulate "noise" on the environment sensors (the temperature, pressure, and humidity sliders)</property>
-                <property name="xalign">0</property>
                 <property name="draw_indicator">True</property>
               </object>
               <packing>
@@ -130,7 +132,6 @@ Author: Dave Jones
                 <property name="can_focus">True</property>
                 <property name="receives_default">False</property>
                 <property name="tooltip_text" translatable="yes">When checked, the emulator will constantly simulate accelerometer (gravity induced), gyroscope (rate of change), and magnetometer (relative North) values based on the yaw, pitch, and roll sliders</property>
-                <property name="xalign">0</property>
                 <property name="draw_indicator">True</property>
               </object>
               <packing>
@@ -197,7 +198,6 @@ Author: Dave Jones
                 <property name="can_focus">True</property>
                 <property name="receives_default">False</property>
                 <property name="tooltip_text" translatable="yes">When selected, the orientation sliders will have a minimum of -180°, a mid-point at 0°, and a maximum of 180°</property>
-                <property name="xalign">0</property>
                 <property name="active">True</property>
                 <property name="draw_indicator">True</property>
                 <signal name="toggled" handler="orientation_changed" swapped="no"/>
@@ -214,7 +214,6 @@ Author: Dave Jones
                 <property name="can_focus">True</property>
                 <property name="receives_default">False</property>
                 <property name="tooltip_text" translatable="yes">When selected, the orientation sliders will have a minimum of 0°, a mid-point at 180°, and a maximum of 360°</property>
-                <property name="xalign">0</property>
                 <property name="active">True</property>
                 <property name="draw_indicator">True</property>
                 <property name="group">orientation_balance</property>
@@ -232,7 +231,6 @@ Author: Dave Jones
                 <property name="can_focus">True</property>
                 <property name="receives_default">False</property>
                 <property name="tooltip_text" translatable="yes">When selected, the orientation sliders will have a minimum of 180°, a mid-point at 0° (immediately after 359°), and a maximum of 180°</property>
-                <property name="xalign">0</property>
                 <property name="active">True</property>
                 <property name="draw_indicator">True</property>
                 <property name="group">orientation_balance</property>
@@ -246,11 +244,11 @@ Author: Dave Jones
           </object>
           <packing>
             <property name="expand">False</property>
-            <property name="fill">True</property>
+            <property name="fill">False</property>
             <property name="position">1</property>
           </packing>
         </child>
       </object>
     </child>
-  </object>
+  </template>
 </interface>

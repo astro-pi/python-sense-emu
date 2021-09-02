@@ -51,9 +51,6 @@ from .common import HEADER_REC, DATA_REC, DataRecord, slow_pi
 
 def main():
     init_i18n()
-    # threads_init isn't required since PyGObject 3.10.2, but just in case
-    # we're on something ancient...
-    GObject.threads_init()
     app = EmuApplication()
     app.run(sys.argv)
 
@@ -63,6 +60,10 @@ def load_image(filename, format='png'):
     loader.write(pkg_resources.resource_string(__name__, filename))
     loader.close()
     return loader.get_pixbuf()
+
+
+def load_ui(filename):
+    return pkg_resources.resource_string(__name__, filename)
 
 
 class EmuApplication(Gtk.Application):
@@ -111,7 +112,7 @@ class EmuApplication(Gtk.Application):
         builder = Gtk.Builder(translation_domain=__project__)
         builder.add_from_string(
             pkg_resources.resource_string(__name__, 'menu.ui').decode('utf-8'))
-        self.props.menubar = builder.get_object('app-menu')
+        self.set_menubar(builder.get_object('app-menu'))
 
         # Construct the open examples sub-menu
         for directory, label in [
@@ -125,16 +126,16 @@ class EmuApplication(Gtk.Application):
             examples = Gio.Menu.new()
             # NOTE: The use of literal "/" below is correct; resource paths
             # are not file-system paths and always use "/"
-            for example in sorted(
-                    pkg_resources.resource_listdir(__name__, 'examples/%s' % directory)):
+            for example in sorted(pkg_resources.resource_listdir(
+                    __name__, 'examples/{directory}'.format(directory=directory))):
                 if example.endswith('.py'):
                     examples.append(
                         example.replace('_', '__'),
                         Gio.Action.print_detailed_name(
                             'app.example',
-                            GLib.Variant.new_string('%s/%s' % (directory, example))
-                            )
-                        )
+                            GLib.Variant.new_string(
+                                '{directory}/{example}'.format(
+                                    directory=directory, example=example))))
             builder.get_object('example-submenu').append_submenu(label, examples)
 
         # Construct the settings database and tweak initial value of
@@ -173,11 +174,11 @@ class EmuApplication(Gtk.Application):
             self.imu.simulate_world = settings.get_boolean(key)
         elif key == 'orientation-scale':
             # Force the orientation sliders to redraw
-            self.window.ui.yaw_scale.queue_draw()
-            self.window.ui.pitch_scale.queue_draw()
-            self.window.ui.roll_scale.queue_draw()
+            self.window.yaw_scale.queue_draw()
+            self.window.pitch_scale.queue_draw()
+            self.window.roll_scale.queue_draw()
         elif key == 'screen-fps':
-            self.window.ui.screen_widget.screen_update_delay = 1 / settings.get_int(key)
+            self.window.screen_widget.screen_update_delay = 1 / settings.get_int(key)
 
     def do_shutdown(self):
         if self.lock.mine:
@@ -226,7 +227,8 @@ class EmuApplication(Gtk.Application):
         logo = load_image('sense_emu_gui.svg', format='svg')
         about_dialog = Gtk.AboutDialog(
             transient_for=self.window,
-            authors=['%s <%s>' % (__author__, __author_email__)],
+            authors=['{author} <{email}>'.format(author=__author__,
+                                                 email=__author_email__)],
             license_type=Gtk.License.GPL_2_0, logo=logo,
             version=__version__, website=__url__)
         about_dialog.run()
@@ -285,24 +287,6 @@ class EmuApplication(Gtk.Application):
 
     def on_quit(self, action, param):
         self.quit()
-
-
-class BuilderUi:
-    def __init__(self, owner, filename):
-        # Load the GUI definitions (see __getattr__ for how we tie the loaded
-        # objects into instance variables) and connect all handlers to methods
-        # on this object
-        self._builder = Gtk.Builder(translation_domain=__project__)
-        self._builder.add_from_string(
-            pkg_resources.resource_string(__name__, filename).decode('utf-8'))
-        self._builder.connect_signals(owner)
-
-    def __getattr__(self, name):
-        result = self._builder.get_object(name)
-        if result is None:
-            raise AttributeError(_('No such attribute %r') % name)
-        setattr(self, name, result)
-        return result
 
 
 class ScreenWidget(Gtk.DrawingArea):
@@ -486,20 +470,42 @@ class ScreenWidget(Gtk.DrawingArea):
         self._update_thread.join()
 
 
+@Gtk.Template(string=load_ui('main_window.ui'))
 class MainWindow(Gtk.ApplicationWindow):
+    __gtype_name__ = 'MainWindow'
+
+    screen_box = Gtk.Template.Child()
+
+    gyro_grid = Gtk.Template.Child()
+    roll_scale = Gtk.Template.Child()
+    pitch_scale = Gtk.Template.Child()
+    yaw_scale = Gtk.Template.Child()
+    roll = Gtk.Template.Child()
+    pitch = Gtk.Template.Child()
+    yaw = Gtk.Template.Child()
+
+    environ_box = Gtk.Template.Child()
+    humidity = Gtk.Template.Child()
+    pressure = Gtk.Template.Child()
+    temperature = Gtk.Template.Child()
+
+    joystick_box = Gtk.Template.Child()
+    left_button = Gtk.Template.Child()
+    right_button = Gtk.Template.Child()
+    up_button = Gtk.Template.Child()
+    down_button = Gtk.Template.Child()
+    enter_button = Gtk.Template.Child()
+
+    screen_rotate_label = Gtk.Template.Child()
+    screen_rotate_clockwise = Gtk.Template.Child()
+    screen_rotate_anticlockwise = Gtk.Template.Child()
+
+    play_box = Gtk.Template.Child()
+    play_label = Gtk.Template.Child()
+    play_progressbar = Gtk.Template.Child()
+
     def __init__(self, *args, **kwargs):
         super(MainWindow, self).__init__(*args, **kwargs)
-
-        # Build the UI; this is a bit round-about because of Gtk's weird UI
-        # handling. One can't just use a UI file to setup an existing Window
-        # instance (as in Qt); instead one must use a separate handler object
-        # (in which case overriding do_destroy is impossible) or construct a
-        # whole new Window, remove its components, add them to ourselves and
-        # then ditch the Window.
-        self._ui = BuilderUi(self, 'main_window.ui')
-        self.ui.window.remove(self.ui.root_grid)
-        self.add(self.ui.root_grid)
-        self.ui.window.destroy()
 
         # Set the window icon
         icon = load_image('sense_emu_gui.png')
@@ -513,40 +519,40 @@ class MainWindow(Gtk.ApplicationWindow):
         self._play_restore = (True, True, True)
 
         # Set up the custom screen widget
-        self.ui.screen_widget = ScreenWidget(visible=True, client=self.props.application.screen)
-        self.ui.screen_box.pack_start(self.ui.screen_widget, True, True, 0)
-        self.ui.screen_widget.show()
+        self.screen_widget = ScreenWidget(visible=True, client=self.props.application.screen)
+        self.screen_box.pack_start(self.screen_widget, True, True, 0)
+        self.screen_widget.show()
 
         # Set initial positions on sliders (and add some marks)
-        self.ui.pitch_scale.add_mark(0, Gtk.PositionType.BOTTOM, None)
-        self.ui.roll_scale.add_mark(0, Gtk.PositionType.BOTTOM, None)
-        self.ui.yaw_scale.add_mark(0, Gtk.PositionType.BOTTOM, None)
-        self.ui.roll.props.value = self.props.application.imu.orientation[0]
-        self.ui.pitch.props.value = self.props.application.imu.orientation[1]
-        self.ui.yaw.props.value = self.props.application.imu.orientation[2]
-        self.ui.humidity.props.value = self.props.application.humidity.humidity
-        self.ui.pressure.props.value = self.props.application.pressure.pressure
-        self.ui.temperature.props.value = self.props.application.humidity.temperature
+        self.pitch_scale.add_mark(0, Gtk.PositionType.BOTTOM, None)
+        self.roll_scale.add_mark(0, Gtk.PositionType.BOTTOM, None)
+        self.yaw_scale.add_mark(0, Gtk.PositionType.BOTTOM, None)
+        self.roll.props.value = self.props.application.imu.orientation[0]
+        self.pitch.props.value = self.props.application.imu.orientation[1]
+        self.yaw.props.value = self.props.application.imu.orientation[2]
+        self.humidity.props.value = self.props.application.humidity.humidity
+        self.pressure.props.value = self.props.application.pressure.pressure
+        self.temperature.props.value = self.props.application.humidity.temperature
 
         # Set up attributes for the joystick buttons
         self._stick_held_lock = Lock()
         self._stick_held_id = 0
-        self.ui.left_button.direction = SenseStick.KEY_LEFT
-        self.ui.right_button.direction = SenseStick.KEY_RIGHT
-        self.ui.up_button.direction = SenseStick.KEY_UP
-        self.ui.down_button.direction = SenseStick.KEY_DOWN
-        self.ui.enter_button.direction = SenseStick.KEY_ENTER
+        self.left_button.direction = SenseStick.KEY_LEFT
+        self.right_button.direction = SenseStick.KEY_RIGHT
+        self.up_button.direction = SenseStick.KEY_UP
+        self.down_button.direction = SenseStick.KEY_DOWN
+        self.enter_button.direction = SenseStick.KEY_ENTER
         self._stick_map = {
-            Gdk.KEY_Return: self.ui.enter_button,
-            Gdk.KEY_Left:   self.ui.left_button,
-            Gdk.KEY_Right:  self.ui.right_button,
-            Gdk.KEY_Up:     self.ui.up_button,
-            Gdk.KEY_Down:   self.ui.down_button,
+            Gdk.KEY_Return: self.enter_button,
+            Gdk.KEY_Left:   self.left_button,
+            Gdk.KEY_Right:  self.right_button,
+            Gdk.KEY_Up:     self.up_button,
+            Gdk.KEY_Down:   self.down_button,
             }
 
         # Set up attributes for the screen rotation controls
-        self.ui.screen_rotate_clockwise.angle = -90
-        self.ui.screen_rotate_anticlockwise.angle = 90
+        self.screen_rotate_clockwise.angle = -90
+        self.screen_rotate_anticlockwise.angle = 90
         self._stick_rotations = {
             SenseStick.KEY_LEFT:  SenseStick.KEY_UP,
             SenseStick.KEY_UP:    SenseStick.KEY_RIGHT,
@@ -555,27 +561,18 @@ class MainWindow(Gtk.ApplicationWindow):
             SenseStick.KEY_ENTER: SenseStick.KEY_ENTER,
             }
 
-        # Connect some handlers for window size and state
-        self._current_width = -1
-        self._current_height = -1
-        self._is_maximized = False
-        self.connect('size-allocate', self.window_resized)
-        self.connect('window-state-event', self.window_state_changed)
-
+    @Gtk.Template.Callback()
     def window_resized(self, widget, rect):
         if not self.is_maximized():
             self.props.application.settings.set_int('window-width', rect.width)
             self.props.application.settings.set_int('window-height', rect.height)
 
+    @Gtk.Template.Callback()
     def window_state_changed(self, widget, event):
         if event.type == Gdk.EventType.WINDOW_STATE:
             self.props.application.settings.set_boolean(
                 'window-maximized', event.new_window_state & Gdk.WindowState.MAXIMIZED)
         return False
-
-    @property
-    def ui(self):
-        return self._ui
 
     def do_destroy(self):
         try:
@@ -586,34 +583,41 @@ class MainWindow(Gtk.ApplicationWindow):
             pass
         Gtk.ApplicationWindow.do_destroy(self)
 
+    @Gtk.Template.Callback()
     def format_pressure(self, scale, value):
         return '%.1fmbar' % value
 
+    @Gtk.Template.Callback()
     def pressure_changed(self, adjustment):
         if not self._play_thread:
             self.props.application.pressure.set_values(
-                self.ui.pressure.props.value,
-                self.ui.temperature.props.value,
+                self.pressure.props.value,
+                self.temperature.props.value,
                 )
 
+    @Gtk.Template.Callback()
     def format_humidity(self, scale, value):
         return '%.1f%%' % value
 
+    @Gtk.Template.Callback()
     def humidity_changed(self, adjustment):
         if not self._play_thread:
             self.props.application.humidity.set_values(
-                self.ui.humidity.props.value,
-                self.ui.temperature.props.value,
+                self.humidity.props.value,
+                self.temperature.props.value,
                 )
 
+    @Gtk.Template.Callback()
     def format_temperature(self, scale, value):
         return '%.1f°C' % value
 
+    @Gtk.Template.Callback()
     def temperature_changed(self, adjustment):
         if not self._play_thread:
             self.pressure_changed(adjustment)
             self.humidity_changed(adjustment)
 
+    @Gtk.Template.Callback()
     def format_orientation(self, scale, value):
         mode = self.props.application.settings.get_string('orientation-scale')
         return '%.1f°' % (
@@ -623,14 +627,16 @@ class MainWindow(Gtk.ApplicationWindow):
             999 # should never happen
             )
 
+    @Gtk.Template.Callback()
     def orientation_changed(self, adjustment):
         if not self._play_thread:
             self.props.application.imu.set_orientation((
-                self.ui.roll.props.value,
-                self.ui.pitch.props.value,
-                self.ui.yaw.props.value,
+                self.roll.props.value,
+                self.pitch.props.value,
+                self.yaw.props.value,
                 ))
 
+    @Gtk.Template.Callback()
     def stick_key_pressed(self, button, event):
         try:
             button = self._stick_map[event.keyval]
@@ -640,6 +646,7 @@ class MainWindow(Gtk.ApplicationWindow):
             self.stick_pressed(button, event)
             return True
 
+    @Gtk.Template.Callback()
     def stick_key_released(self, button, event):
         try:
             button = self._stick_map[event.keyval]
@@ -649,6 +656,7 @@ class MainWindow(Gtk.ApplicationWindow):
             self.stick_released(button, event)
             return True
 
+    @Gtk.Template.Callback()
     def stick_pressed(self, button, event):
         # When a button is double-clicked, GTK fires two pressed events for the
         # second click with no intervening released event (so there's one
@@ -667,6 +675,7 @@ class MainWindow(Gtk.ApplicationWindow):
         button.set_active(True)
         return True
 
+    @Gtk.Template.Callback()
     def stick_released(self, button, event):
         with self._stick_held_lock:
             if self._stick_held_id:
@@ -689,7 +698,7 @@ class MainWindow(Gtk.ApplicationWindow):
     def _stick_send(self, direction, action):
         tv_usec, tv_sec = math.modf(time())
         tv_usec *= 1000000
-        r = self.ui.screen_widget.props.rotation // 90
+        r = self.screen_widget.props.rotation // 90
         while r:
             direction = self._stick_rotations[direction]
             r -= 1
@@ -697,12 +706,14 @@ class MainWindow(Gtk.ApplicationWindow):
             int(tv_sec), int(tv_usec), SenseStick.EV_KEY, direction, action)
         self.props.application.stick.send(event_rec)
 
+    @Gtk.Template.Callback()
     def rotate_screen(self, button):
-        self.ui.screen_widget.props.rotation = (self.ui.screen_widget.props.rotation + button.angle) % 360
-        self.ui.screen_rotate_label.props.label = '%d°' % self.ui.screen_widget.props.rotation
+        self.screen_widget.props.rotation = (self.screen_widget.props.rotation + button.angle) % 360
+        self.screen_rotate_label.props.label = '%d°' % self.screen_widget.props.rotation
 
+    @Gtk.Template.Callback()
     def toggle_orientation(self, button):
-        self.ui.screen_widget.props.orientation = not self.ui.screen_widget.props.orientation
+        self.screen_widget.props.orientation = not self.screen_widget.props.orientation
 
     def _play_run(self, f):
         err = None
@@ -751,18 +762,19 @@ class MainWindow(Gtk.ApplicationWindow):
     def _play_update_controls(self, fraction):
         with self._play_update_lock:
             self._play_update_id = 0
-        self.ui.play_progressbar.props.fraction = fraction
+        self.play_progressbar.props.fraction = fraction
         if not math.isnan(self.props.application.humidity.temperature):
-            self.ui.temperature.props.value = self.props.application.humidity.temperature
+            self.temperature.props.value = self.props.application.humidity.temperature
         if not math.isnan(self.props.application.pressure.pressure):
-            self.ui.pressure.props.value = self.props.application.pressure.pressure
+            self.pressure.props.value = self.props.application.pressure.pressure
         if not math.isnan(self.props.application.humidity.humidity):
-            self.ui.humidity.props.value = self.props.application.humidity.humidity
-        self.ui.yaw.props.value = math.degrees(self.props.application.imu.orientation[2])
-        self.ui.pitch.props.value = math.degrees(self.props.application.imu.orientation[1])
-        self.ui.roll.props.value = math.degrees(self.props.application.imu.orientation[0])
+            self.humidity.props.value = self.props.application.humidity.humidity
+        self.yaw.props.value = math.degrees(self.props.application.imu.orientation[2])
+        self.pitch.props.value = math.degrees(self.props.application.imu.orientation[1])
+        self.roll.props.value = math.degrees(self.props.application.imu.orientation[0])
         return False
 
+    @Gtk.Template.Callback()
     def play_stop_clicked(self, button):
         self._play_stop()
 
@@ -791,8 +803,8 @@ class MainWindow(Gtk.ApplicationWindow):
 
     def _play_controls_setup(self, filename):
         # Disable all the associated user controls while playing back
-        self.ui.environ_box.props.sensitive = False
-        self.ui.gyro_grid.props.sensitive = False
+        self.environ_box.props.sensitive = False
+        self.gyro_grid.props.sensitive = False
         # Disable simulation threads as we're going to manipulate the
         # values precisely
         self._play_restore = (
@@ -804,19 +816,19 @@ class MainWindow(Gtk.ApplicationWindow):
         self.props.application.humidity.simulate_noise = False
         self.props.application.imu.simulate_world = False
         # Show the playback bar
-        self.ui.play_label.props.label = _('Playing %s') % os.path.basename(filename)
-        self.ui.play_progressbar.props.fraction = 0.0
-        self.ui.play_box.props.visible = True
+        self.play_label.props.label = _('Playing %s') % os.path.basename(filename)
+        self.play_progressbar.props.fraction = 0.0
+        self.play_box.props.visible = True
 
     def _play_controls_finish(self, exc):
         # Reverse _play_controls_setup
-        self.ui.play_box.props.visible = False
+        self.play_box.props.visible = False
         ( self.props.application.pressure.simulate_noise,
             self.props.application.humidity.simulate_noise,
             self.props.application.imu.simulate_world,
             ) = self._play_restore
-        self.ui.environ_box.props.sensitive = True
-        self.ui.gyro_grid.props.sensitive = True
+        self.environ_box.props.sensitive = True
+        self.gyro_grid.props.sensitive = True
         self._play_thread = None
         # If an exception occurred in the background thread, display the
         # error in an appropriate dialog
@@ -839,40 +851,45 @@ class MainWindow(Gtk.ApplicationWindow):
         self._play_thread.start()
 
 
+@Gtk.Template(string=load_ui('prefs_dialog.ui'))
 class PrefsDialog(Gtk.Dialog):
+    __gtype_name__ = 'PrefsDialog'
+
+    close_button = Gtk.Template.Child()
+
+    env_check = Gtk.Template.Child()
+    imu_check = Gtk.Template.Child()
+    screen_fps = Gtk.Template.Child()
+    editor_entry = Gtk.Template.Child()
+
+    orientation_balance = Gtk.Template.Child()
+    orientation_circle = Gtk.Template.Child()
+    orientation_modulo = Gtk.Template.Child()
+
     def __init__(self, *args, **kwargs):
         self.settings = kwargs.pop('settings')
         super(PrefsDialog, self).__init__(*args, **kwargs)
 
-        # See comments in MainWindow...
-        self._ui = BuilderUi(self, 'prefs_dialog.ui')
-        self.ui.window.remove(self.ui.dialog_vbox)
-        self.remove(self.get_content_area())
-        self.add(self.ui.dialog_vbox)
-        self.ui.window.destroy()
-
-        self.props.resizable = False
-        self.ui.close_button.grab_default()
         self.settings.bind(
-            'simulate-env', self.ui.env_check, 'active', Gio.SettingsBindFlags.DEFAULT)
+            'simulate-env', self.env_check, 'active', Gio.SettingsBindFlags.DEFAULT)
         self.settings.bind(
-            'simulate-imu', self.ui.imu_check, 'active', Gio.SettingsBindFlags.DEFAULT)
+            'simulate-imu', self.imu_check, 'active', Gio.SettingsBindFlags.DEFAULT)
         self.settings.bind(
-            'screen-fps', self.ui.screen_fps, 'value', Gio.SettingsBindFlags.DEFAULT)
-        self.ui.orientation_balance.value = 'balance'
-        self.ui.orientation_circle.value = 'circle'
-        self.ui.orientation_modulo.value = 'modulo'
+            'screen-fps', self.screen_fps, 'value', Gio.SettingsBindFlags.DEFAULT)
+        self.settings.bind(
+            'editor-command', self.editor_entry, 'text', Gio.SettingsBindFlags.DEFAULT)
+        self.orientation_balance.value = 'balance'
+        self.orientation_circle.value = 'circle'
+        self.orientation_modulo.value = 'modulo'
         s = self.settings.get_string('orientation-scale')
-        for c in self.ui.orientation_balance.get_group():
+        for c in self.orientation_balance.get_group():
             c.props.active = (c.value == s)
 
-    @property
-    def ui(self):
-        return self._ui
-
+    @Gtk.Template.Callback()
     def close_clicked(self, button):
         self.response(Gtk.ResponseType.ACCEPT)
 
+    @Gtk.Template.Callback()
     def orientation_changed(self, button):
         if button.props.active:
             self.settings.set_string('orientation-scale', button.value)
