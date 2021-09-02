@@ -16,15 +16,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>
 
-from __future__ import (
-    unicode_literals,
-    absolute_import,
-    print_function,
-    division,
-    )
-nstr = str
-str = type('')
-
 import sys
 import os
 import io
@@ -82,7 +73,7 @@ def init_screen():
     return fd
 
 
-class ScreenClient(object):
+class ScreenClient:
     def __init__(self):
         self._fd = init_screen()
         self._map = mmap.mmap(self._fd.fileno(), 0, access=mmap.ACCESS_READ)
@@ -119,6 +110,7 @@ class ScreenClient(object):
         # the file modification timestamps. Unfortunately, futimes(3) is not
         # universally supported, and only available in Python 3.3+ so this gets
         # a bit convoluted...
+        # FIXME only need 3.3+ support now; work out which bits are 2.7 and excise
         touch = lambda: os.utime(self._fd.fileno())
         try:
             if os.utime in os.supports_fd:
@@ -149,4 +141,3 @@ class ScreenClient(object):
     @property
     def timestamp(self):
         return os.fstat(self._fd.fileno()).st_mtime
-

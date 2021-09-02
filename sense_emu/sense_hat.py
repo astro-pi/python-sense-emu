@@ -16,17 +16,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>
 
-#!/usr/bin/python
-
-from __future__ import (
-    unicode_literals,
-    absolute_import,
-    print_function,
-    division,
-    )
-nstr = str
-str = type('')
-
 import struct
 import io
 import os
@@ -38,7 +27,7 @@ import shutil
 import glob
 import array
 import struct
-import subprocess
+import subprocess as sp
 import warnings
 from PIL import Image  # pillow
 from copy import deepcopy
@@ -50,7 +39,7 @@ from .stick import SenseStick
 from .screen import init_screen, GAMMA_DEFAULT, GAMMA_LOW
 
 
-class SenseHat(object):
+class SenseHat:
     """
     The main interface the Raspberry Pi Sense HAT.
 
@@ -89,17 +78,17 @@ class SenseHat(object):
         lock = EmulatorLock('sense_emu')
         if not lock.wait(1):
             warnings.warn(Warning('No emulator detected; spawning sense_emu_gui'))
-            with io.open(os.devnull, 'r+b') as devnull:
-                try:
-                    setpgrp = os.setpgrp
-                except AttributeError:
-                    setpgrp = None
-                # setpgrp is called to spawn a new process group, ensuring
-                # that signals from the interpreter (e.g. the user pressing
-                # Ctrl+C) don't get sent to the emulator too
-                subprocess.Popen(['sense_emu_gui'], preexec_fn=setpgrp,
-                                 stdin=devnull, stdout=devnull, stderr=devnull,
-                                 close_fds=True)
+            try:
+                setpgrp = os.setpgrp
+            except AttributeError:
+                setpgrp = None
+            # setpgrp is called to spawn a new process group, ensuring that
+            # signals from the interpreter (e.g. the user pressing Ctrl+C)
+            # don't get sent to the emulator too
+            sp.Popen(
+                ['sense_emu_gui'], preexec_fn=setpgrp,
+                stdin=sp.DEVNULL, stdout=sp.DEVNULL, stderr=sp.DEVNULL,
+                close_fds=True)
 
         self._fb_device = self._get_fb_device()
         if self._fb_device is None:
@@ -555,22 +544,22 @@ class SenseHat(object):
     def gamma(self):
         with open(self._fb_device, 'rb') as f:
             f.seek(128)
-            return struct.unpack(nstr('32B'), f.read(32))
+            return struct.unpack('32B', f.read(32))
 
     @gamma.setter
     def gamma(self, buffer):
-        if len(buffer) is not 32:
+        if len(buffer) != 32:
             raise ValueError('Gamma array must be of length 32')
 
         if not all(b <= 31 for b in buffer):
             raise ValueError('Gamma values must be bewteen 0 and 31')
 
         if not isinstance(buffer, array.array):
-            buffer = array.array(nstr('B'), buffer)
+            buffer = array.array('B', buffer)
 
         with open(self._fb_device, 'rb+') as f:
             f.seek(128)
-            f.write(struct.pack(nstr('32B'), *buffer))
+            f.write(struct.pack('32B', *buffer))
 
     def gamma_reset(self):
         """

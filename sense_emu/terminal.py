@@ -24,14 +24,6 @@ to command line applications: a help screen, universal file globbing, response
 file handling, and common logging configuration and options.
 """
 
-from __future__ import (
-    unicode_literals,
-    absolute_import,
-    print_function,
-    division,
-    )
-str = type('')
-
 import sys
 import io
 import os
@@ -40,8 +32,8 @@ import textwrap
 import logging
 import locale
 import traceback
+import configparser
 
-from . import configparser
 from .i18n import init_i18n, _
 
 try:
@@ -61,10 +53,9 @@ _CONSOLE.setLevel(logging.DEBUG)
 logging.getLogger().addHandler(_CONSOLE)
 
 
-class FileType(object):
+class FileType:
     # Variant of argparse.FileType that handles binary stdin/stdout streams
-    # correctly under Python 3, and handles encoded text files correctly under
-    # Python 2
+    # correctly under Python 3
     def __init__(self, mode='r', bufsize=-1, encoding=None, errors=None):
         self._mode = mode
         self._bufsize = bufsize
@@ -104,7 +95,7 @@ class FileType(object):
         return '%s(%s)' % (type(self).__name__, args_str)
 
 
-class TerminalApplication(object):
+class TerminalApplication:
     """
     Base class for command line applications.
 
@@ -257,5 +248,3 @@ class TerminalApplication(object):
     def main(self, args):
         "Called as the main body of the utility"
         raise NotImplementedError
-
-

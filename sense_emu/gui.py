@@ -16,16 +16,6 @@
 # You should have received a copy of the GNU General Public License along with
 # this program. If not, see <http://www.gnu.org/licenses/>
 
-from __future__ import (
-    unicode_literals,
-    absolute_import,
-    print_function,
-    division,
-    )
-nstr = str
-str = type('')
-
-
 import io
 import os
 import sys
@@ -297,7 +287,7 @@ class EmuApplication(Gtk.Application):
         self.quit()
 
 
-class BuilderUi(object):
+class BuilderUi:
     def __init__(self, owner, filename):
         # Load the GUI definitions (see __getattr__ for how we tie the loaded
         # objects into instance variables) and connect all handlers to methods
@@ -886,4 +876,3 @@ class PrefsDialog(Gtk.Dialog):
     def orientation_changed(self, button):
         if button.props.active:
             self.settings.set_string('orientation-scale', button.value)
-

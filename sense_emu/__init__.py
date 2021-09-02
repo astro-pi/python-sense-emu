@@ -18,13 +18,6 @@
 
 "The Raspberry Pi Sense HAT Emulator library"
 
-from __future__ import (
-    unicode_literals,
-    absolute_import,
-    print_function,
-    division,
-    )
-
 import sys
 
 from .sense_hat import SenseHat, SenseHat as AstroPi
@@ -97,5 +90,3 @@ __entry_points__ = {
         'sense_emu_gui = sense_emu.gui:main',
         ],
     }
-
-

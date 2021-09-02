@@ -16,15 +16,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>
 
-from __future__ import (
-    unicode_literals,
-    absolute_import,
-    print_function,
-    division,
-    )
-nstr = str
-str = type('')
-
 import sys
 import os
 import io
@@ -45,7 +36,7 @@ from .common import clamp
 # See HTS221 data-sheet for details of register values
 HUMIDITY_FACTOR = 256
 TEMP_FACTOR = 64
-HUMIDITY_DATA = Struct(nstr(
+HUMIDITY_DATA = Struct(
     '@'   # native mode
     'B'   # humidity sensor type
     '6p'  # humidity sensor name
@@ -61,12 +52,12 @@ HUMIDITY_DATA = Struct(nstr(
     'h'   # T_OUT
     'B'   # H_VALID
     'B'   # T_VALID
-    ))
+)
 
 HumidityData = namedtuple('HumidityData', (
     'type', 'name', 'H0', 'H1', 'T0', 'T1', 'H0_OUT', 'H1_OUT',
     'T0_OUT', 'T1_OUT', 'H_OUT', 'T_OUT', 'H_VALID', 'T_VALID')
-    )
+)
 
 
 def humidity_filename():
@@ -101,8 +92,8 @@ def init_humidity():
         fd.seek(HUMIDITY_DATA.size)
         fd.truncate()
     except IOError as e:
-        # If the screen's device file doesn't exist, create it with reasonable
-        # initial values
+        # If the humidity device's file doesn't exist, create it with
+        # reasonable initial values
         if e.errno == errno.ENOENT:
             fd = io.open(humidity_filename(), 'w+b', buffering=0)
             fd.write(b'\x00' * HUMIDITY_DATA.size)
@@ -111,7 +102,7 @@ def init_humidity():
     return fd
 
 
-class HumidityServer(object):
+class HumidityServer:
     def __init__(self, simulate_noise=True):
         self._random = Random()
         self._fd = init_humidity()

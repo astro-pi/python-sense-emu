@@ -16,14 +16,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>
 
-from __future__ import (
-    unicode_literals,
-    absolute_import,
-    print_function,
-    division,
-    )
-str = type('')
-
 import sys
 import locale
 import gettext as _gettext
@@ -74,11 +66,6 @@ def init_i18n(languages=None):
         _gettext.textdomain(__project__)
 
 
-if sys.version_info.major == 3:
-    gettext = _gettext.gettext
-    ngettext = _gettext.ngettext
-else:
-    gettext = lambda message: _gettext.gettext(message).decode('utf-8')
-    ngettext = lambda singular, plural, n: _gettext.ngettext(singular, plural, n).decode('utf-8')
+gettext = _gettext.gettext
+ngettext = _gettext.ngettext
 _ = gettext
-

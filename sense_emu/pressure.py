@@ -16,15 +16,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>
 
-from __future__ import (
-    unicode_literals,
-    absolute_import,
-    print_function,
-    division,
-    )
-nstr = str
-str = type('')
-
 import sys
 import os
 import io
@@ -46,7 +37,7 @@ from .common import clamp
 PRESSURE_FACTOR = 4096
 TEMP_OFFSET = 37
 TEMP_FACTOR = 480
-PRESSURE_DATA = Struct(nstr(
+PRESSURE_DATA = Struct(
     '@'   # native mode
     'B'   # pressure sensor type
     '6p'  # pressure sensor name
@@ -55,7 +46,7 @@ PRESSURE_DATA = Struct(nstr(
     'h'   # T_OUT
     'B'   # P_VALID
     'B'   # T_VALID
-    ))
+)
 
 PressureData = namedtuple('PressureData',
     ('type', 'name', 'P_REF', 'P_OUT', 'T_OUT', 'P_VALID', 'T_VALID'))
@@ -87,13 +78,14 @@ def init_pressure():
     the file does not already exist, it is created and zeroed.
     """
     try:
-        # Attempt to open the IMU's device file and ensure it's the right size
+        # Attempt to open the pressure device's file and ensure it's the right
+        # size
         fd = io.open(pressure_filename(), 'r+b', buffering=0)
         fd.seek(PRESSURE_DATA.size)
         fd.truncate()
     except IOError as e:
-        # If the screen's device file doesn't exist, create it with reasonable
-        # initial values
+        # If the pressure device's file doesn't exist, create it with
+        # reasonable initial values
         if e.errno == errno.ENOENT:
             fd = io.open(pressure_filename(), 'w+b', buffering=0)
             fd.write(b'\x00' * PRESSURE_DATA.size)
@@ -102,7 +94,7 @@ def init_pressure():
     return fd
 
 
-class PressureServer(object):
+class PressureServer:
     def __init__(self, simulate_noise=True):
         self._random = Random()
         self._fd = init_pressure()
@@ -204,5 +196,3 @@ class PressureServer(object):
             P_OUT=0 if isnan(pressure) else int(clamp(pressure, 260, 1260) * PRESSURE_FACTOR),
             T_OUT=0 if isnan(temperature) else int((clamp(temperature, -30, 105) - TEMP_OFFSET) * TEMP_FACTOR),
             ))
-
-

@@ -16,21 +16,11 @@
 # You should have received a copy of the GNU General Public License along with
 # this program. If not, see <http://www.gnu.org/licenses/>
 
-
-from __future__ import (
-    unicode_literals,
-    absolute_import,
-    print_function,
-    division,
-    )
-str = type('')
-
 import os
 import logging
 import argparse
 from threading import Thread, Event
 from time import time, sleep
-from struct import Struct
 
 from . import __version__
 from .i18n import _

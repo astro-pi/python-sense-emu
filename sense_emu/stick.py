@@ -16,15 +16,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>
 
-from __future__ import (
-    unicode_literals,
-    absolute_import,
-    print_function,
-    division,
-    )
-native_str = str
-str = type('')
-
 import io
 import os
 import sys
@@ -37,10 +28,7 @@ import socket
 from functools import wraps
 from collections import namedtuple
 from threading import Thread, Event
-try:
-    from queue import Queue, Empty
-except:
-    from Queue import Queue, Empty # py2.x
+from queue import Queue, Empty
 from time import sleep
 
 
@@ -145,12 +133,12 @@ def init_stick_client():
     return client.makefile('rb', 0)
 
 
-class SenseStick(object):
+class SenseStick:
     """
     Represents the joystick on the Sense HAT.
     """
     SENSE_HAT_EVDEV_NAME = 'Raspberry Pi Sense HAT Joystick'
-    EVENT_FORMAT = native_str('llHHI')
+    EVENT_FORMAT = 'llHHI'
     EVENT_SIZE = struct.calcsize(EVENT_FORMAT)
 
     EV_KEY = 0x01
@@ -418,7 +406,7 @@ class SenseStick(object):
         self._start_stop_thread()
 
 
-class StickServer(object):
+class StickServer:
     def __init__(self):
         family, sock_type, addr = stick_address()
         server = socket.socket(family, sock_type)

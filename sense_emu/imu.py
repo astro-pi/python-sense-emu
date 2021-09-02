@@ -16,15 +16,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>
 
-from __future__ import (
-    unicode_literals,
-    absolute_import,
-    print_function,
-    division,
-    )
-nstr = str
-str = type('')
-
 import sys
 import os
 import io
@@ -47,7 +38,7 @@ ACCEL_FACTOR = 4081.6327
 GYRO_FACTOR = 57.142857
 COMPASS_FACTOR = 7142.8571
 ORIENT_FACTOR = 5214.1892
-IMU_DATA = Struct(nstr(
+IMU_DATA = Struct(
     '@'   # native mode
     'B'   # IMU sensor type
     '20p' # IMU sensor name
@@ -56,9 +47,10 @@ IMU_DATA = Struct(nstr(
     'hhh' # OUT_X_XL, OUT_Y_XL, OUT_Z_XL
     'hhh' # OUT_X_M, OUT_Y_M, OUT_Z_M
     'hhh' # Orientation X, Y, Z
-    ))
+)
 
-IMUData = namedtuple('IMUData', ('type', 'name', 'timestamp', 'accel', 'gyro', 'compass', 'orient'))
+IMUData = namedtuple('IMUData', (
+    'type', 'name', 'timestamp', 'accel', 'gyro', 'compass', 'orient'))
 
 
 def imu_filename():
@@ -92,7 +84,7 @@ def init_imu():
         fd.seek(IMU_DATA.size)
         fd.truncate()
     except IOError as e:
-        # If the screen's device file doesn't exist, create it with reasonable
+        # If the IMU device's file doesn't exist, create it with reasonable
         # initial values
         if e.errno == errno.ENOENT:
             fd = io.open(imu_filename(), 'w+b', buffering=0)
@@ -107,10 +99,8 @@ def init_imu():
 try:
     _time = time.monotonic # 3.3+ (only guaranteed in 3.5+)
 except AttributeError:
-    try:
-        _time = time.perf_counter # 3.3+
-    except AttributeError:
-        _time = time.time # fallback for 2.7
+    _time = time.perf_counter # 3.3+
+
 def timestamp():
     """
     Returns a timestamp as an integer number of microseconds after some
@@ -127,7 +117,7 @@ Y = V(0, 1, 0)
 Z = V(0, 0, 1)
 
 
-class IMUServer(object):
+class IMUServer:
     def __init__(self, simulate_world=True):
         self._random = Random()
         self._fd = init_imu()
@@ -347,4 +337,3 @@ class IMUServer(object):
                 int(clamp(orient[2], -180, 180) * ORIENT_FACTOR),
                 )
             ))
-

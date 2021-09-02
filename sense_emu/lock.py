@@ -16,14 +16,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>
 
-from __future__ import (
-    unicode_literals,
-    absolute_import,
-    print_function,
-    division,
-    )
-str = type('')
-
 import sys
 import os
 import io
@@ -93,7 +85,7 @@ def lock_filename():
             return os.path.join('/tmp', fname)
 
 
-class EmulatorLock(object):
+class EmulatorLock:
     def __init__(self, name):
         self._filename = lock_filename()
         self.name = name # XXX not currently used
@@ -183,12 +175,5 @@ class EmulatorLock(object):
                 lockfile.close()
 
     def _write_pid(self):
-        try:
-            lockfile = io.open(self._filename, 'x')
-        except ValueError as e:
-            # We're on py2.x or 3.2
-            mode = 0o666
-            lockfile = os.fdopen(os.open(
-                self._filename, os.O_CREAT | os.O_EXCL | os.O_WRONLY, mode), 'w')
-        lockfile.write('%d\n' % os.getpid())
-        lockfile.close()
+        with io.open(self._filename, 'x', encoding='ascii') as lockfile:
+            lockfile.write('%d\n' % os.getpid())

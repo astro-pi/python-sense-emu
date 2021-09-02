@@ -16,15 +16,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>
 
-from __future__ import (
-    unicode_literals,
-    absolute_import,
-    print_function,
-    division,
-    )
-nstr = str
-str = type('')
-
 import io
 import errno
 from struct import Struct
@@ -32,15 +23,15 @@ from collections import namedtuple
 
 
 # Structures for sense_rec and sense_play
-HEADER_REC = Struct(nstr(
+HEADER_REC = Struct(
     '='  # native order, standard sizing
     '8s' # magic number ("SENSEHAT")
     'b'  # version number (1)
     '7x' # padding
     'd'  # initial timestamp
-    ))
+)
 
-DATA_REC = Struct(nstr(
+DATA_REC = Struct(
     '='   # native order, standard sizing
     'd'   # timestamp
     'dd'  # pressure+temp readings
@@ -49,7 +40,7 @@ DATA_REC = Struct(nstr(
     'ddd' # raw gyro readings
     'ddd' # raw compass readings
     'ddd' # calculated pose
-    ))
+)
 
 DataRecord = namedtuple('DataRecord', (
     'timestamp',
@@ -59,7 +50,7 @@ DataRecord = namedtuple('DataRecord', (
     'gx', 'gy', 'gz',
     'cx', 'cy', 'cz',
     'ox', 'oy', 'oz',
-    ))
+))
 
 
 def clamp(value, min_value, max_value):
@@ -75,6 +66,8 @@ def slow_pi():
     processor, specifically a BCM2835. This is used to determine defaults for
     the simulation's processing.
     """
+    # FIXME this won't work with modern kernels that all like the hardware as
+    # BCM2835; use /proc/device-tree/model and parse SoC bits
     try:
         cpu = ''
         with io.open('/proc/cpuinfo', 'r') as f:
@@ -87,4 +80,3 @@ def slow_pi():
         if e.errno == errno.ENOENT:
             return False
         raise
-

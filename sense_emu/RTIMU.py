@@ -16,16 +16,6 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>
 
-from __future__ import (
-    unicode_literals,
-    absolute_import,
-    print_function,
-    division,
-    )
-nstr = str
-str = type('')
-
-
 import mmap
 from time import time
 
@@ -36,12 +26,12 @@ from .humidity import init_humidity, HUMIDITY_DATA, HumidityData
 from .imu import init_imu, IMU_DATA, IMUData, ACCEL_FACTOR, GYRO_FACTOR, COMPASS_FACTOR, ORIENT_FACTOR
 
 
-class Settings(object):
+class Settings:
     def __init__(self, path):
         self.path = path
 
 
-class RTIMU(object):
+class RTIMU:
     def __init__(self, settings):
         self.settings = settings
         self._fd = init_imu()
@@ -252,5 +242,3 @@ class RTHumidity(object):
 
     def humidityName(self):
         return self._read().name.decode('ascii')
-
-

@@ -16,23 +16,13 @@
 # You should have received a copy of the GNU General Public License along with
 # this program. If not, see <http://www.gnu.org/licenses/>
 
-from __future__ import (
-    unicode_literals,
-    absolute_import,
-    print_function,
-    division,
-    )
-str = type('')
-
-
 import sys
 import os
 import csv
 import logging
 import argparse
 import datetime as dt
-from time import time, sleep
-from struct import Struct
+from time import time
 
 from . import __version__
 from .i18n import _
@@ -54,11 +44,7 @@ class DumpApplication(TerminalApplication):
             '--header', action='store_true', default=False,
             help=_('if specified, output column headers'))
         self.parser.add_argument('input', type=FileType('rb'))
-        # Eurgh ... csv module under Python 2 only outputs byte-strings
-        if sys.version_info.major == 2:
-            self.parser.add_argument('output', type=FileType('wb'))
-        else:
-            self.parser.add_argument('output', type=FileType('w', encoding='utf-8'))
+        self.parser.add_argument('output', type=FileType('w', encoding='utf-8'))
 
     def source(self, f):
         logging.info(_('Reading header'))
