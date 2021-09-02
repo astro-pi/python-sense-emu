@@ -7,7 +7,7 @@ all: $(PNGS) $(XPMS) $(ICONS)
 
 clean:
 	rm -f $(PNGS) $(XPMS) $(ICONS)
-	rmdir $(DIRS)
+	-rmdir $(DIRS)
 
 $(DIRS):
 	mkdir $@
