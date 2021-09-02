@@ -23,6 +23,7 @@ import atexit
 import struct
 import math
 import errno
+import shlex
 import subprocess
 import webbrowser
 import datetime as dt
@@ -254,11 +255,12 @@ class EmuApplication(Gtk.Application):
 
 """.format(filename=filename))
         target.write(source.read().decode('utf-8'))
-        # Spawn IDLE; if this seems like a crazy way to spawn IDLE, you're
-        # right but it's also cross-platform and cross-version compatible
-        # (works on Py 2.x on Windows and UNIX, and Py 3.x on Windows and UNIX;
-        # almost any other variant fails for some combination)
-        subprocess.Popen(["thonny", filename])
+        cmd = self.settings.get_string('editor-command')
+        try:
+            cmd % 'foo'
+        except TypeError:
+            cmd = cmd + ' %s'
+        subprocess.Popen(shlex.split(cmd % shlex.quote(filename)))
 
     def on_play(self, action, param):
         open_dialog = Gtk.FileChooserDialog(

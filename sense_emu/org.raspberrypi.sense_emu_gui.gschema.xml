@@ -58,5 +58,15 @@
       <description>Stores whether or not the main window is
         maximized.</description>
     </key>
+    <key name="editor-command" type="s">
+      <default>'python3 -c "from idlelib.pyshell import main; main()"'</default>
+      <summary>The command to launch the script editor</summary>
+      <description>When an example script is opened from the menu, this is
+      the command that is executed to open the script editor (which may also
+      be the environment that runs the script in the case of applications like
+      IDLE and Thonny). If %s appears in this string, the script filename will
+      be substituted for it; otherwise the script filename will be appended to
+      the command line.</description>
+    </key>
   </schema>
 </schemalist>
