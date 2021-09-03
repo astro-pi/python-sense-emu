@@ -36,3 +36,6 @@ coverage
 # Translations
 *.mo
 
+# Generated images
+icons/*/
+!icons/scalable/
