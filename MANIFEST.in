@@ -1,9 +1,2 @@
 include README.rst
 include LICENSE.txt
-include sense_emu/*.ui
-include sense_emu/*.png
-include sense_emu/sense_emu_gui.svg
-include sense_emu/*.txt
-include sense_emu/gschemas.compiled
-include sense_emu/locale/*/LC_MESSAGES/*.mo
-include sense_emu/examples/*/*.py
