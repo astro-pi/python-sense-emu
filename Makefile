@@ -92,11 +92,12 @@ i18n: $(MO_FILES) $(PO_FILES) $(POT_FILE)
 
 gschema: $(GSCHEMA_COMPILED)
 
-develop: tags
+develop:
 	@# These have to be done separately to avoid a cockup...
 	$(PIP) install -U setuptools
 	$(PIP) install -U pip
 	$(PIP) install -U twine
+	$(PIP) install -U tox
 	$(PIP) install -e .[doc,test]
 	@# If we're in a venv, link the system's GObject Introspection (gi) into it
 ifeq ($(VIRTUAL_ENV),)
@@ -134,9 +135,13 @@ clean:
 		$(MAKE) -C $$dir clean; \
 	done
 	find $(CURDIR) -name "*.pyc" -delete
+	find $(CURDIR) -name "__pycache__" -delete
 
 tags: $(PY_SOURCES)
 	ctags -R --exclude="build/*" --exclude="docs/*" --languages="Python"
+
+lint: $(PY_SOURCES)
+	pylint $(WHEEL_NAME)
 
 $(SUBDIRS):
 	$(MAKE) -C $@
