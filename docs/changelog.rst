@@ -5,6 +5,13 @@ Change log
 ==========
 
 
+Release 1.2 (2021-09-03)
+========================
+
+* Updated code to work with later Gtk3 versions
+* Added configuration option for the editor launched for examples
+
+
 Release 1.1 (2018-07-07)
 ========================
 
