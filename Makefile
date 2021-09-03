@@ -76,6 +76,7 @@ doc: $(DOC_SOURCES)
 	$(MAKE) -C docs html
 	$(MAKE) -C docs epub
 	$(MAKE) -C docs latexpdf
+	$(MAKE) $(MAN_PAGES)
 
 source: $(DIST_TAR) $(DIST_ZIP)
 
@@ -128,7 +129,7 @@ test:
 	$(PYTEST)
 
 clean:
-	rm -fr dist/ build/ .pytest_cache/ .mypy_cache/ $(WHEEL_NAME).egg-info/ tags .coverage
+	rm -fr dist/ build/ man/ .pytest_cache/ .mypy_cache/ $(WHEEL_NAME).egg-info/ tags .coverage
 	for dir in $(SUBDIRS); do \
 		$(MAKE) -C $$dir clean; \
 	done
@@ -141,9 +142,9 @@ $(SUBDIRS):
 	$(MAKE) -C $@
 
 $(MAN_PAGES): $(DOC_SOURCES)
-	$(PYTHON) $(PYFLAGS) setup.py build_sphinx -b man
+	$(MAKE) -C docs man
 	mkdir -p man/
-	cp build/sphinx/man/*.[0-9] man/
+	cp build/man/*.[0-9] man/
 
 $(POT_FILE): $(PY_SOURCES)
 	$(XGETTEXT) -cI18N -o $@ $(filter %.py,$^) $(filter %.ui,$^)
