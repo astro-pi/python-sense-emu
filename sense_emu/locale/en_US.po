@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-07-07 13:35+0100\n"
+"POT-Creation-Date: 2021-09-03 12:23+0100\n"
 "PO-Revision-Date: 2016-08-17 10:49+0100\n"
 "Last-Translator: Dave Jones <dave@waveform.org.uk>\n"
 "Language-Team: English\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: sense_emu/dump.py:47
+#: sense_emu/dump.py:37
 msgid ""
 "Converts a Sense HAT recording to CSV format, for the purposes of debugging "
 "or analysis."
@@ -25,109 +25,104 @@ msgstr ""
 "Converts a Sense HAT recording to CSV format, for the purposes of debugging "
 "or analysis."
 
-#: sense_emu/dump.py:51
+#: sense_emu/dump.py:41
 #, python-format
 msgid ""
 "the format to use when outputting the record timestamp (default: %(default)s)"
 msgstr ""
 "the format to use when outputting the record timestamp (default: %(default)s)"
 
-#: sense_emu/dump.py:55
+#: sense_emu/dump.py:45
 msgid "if specified, output column headers"
 msgstr "if specified, output column headers"
 
-#: sense_emu/dump.py:64 sense_emu/play.py:53
+#: sense_emu/dump.py:50 sense_emu/play.py:44
 msgid "Reading header"
 msgstr "Reading header"
 
-#: sense_emu/dump.py:67 sense_emu/play.py:56
+#: sense_emu/dump.py:53 sense_emu/play.py:47
 msgid "Invalid magic number at start of input"
 msgstr "Invalid magic number at start of input"
 
-#: sense_emu/dump.py:69 sense_emu/play.py:58
+#: sense_emu/dump.py:55 sense_emu/play.py:49
 #, python-format
 msgid "Unrecognized file version number (%d)"
 msgstr "Unrecognized file version number (%d)"
 
-#: sense_emu/dump.py:71
+#: sense_emu/dump.py:57
 #, python-format
 msgid "Dumping recording taken at %s"
 msgstr "Dumping recording taken at %s"
 
-#: sense_emu/dump.py:79 sense_emu/play.py:68
+#: sense_emu/dump.py:65 sense_emu/play.py:59
 msgid "Incomplete data record at end of file"
 msgstr "Incomplete data record at end of file"
 
-#: sense_emu/dump.py:105
+#: sense_emu/dump.py:91
 #, python-format
 msgid "Converted %d records"
 msgstr "Converted %d records"
 
-#: sense_emu/gui.py:84 sense_emu/main_window.ui:77
+#: sense_emu/gui.py:76 sense_emu/main_window.ui:77
 msgid "Sense HAT Emulator"
 msgstr "Sense HAT Emulator"
 
-#: sense_emu/gui.py:98 sense_emu/gui.py:840
+#: sense_emu/gui.py:90 sense_emu/gui.py:841
 msgid "Error"
 msgstr "Error"
 
-#: sense_emu/gui.py:100
+#: sense_emu/gui.py:92
 msgid "Another process is currently acting as the Sense HAT emulator"
 msgstr "Another process is currently acting as the Sense HAT emulator"
 
 #. I18N: Easy examples
-#: sense_emu/gui.py:129
+#: sense_emu/gui.py:121
 msgid "Simple"
 msgstr "Simple"
 
 #. I18N: Intermediate skill examples
-#: sense_emu/gui.py:131
+#: sense_emu/gui.py:123
 msgid "Intermediate"
 msgstr "Intermediate"
 
 #. I18N: Difficult examples
-#: sense_emu/gui.py:133
+#: sense_emu/gui.py:125
 msgid "Advanced"
 msgstr "Advanced"
 
-#: sense_emu/gui.py:277
+#: sense_emu/gui.py:268
 msgid "Select the recording to play"
 msgstr "Select the recording to play"
 
-#: sense_emu/gui.py:292
+#: sense_emu/gui.py:283
 msgid "Preferences"
 msgstr "Preferences"
 
-#: sense_emu/gui.py:316
-#, python-format
-msgid "No such attribute %r"
-msgstr "No such attribute %r"
-
-#: sense_emu/gui.py:791
+#: sense_emu/gui.py:792
 #, python-format
 msgid "%s is not a Sense HAT recording"
 msgstr "%s is not a Sense HAT recording"
 
-#: sense_emu/gui.py:793
+#: sense_emu/gui.py:794
 #, python-format
 msgid "%s has unrecognized file version number"
 msgstr "%s has unrecognized file version number"
 
-#: sense_emu/gui.py:800
+#: sense_emu/gui.py:801
 #, python-format
 msgid "Incomplete data record at end of %s"
 msgstr "Incomplete data record at end of %s"
 
-#: sense_emu/gui.py:820
+#: sense_emu/gui.py:821
 #, python-format
 msgid "Playing %s"
 msgstr "Playing %s"
 
-#: sense_emu/gui.py:841
+#: sense_emu/gui.py:842
 msgid "Error while replaying recording"
 msgstr "Error while replaying recording"
 
-#: sense_emu/play.py:48
+#: sense_emu/play.py:39
 msgid ""
 "Replays readings recorded from a Raspberry Pi Sense HAT, via the Sense HAT "
 "emulation library."
@@ -135,26 +130,26 @@ msgstr ""
 "Replays readings recorded from a Raspberry Pi Sense HAT, via the Sense HAT "
 "emulation library."
 
-#: sense_emu/play.py:60
+#: sense_emu/play.py:51
 #, python-format
 msgid "Playing back recording taken at %s"
 msgstr "Playing back recording taken at %s"
 
-#: sense_emu/play.py:91
+#: sense_emu/play.py:82
 msgid "Skipping records to catch up"
 msgstr "Skipping records to catch up"
 
-#: sense_emu/play.py:105
+#: sense_emu/play.py:96
 #, python-format
 msgid "Skipped %d records during playback"
 msgstr "Skipped %d records during playback"
 
-#: sense_emu/play.py:106
+#: sense_emu/play.py:97
 #, python-format
 msgid "Finished playback of %d records"
 msgstr "Finished playback of %d records"
 
-#: sense_emu/record.py:45
+#: sense_emu/record.py:35
 msgid ""
 "Records the readings from a Raspberry Pi Sense HAT in real time, outputting "
 "the results to the specified file."
@@ -162,12 +157,12 @@ msgstr ""
 "Records the readings from a Raspberry Pi Sense HAT in real time, outputting "
 "the results to the specified file."
 
-#: sense_emu/record.py:50
+#: sense_emu/record.py:40
 #, python-format
 msgid "the Sense HAT configuration file to use (default: %(default)s)"
 msgstr "the Sense HAT configuration file to use (default: %(default)s)"
 
-#: sense_emu/record.py:54
+#: sense_emu/record.py:44
 msgid ""
 "the duration to record for in seconds (default: record until terminated with "
 "Ctrl+C)"
@@ -175,13 +170,13 @@ msgstr ""
 "the duration to record for in seconds (default: record until terminated with "
 "Ctrl+C)"
 
-#: sense_emu/record.py:59
+#: sense_emu/record.py:49
 msgid ""
 "the delay between each reading in seconds (default: the IMU polling "
 "interval, typically 0.003 seconds)"
 msgstr ""
 
-#: sense_emu/record.py:63
+#: sense_emu/record.py:53
 msgid ""
 "flush every record to disk immediately; reduces chances of truncated data on "
 "power loss, but greatly increases disk activity"
@@ -189,101 +184,101 @@ msgstr ""
 "flush every record to disk immediately; reduces chances of truncated data on "
 "power loss, but greatly increases disk activity"
 
-#: sense_emu/record.py:72
+#: sense_emu/record.py:62
 msgid ""
 "unable to import RTIMU; ensure the Sense HAT library is correctly installed"
 msgstr ""
 "unable to import RTIMU; ensure the Sense HAT library is correctly installed"
 
-#: sense_emu/record.py:75
+#: sense_emu/record.py:65
 msgid "configuration filename must end with .ini"
 msgstr "configuration filename must end with .ini"
 
-#: sense_emu/record.py:77
+#: sense_emu/record.py:67
 #, python-format
 msgid "Reading settings from %s"
 msgstr "Reading settings from %s"
 
-#: sense_emu/record.py:79
+#: sense_emu/record.py:69
 msgid "Initializing sensors"
 msgstr "Initializing sensors"
 
-#: sense_emu/record.py:82
+#: sense_emu/record.py:72
 msgid "Failed to initialize Sense HAT IMU"
 msgstr "Failed to initialize Sense HAT IMU"
 
-#: sense_emu/record.py:85
+#: sense_emu/record.py:75
 msgid "Failed to initialize Sense HAT pressure sensor"
 msgstr "Failed to initialize Sense HAT pressure sensor"
 
-#: sense_emu/record.py:88
+#: sense_emu/record.py:78
 msgid "Failed to initialize Sense HAT humidity sensor"
 msgstr "Failed to initialize Sense HAT humidity sensor"
 
-#: sense_emu/record.py:93
+#: sense_emu/record.py:83
 msgid "Starting recording"
 msgstr "Starting recording"
 
-#: sense_emu/record.py:103
+#: sense_emu/record.py:93
 #, python-format
 msgid "%d records written"
 msgstr "%d records written"
 
-#: sense_emu/record.py:139
+#: sense_emu/record.py:129
 #, python-format
 msgid "Finishing recording after %d records"
 msgstr "Finishing recording after %d records"
 
-#: sense_emu/terminal.py:91
+#: sense_emu/terminal.py:82
 #, python-format
 msgid "argument \"-\" with mode %r"
 msgstr "argument \"-\" with mode %r"
 
-#: sense_emu/terminal.py:96
+#: sense_emu/terminal.py:87
 #, python-format
 msgid "can't open '%(name)s': %(error)s"
 msgstr "can't open '%(name)s': %(error)s"
 
-#: sense_emu/terminal.py:141
+#: sense_emu/terminal.py:132
 msgid "specify the configuration file to load"
 msgstr "specify the configuration file to load"
 
-#: sense_emu/terminal.py:147
+#: sense_emu/terminal.py:138
 msgid "produce less console output"
 msgstr "produce less console output"
 
-#: sense_emu/terminal.py:150
+#: sense_emu/terminal.py:141
 msgid "produce more console output"
 msgstr "produce more console output"
 
-#: sense_emu/terminal.py:153
+#: sense_emu/terminal.py:144
 msgid "log messages to the specified file"
 msgstr "log messages to the specified file"
 
-#: sense_emu/terminal.py:160
+#: sense_emu/terminal.py:151
 msgid "run under PDB (debug mode)"
 msgstr "run under PDB (debug mode)"
 
-#: sense_emu/terminal.py:193
+#: sense_emu/terminal.py:184
 #, python-format
 msgid "Reading configuration from %s"
 msgstr "Reading configuration from %s"
 
-#: sense_emu/terminal.py:206
+#: sense_emu/terminal.py:197
 #, python-format
 msgid "unable to locate [%s] section in configuration"
 msgstr "unable to locate [%s] section in configuration"
 
-#: sense_emu/terminal.py:241
+#: sense_emu/terminal.py:232
 msgid "Try the --help option for more information."
 msgstr "Try the --help option for more information."
 
 #. Title above the emulated Sense HAT screen
-#: sense_emu/main_window.ui:99
+#: sense_emu/main_window.ui:104
 msgid "Screen"
 msgstr "Screen"
 
-#: sense_emu/main_window.ui:117
+#: sense_emu/main_window.ui:122
 msgid ""
 "Rotate the Sense HAT 90 degrees clockwise; after rotation the joystick "
 "buttons will produce directions appropriate to the HAT's orientation"
@@ -291,7 +286,7 @@ msgstr ""
 "Rotate the Sense HAT 90 degrees clockwise; after rotation the joystick "
 "buttons will produce directions appropriate to the HAT's orientation"
 
-#: sense_emu/main_window.ui:132
+#: sense_emu/main_window.ui:137
 msgid ""
 "Rotate the Sense HAT 90 degrees counter-clockwise; after rotation the "
 "joystick buttons will produce directions appropriate to the HAT's orientation"
@@ -299,7 +294,7 @@ msgstr ""
 "Rotate the Sense HAT 90 degrees counter-clockwise; after rotation the "
 "joystick buttons will produce directions appropriate to the HAT's orientation"
 
-#: sense_emu/main_window.ui:159
+#: sense_emu/main_window.ui:164
 msgid ""
 "Click to toggle an overlay showing the positive direction of the yaw, pitch, "
 "and roll rotations"
@@ -307,41 +302,41 @@ msgstr ""
 "Click to toggle an overlay showing the positive direction of the yaw, pitch, "
 "and roll rotations"
 
-#: sense_emu/main_window.ui:198
+#: sense_emu/main_window.ui:203
 msgid "Temperature"
 msgstr "Temperature"
 
-#: sense_emu/main_window.ui:240
+#: sense_emu/main_window.ui:245
 msgid "Pressure"
 msgstr "Pressure"
 
-#: sense_emu/main_window.ui:283
+#: sense_emu/main_window.ui:288
 msgid "Humidity"
 msgstr "Humidity"
 
 #. Title above emulated Sense HAT joystick buttons
-#: sense_emu/main_window.ui:448
+#: sense_emu/main_window.ui:453
 msgid "Joystick"
 msgstr "Joystick"
 
-#: sense_emu/main_window.ui:474
+#: sense_emu/main_window.ui:479
 msgid "Pitch"
 msgstr "Pitch"
 
-#: sense_emu/main_window.ui:486
+#: sense_emu/main_window.ui:491
 msgid "Roll"
 msgstr "Roll"
 
-#: sense_emu/main_window.ui:498
+#: sense_emu/main_window.ui:503
 msgid "Yaw"
 msgstr "Yaw"
 
-#: sense_emu/main_window.ui:557
+#: sense_emu/main_window.ui:562
 msgid "Orientation"
 msgstr "Orientation"
 
 #. Cancels playback of a recording
-#: sense_emu/main_window.ui:601
+#: sense_emu/main_window.ui:606
 msgid "Stop"
 msgstr "Stop"
 
@@ -381,19 +376,19 @@ msgstr "Contents"
 msgid "_About..."
 msgstr "_About..."
 
-#: sense_emu/prefs_dialog.ui:90
+#: sense_emu/prefs_dialog.ui:93
 msgid "Simulate"
 msgstr "Simulate"
 
-#: sense_emu/prefs_dialog.ui:103
+#: sense_emu/prefs_dialog.ui:106
 msgid "Screen updates"
 msgstr "Screen updates"
 
-#: sense_emu/prefs_dialog.ui:113
+#: sense_emu/prefs_dialog.ui:116
 msgid "Environment sensors"
 msgstr "Environment sensors"
 
-#: sense_emu/prefs_dialog.ui:117
+#: sense_emu/prefs_dialog.ui:120
 msgid ""
 "When checked, the emulator will continually simulate \"noise\" on the "
 "environment sensors (the temperature, pressure, and humidity sliders)"
@@ -401,11 +396,11 @@ msgstr ""
 "When checked, the emulator will continually simulate \"noise\" on the "
 "environment sensors (the temperature, pressure, and humidity sliders)"
 
-#: sense_emu/prefs_dialog.ui:128
+#: sense_emu/prefs_dialog.ui:130
 msgid "Inertial measurement unit"
 msgstr "Inertial measurement unit"
 
-#: sense_emu/prefs_dialog.ui:132
+#: sense_emu/prefs_dialog.ui:134
 msgid ""
 "When checked, the emulator will constantly simulate accelerometer (gravity "
 "induced), gyroscope (rate of change), and magnetometer (relative North) "
@@ -415,7 +410,7 @@ msgstr ""
 "induced), gyroscope (rate of change), and magnetometer (relative North) "
 "values based on the yaw, pitch, and roll sliders"
 
-#: sense_emu/prefs_dialog.ui:145
+#: sense_emu/prefs_dialog.ui:146
 msgid ""
 "Sets the maximum rate at which the emulated pixel display can update. The "
 "real HAT updates at 60fps but emulation at this speed can cause issues on "
@@ -425,15 +420,15 @@ msgstr ""
 "real HAT updates at 60fps but emulation at this speed can cause issues on "
 "slower Pi's"
 
-#: sense_emu/prefs_dialog.ui:165
+#: sense_emu/prefs_dialog.ui:166
 msgid "fps"
 msgstr "fps"
 
-#: sense_emu/prefs_dialog.ui:184
+#: sense_emu/prefs_dialog.ui:185
 msgid "Orientation scale"
 msgstr "Orientation scale"
 
-#: sense_emu/prefs_dialog.ui:199
+#: sense_emu/prefs_dialog.ui:200
 msgid ""
 "When selected, the orientation sliders will have a minimum of -180°, a mid-"
 "point at 0°, and a maximum of 180°"
@@ -449,10 +444,22 @@ msgstr ""
 "When selected, the orientation sliders will have a minimum of 0°, a mid-"
 "point at 180°, and a maximum of 360°"
 
-#: sense_emu/prefs_dialog.ui:234
+#: sense_emu/prefs_dialog.ui:233
 msgid ""
 "When selected, the orientation sliders will have a minimum of 180°, a mid-"
 "point at 0° (immediately after 359°), and a maximum of 180°"
 msgstr ""
 "When selected, the orientation sliders will have a minimum of 180°, a mid-"
 "point at 0° (immediately after 359°), and a maximum of 180°"
+
+#: sense_emu/prefs_dialog.ui:248
+msgid "Editor command"
+msgstr ""
+
+#: sense_emu/prefs_dialog.ui:261
+#, python-format
+msgid "editor %s"
+msgstr ""
+
+#~ msgid "No such attribute %r"
+#~ msgstr "No such attribute %r"
