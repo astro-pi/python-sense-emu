@@ -13,22 +13,22 @@ $(DIRS):
 	mkdir $@
 
 16x16/%.png: scalable/%.svg 16x16
-	inkscape -e $@ -w 16 -h 16 $<
+	convert -background none $< -resize 16x16 $@
 
 24x24/%.png: scalable/%.svg 24x24
-	inkscape -e $@ -w 24 -h 24 $<
+	convert -background none $< -resize 24x24 $@
 
 32x32/%.png: scalable/%.svg 32x32
-	inkscape -e $@ -w 32 -h 32 $<
+	convert -background none $< -resize 32x32 $@
 
 48x48/%.png: scalable/%.svg 48x48
-	inkscape -e $@ -w 48 -h 48 $<
+	convert -background none $< -resize 48x48 $@
 
 64x64/%.png: scalable/%.svg 64x64
-	inkscape -e $@ -w 64 -h 64 $<
+	convert -background none $< -resize 64x64 $@
 
 128x128/%.png: scalable/%.svg 128x128
-	inkscape -e $@ -w 128 -h 128 $<
+	convert -background none $< -resize 128x128 $@
 
 # Starting from a large res PNG and resizing downward seems to produce the best
 # "lower resolution" XPMs and ICOs
