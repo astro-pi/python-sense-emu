@@ -99,7 +99,7 @@ htmlhelp_basename = '{info[name]}doc'.format(info=info)
 # Hack to make wide tables work properly in RTD
 # See https://github.com/snide/sphinx_rtd_theme/issues/117 for details
 def setup(app):
-    app.add_stylesheet('style_override.css')
+    app.add_css_file('style_override.css')
 
 # -- Options for LaTeX output ---------------------------------------------
 
