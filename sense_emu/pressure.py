@@ -112,8 +112,8 @@ class PressureServer:
         self._noise_write()
         # The queue lengths are selected to accurately represent the response
         # time of the sensors
-        self._pressures = np.full((25,), self._pressure, dtype=np.float)
-        self._temperatures = np.full((25,), self._temperature, dtype=np.float)
+        self._pressures = np.full((25,), self._pressure, dtype=float)
+        self._temperatures = np.full((25,), self._temperature, dtype=float)
         self.simulate_noise = simulate_noise
 
     def close(self):
