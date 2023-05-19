@@ -145,9 +145,9 @@ class IMUServer:
         # These queue lengths were arbitrarily selected to smooth the action of
         # the orientation sliders in the GUI; they bear no particular relation
         # to the hardware
-        self._gyros = np.full((10, 3), self._gyro, dtype=np.float)
-        self._accels = np.full((10, 3), self._accel, dtype=np.float)
-        self._comps = np.full((10, 3), self._compass, dtype=np.float)
+        self._gyros = np.full((10, 3), self._gyro, dtype=float)
+        self._accels = np.full((10, 3), self._accel, dtype=float)
+        self._comps = np.full((10, 3), self._compass, dtype=float)
         self.simulate_world = simulate_world
 
     def close(self):
