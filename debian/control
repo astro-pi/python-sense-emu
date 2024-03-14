@@ -6,8 +6,6 @@ Priority: extra
 Build-Depends:
  debhelper (>= 8),
  dh-python,
- python-all (>= 2.7),
- python-setuptools,
  python3-all,
  python3-setuptools,
  python3-sphinx

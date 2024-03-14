@@ -29,6 +29,17 @@ VER:=$(shell $(PYTHON) $(PYFLAGS) setup.py --version)
 PY_SOURCES:=$(shell \
 	$(PYTHON) $(PYFLAGS) setup.py egg_info >/dev/null 2>&1 && \
 	cat $(WHEEL_NAME).egg-info/SOURCES.txt | grep -v "\.egg-info"  | grep -v "\.mo$$")
+DEB_SOURCES:=debian/changelog \
+	debian/control \
+	debian/copyright \
+	debian/rules \
+	debian/docs \
+	$(wildcard debian/*.init) \
+	$(wildcard debian/*.default) \
+	$(wildcard debian/*.manpages) \
+	$(wildcard debian/*.docs) \
+	$(wildcard debian/*.doc-base) \
+	$(wildcard debian/*.desktop)
 DOC_SOURCES:=docs/conf.py \
 	$(wildcard docs/*.png) \
 	$(wildcard docs/*.svg) \
@@ -42,6 +53,13 @@ SUBDIRS:=icons
 # Calculate the name of all outputs
 DIST_WHEEL=dist/$(WHEEL_NAME)-$(VER)-py3-none-any.whl
 DIST_TAR=dist/$(NAME)-$(VER).tar.gz
+DIST_DEB=dist/python-$(NAME)_$(VER)$(DEB_SUFFIX)_all.deb \
+	dist/python3-$(NAME)_$(VER)$(DEB_SUFFIX)_all.deb \
+	dist/python-$(NAME)-doc_$(VER)$(DEB_SUFFIX)_all.deb \
+	dist/$(NAME)-tools_$(VER)$(DEB_SUFFIX)_all.deb \
+	dist/$(NAME)_$(VER)$(DEB_SUFFIX)_$(DEB_ARCH).build \
+	dist/$(NAME)_$(VER)$(DEB_SUFFIX)_$(DEB_ARCH).buildinfo \
+	dist/$(NAME)_$(VER)$(DEB_SUFFIX)_$(DEB_ARCH).changes
 DIST_ZIP=dist/$(NAME)-$(VER).zip
 MAN_PAGES=man/sense_rec.1 man/sense_play.1 man/sense_csv.1 man/sense_emu_gui.1
 POT_FILE=$(WHEEL_NAME)/locale/$(NAME).pot
@@ -63,6 +81,7 @@ all:
 	@echo "make wheel - Generate a PyPI wheel package"
 	@echo "make zip - Generate a source zip package"
 	@echo "make tar - Generate a source tar package"
+	@echo "make deb - Generate Debian packages"
 	@echo "make dist - Generate all packages"
 	@echo "make clean - Get rid of all generated files"
 	@echo "make release - Create and tag a new release"
@@ -85,6 +104,8 @@ wheel: $(DIST_WHEEL)
 zip: $(DIST_ZIP)
 
 tar: $(DIST_TAR)
+
+deb: $(DIST_DEB)
 
 dist: $(DIST_WHEEL) $(DIST_TAR) $(DIST_ZIP)
 
@@ -173,6 +194,16 @@ $(DIST_ZIP): $(PY_SOURCES) $(MO_FILES) $(GSCHEMA_COMPILED) $(SUBDIRS)
 $(DIST_WHEEL): $(PY_SOURCES) $(MO_FILES) $(GSCHEMA_COMPILED) $(SUBDIRS)
 	$(PYTHON) $(PYFLAGS) setup.py bdist_wheel
 
+$(DIST_DEB): $(PY_SOURCES) $(MO_FILES) $(GSCHEMA_COMPILED) $(SUBDIRS) $(DEB_SOURCES) $(MAN_PAGES)
+	# build the binary package in the parent directory then rename it to
+	# project_version.orig.tar.gz
+	$(PYTHON) $(PYFLAGS) setup.py sdist --dist-dir=../
+	rename -f 's/$(NAME)-(.*)\.tar\.gz/$(NAME)_$$1\.orig\.tar\.gz/' ../*
+	#debuild -b
+	debuild -b -uc -us
+	mkdir -p dist/
+	for f in $(DIST_DEB); do cp ../$${f##*/} dist/; done
+
 release:
 	$(MAKE) clean
 	test -z "$(shell git status --porcelain)"
@@ -183,4 +214,4 @@ upload: $(DIST_TAR) $(DIST_WHEEL)
 	$(TWINE) check $(DIST_TAR) $(DIST_WHEEL)
 	$(TWINE) upload $(DIST_TAR) $(DIST_WHEEL)
 
-.PHONY: all install develop test doc source wheel zip tar dist clean tags release upload $(SUBDIRS)
+.PHONY: all install develop test doc source wheel zip tar deb dist clean tags release upload $(SUBDIRS)
