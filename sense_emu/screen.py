@@ -98,6 +98,8 @@ class ScreenClient:
             self._touch_stop.set()
             self._touch_thread.join()
             self._touch_thread = None
+            del self._screen
+            del self._gamma
             self._map.close()
             self._map = None
             self._fd.close()
